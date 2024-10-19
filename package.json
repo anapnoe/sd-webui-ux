@@ -1,0 +1,36 @@
+{
+  "name": "@anapnoe/sd-webui-ux",
+  "version": "0.0.1",
+  "description": "Anapnoe WebUi-Ux",
+  "author": "@anapnoe",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/anapnoe/sd-webui-ux/issues"
+  },
+  "homepage": "https://github.com/anapnoe/sd-webui-ux",
+  "license": "AGPLv3",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anapnoe/sd-webui-ux.git"
+  },
+  "scripts": {
+    "lint": "eslint javascript",
+    "fix": "eslint javascript --fix",
+    "scan": "npx auditjs@latest ossi --dev --quiet",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-css": "^0.9.2",
+    "eslint-plugin-html": "^8.1.1",
+    "eslint-plugin-json": "^3.1.0",
+    "eslint-plugin-markdown": "^4.0.1"
+  },
+  "devDependencies": {
+    "vite": "^5.4.8"
+  }
+}

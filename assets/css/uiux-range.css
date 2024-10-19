@@ -1,0 +1,96 @@
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    input[type="range"] {
+        overflow: hidden;
+        width: 100%;
+        -webkit-appearance: none;
+        background-color: var(--ae-input-bg-color);
+        border: var(--ae-input-border-size) solid var(--ae-input-border-color);
+        position: relative;
+        border-radius: var(--ae-border-radius);
+    }
+
+    input[type="range"]::after {
+        content: "";
+        position: absolute;
+        height: 100%;
+        background-image: var(--ae-slider-bg-overlay);
+        width: 100%;
+        left: 1px;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+        height: 14px;
+        -webkit-appearance: none;
+        color: var(--ae-primary-color);
+        margin-top: -1px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        width: 0px;
+        -webkit-appearance: none;
+        height: 14px;
+        cursor: ew-resize;
+        background-color: var(--ae-primary-color);
+        box-shadow: -1024px 0 0 1024px var(--ae-primary-color);
+    }
+}
+
+
+/* Firefox */
+* {
+    scrollbar-color: var(--ae-panel-border-color) var(--ae-main-bg-color) !important;
+    scrollbar-width: thin !important;
+}
+
+input[type="range"]::-moz-range-progress {
+    background-color: var(--ae-primary-color);
+    height: 100%;
+    background-image: var(--ae-slider-bg-overlay);
+}
+
+input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 100%;
+    background-color: var(--ae-input-bg-color);
+    border: none;
+    border-radius: 0px;
+    position: relative;
+    background-image: var(--ae-slider-bg-overlay);
+    opacity: 1;
+}
+
+input[type="range"]::-moz-range-thumb {
+    border: 0px solid var(--ae-primary-color);
+    width: 0px;
+    border-radius: 0%;
+    background-color: var(--ae-primary-color);
+}
+
+/*hide the outline behind the border*/
+input[type="range"]:-moz-focusring {
+    outline: 1px solid var(--ae-primary-color);
+    outline-offset: -1px;
+}
+
+input[type="range"]:focus::-moz-range-track {
+    background-color: var(--ae-input-bg-color);
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+input[type="number"]:hover,
+input[type="number"]:focus {
+    -moz-appearance: initial;
+}
+
+/* IE maybe later  */
+
+input[type="range"]::-ms-fill-lower {
+    background-color: var(--ae-primary-color);
+}
+
+input[type="range"]::-ms-fill-upper {
+    background-color: var(--ae-input-bg-color);
+}

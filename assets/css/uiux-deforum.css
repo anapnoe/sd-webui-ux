@@ -1,0 +1,29 @@
+#deforum_header video {
+    width: 100%;
+    max-height: 100vh;
+    object-fit: contain;
+    background-color: var(--ae-input-bg-color);
+}
+
+#deforum_header p {
+    display: none;
+}
+
+#deforum_header {
+    display: flex;
+    flex-grow: 1;
+    background-color: var(--ae-input-bg-color);
+    inset: 0;
+    position: absolute;
+    z-index: 1;
+    height: 100%;
+    width: 100%;
+}
+
+#deforum-video-preview:has(video) {
+    display: flex !important;
+}
+
+#ae-button-close-video:has(.hidden) {
+    display: none;
+}

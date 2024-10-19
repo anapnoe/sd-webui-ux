@@ -1,0 +1,53 @@
+.log-row {
+    display: table;
+    overflow-wrap: anywhere;
+}
+
+.log-row a {
+    padding: 0 5px;
+}
+
+.log-date {
+    color: #cacaca;
+    display: table-cell;
+    white-space: nowrap;
+    padding: 0px 10px;
+    font-size: 9px;
+}
+
+.log-boolean,
+.log-undefined {
+    color: magenta;
+}
+
+.log-object {
+    color: #cfb0ff;
+}
+
+.log-string {
+    color: #ffca68;
+}
+
+.log-number {
+    color: cyan;
+}
+
+.log-info {
+    color: yellow;
+}
+
+.log-string.log-remove {
+    color: #ff4f4f;
+}
+
+.log-string.log-load {
+    color: #74ff80;
+}
+
+.log-string.log-url {
+    color: #8fc9ff;
+}
+
+.log-string.log-object {
+    color: #8fc9ff;
+}

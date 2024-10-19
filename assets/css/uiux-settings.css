@@ -1,0 +1,25 @@
+.portal.settings-tabs.no-padding {
+    padding-right: var(--ae-panel-padding) !important;
+}
+
+* .settings-comment:has(a) {
+    font-size: 0;
+}
+
+* .settings-comment a {
+    font-size: 10px;
+}
+
+.portal.settings-tabs button:not(button:has(+span), span+button) {
+    border-radius: 0;
+}
+
+.portal.settings-tabs span+button {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.portal.settings-tabs button:has(+span) {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}

@@ -1,0 +1,305 @@
+*.copy-path-button {
+    -webkit-mask-image: url(../svg/clipboard-fill.svg);
+}
+
+*.metadata-button {
+    -webkit-mask-image: url(../svg/file-info-fill.svg);
+}
+
+*.edit-button.card-button {
+    -webkit-mask-image: url(../svg/file-edit-fill.svg);
+}
+
+.icon-folder {
+    -webkit-mask-image: url(../svg/folder-open-line.svg);
+}
+
+.icon-save {
+    -webkit-mask-image: url(../svg/save-2-line.svg);
+}
+
+.icon-zip {
+    -webkit-mask-image: url(../svg/file-zip-line.svg);
+}
+
+.icon-2txt2img {
+    -webkit-mask-image: url(../svg/t-box-line.svg);
+}
+
+.icon-2inpaint {
+    -webkit-mask-image: url(../svg/paint-brush-line.svg);
+}
+
+.gradio-button:has([class*="icon-2"])::after {
+    right: 0px;
+    top: 0px;
+    background-color: var(--ae-input-hover-text-color);
+    -webkit-mask-image: url(../svg/arrow-up-line.svg);
+    z-index: 2;
+}
+
+.icon-2extras {
+    transform: scaleX(-1);
+    -webkit-mask-image: url(../svg/picture-in-picture-exit-line.svg);
+}
+
+.icon-2img2img {
+    -webkit-mask-image: url(../svg/image-line.svg);
+}
+
+.refresh {
+    -webkit-mask-image: url(../svg/loop-right-line.svg);
+}
+
+.icon-info {
+    -webkit-mask-image: url(../svg/information-line.svg);
+}
+
+.icon-crop {
+    -webkit-mask-image: url(../svg/crop-line.svg);
+}
+
+.icon-res-switch {
+    -webkit-mask-image: url(../svg/arrow-up-down-line.svg);
+}
+
+.icon-scripts {
+    -webkit-mask-image: url(../svg/plug-line.svg);
+}
+
+.icon-generate {
+    -webkit-mask-image: url(../svg/ai-generate.svg);
+}
+
+.icon-skip {
+    -webkit-mask-image: url(../svg/skip-forward-line.svg);
+}
+
+.icon-stop {
+    -webkit-mask-image: url(../svg/stop-circle-line.svg);
+}
+
+.icon-loop {
+    -webkit-mask-image: url(../svg/infinity-fill.svg);
+}
+
+.icon-node-tree {
+    -webkit-mask-image: url(../svg/node-tree.svg);
+}
+
+.icon-magic {
+    -webkit-mask-image: url(../svg/magic-line.svg);
+}
+
+.icon-delete {
+    -webkit-mask-image: url(../svg/delete-bin-2-line.svg);
+}
+
+.icon-styles-edit {
+    -webkit-mask-image: url(../svg/draft-line.svg);
+}
+
+.icon-styles-apply {
+    -webkit-mask-image: url(../svg/bill-line.svg);
+}
+
+.icon-dice {
+    -webkit-mask-image: url(../svg/dice-1.svg);
+}
+
+.icon-recycle {
+    -webkit-mask-image: url(../svg/recycle-line.svg);
+}
+
+.icon-equalize {
+    -webkit-mask-image: url(../svg/equalizer-line.svg);
+}
+
+.icon-bug {
+    -webkit-mask-image: url(../svg/bug-2-line.svg);
+}
+
+.icon-prompt {
+    -webkit-mask-image: url(../svg/edit-box-line.svg);
+}
+
+.icon-arrow-down {
+    -webkit-mask-image: url(../svg/arrow-down-s-line.svg);
+}
+
+.icon-arrow-up {
+    -webkit-mask-image: url(../svg/arrow-up-s-line.svg);
+}
+
+
+.icon-checkpoints {
+    -webkit-mask-image: url(../svg/sparkling-line.svg);
+}
+
+.icon-textual-inversion {
+    -webkit-mask-image: url(../svg/focus-line.svg);
+}
+
+.icon-hypernetworks {
+    -webkit-mask-image: url(../svg/focus-2-line.svg);
+}
+
+.icon-lora {
+    -webkit-mask-image: url(../svg/focus-2-fill.svg);
+}
+
+.icon-quicksettings {
+    -webkit-mask-image: url(../svg/list-settings-line.svg);
+}
+
+.icon-pnginfo {
+    -webkit-mask-image: url(../svg/image-add-line.svg);
+}
+
+.icon-extensions {
+    -webkit-mask-image: url(../svg/box-3-line.svg);
+}
+
+.icon-theme {
+    -webkit-mask-image: url(../svg/contrast-drop-2-line.svg);
+}
+
+.icon-settings {
+    -webkit-mask-image: url(../svg/settings-3-line.svg);
+}
+
+.icon-app-logo {
+    -webkit-mask-image: url(../SDNext_Logo.svg);
+}
+
+.icon-txt2img {
+    -webkit-mask-image: url(../svg/t-box-line.svg);
+}
+
+.icon-img2img {
+    -webkit-mask-image: url(../svg/image-line.svg);
+}
+
+.icon-extras {
+    transform: scaleX(-1);
+    -webkit-mask-image: url(../svg/picture-in-picture-exit-line.svg);
+}
+
+.icon-model-merger {
+    transform: rotate(90deg);
+    -webkit-mask-image: url(../svg/organization-chart.svg);
+}
+
+.icon-train {
+    -webkit-mask-image: url(../svg/robot-2-line.svg);
+}
+
+.icon-image-edit {
+    -webkit-mask-image: url(../svg/image-edit-line.svg);
+}
+
+.icon-ruler {
+    -webkit-mask-image: url(../svg/ruler-2-line.svg);
+}
+
+.question-answer {
+    -webkit-mask-image: url(../svg/question-answer-line.svg);
+}
+
+.icon-install {
+    -webkit-mask-image: url(../svg/install-line.svg);
+}
+
+.star_count:before {
+    content: "";
+    -webkit-mask-image: url(../svg/star-line.svg);
+    width: 16px;
+    height: 16px;
+    background-color: var(--ae-primary-color);
+    display: flex;
+
+}
+
+.icon-rocket {
+    -webkit-mask-image: url(../svg/rocket-fill.svg);
+}
+
+.icon-github {
+    -webkit-mask-image: url(../svg/github-fill.svg);
+}
+
+.icon-reload {
+    -webkit-mask-image: url(../svg/restart-fill.svg);
+}
+
+.icon-gradio {
+    -webkit-mask-image: url(../svg/gradio-fill.svg);
+}
+
+.icon-sort {
+    -webkit-mask-image: url(../svg/sort-asc.svg);
+}
+
+button.active .icon-sort {
+    -webkit-mask-image: url(../svg/sort-desc.svg);
+}
+
+.icon-cancel {
+    -webkit-mask-image: url(../svg/close-line.svg);
+}
+
+.icon-terminal {
+    -webkit-mask-image: url(../svg/terminal-box-line.svg);
+}
+
+.icon-dock {
+    -webkit-mask-image: url(../svg/layout-2-line.svg);
+}
+
+.icon-trophy {
+    -webkit-mask-image: url(../svg/trophy-line.svg);
+}
+
+.icon-vip {
+    -webkit-mask-image: url(../svg/vip-diamond-line.svg);
+}
+
+.icon-contributors {
+    -webkit-mask-image: url(../svg/team-line.svg);
+}
+
+.icon-results {
+    -webkit-mask-image: url(../svg/computer-line.svg);
+}
+
+.icon-menuadd {
+    -webkit-mask-image: url(../svg/menu-add-fill.svg);
+}
+
+.icon-deforum {
+    -webkit-mask-image: url(../svg/film-line.svg);
+}
+
+.icon-video {
+    -webkit-mask-image: url(../svg/video-line.svg);
+}
+
+.icon-profile {
+    -webkit-mask-image: url(../svg/profile-line.svg);
+}
+
+.icon-spaces {
+    -webkit-mask-image: url(../svg/function-add-line.svg);
+}
+
+.icon-movie {
+    -webkit-mask-image: url(../svg/movie-2-line.svg);
+}
+
+.icon-folder-image {
+    -webkit-mask-image: url(../svg/folder-image-line.svg);
+}
+
+.icon-gallery {
+    -webkit-mask-image: url(../svg/gallery-line.svg);
+}

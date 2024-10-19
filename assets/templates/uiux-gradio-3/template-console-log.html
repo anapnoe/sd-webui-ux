@@ -1,0 +1,31 @@
+<div id="layout-console-log" class="layout">
+    <div class="layout-content">
+        <div class="xtabs flexbox col">
+            <div id="logger_tabitem" class="xtabs-item no-padding">
+                <div id="container-console-log"></div>
+            </div>
+            <div id="profile_tabitem" class="xtabs-item no-padding">
+                <div data-parent-selector=".global-popup" data-selector="table.popup-table" class="portal dynamic"></div>
+            </div>
+            <div id="pylogger_tabitem" class="xtabs-item no-padding">
+                <div data-parent-selector="gradio-app" data-selector="#tab_anapnoe_sd_uiux_core" class="portal dynamic"></div>
+            </div>
+        </div>
+    </div>
+    <div class="layout-footer">
+        <div class="flexbox padding">
+            <button title="Console Log" id="logger_nav" active="true" tabItemId="#logger_tabitem" tabGroup="console_group" class="xtabs-tab">
+                <div class="mask-icon icon-terminal"></div>
+                <span>Console Log</span>
+            </button>
+            <button title="Python Log" id="pylogger_nav" tabItemId="#pylogger_tabitem" tabGroup="console_group" data-click="#tabs" onclick="mainTabs(this, '#tab_anapnoe_sd_uiux_core')" class="xtabs-tab">
+                <div class="mask-icon icon-terminal"></div>
+                <span>Python Log</span>
+            </button>
+            <button id="profile_nav" title="Startup profile" class="xtabs-tab" tabItemId="#profile_tabitem" tabGroup="console_group" onclick="showProfile('./internal/profile-startup'); return false;">
+                <div class="mask-icon icon-profile"></div>
+                <span>Startup profile</span>
+            </button>
+        </div>
+    </div>
+</div>

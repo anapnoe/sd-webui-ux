@@ -1,0 +1,7 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - given-names: Anapnoe
+title: "SD Web UI-UX"
+date-released: 2024-10-09
+url: "https://github.com/anapnoe/sd-webui-ux"

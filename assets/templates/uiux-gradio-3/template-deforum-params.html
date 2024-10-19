@@ -1,0 +1,78 @@
+<div id="layout-deforum" class="layout">
+    <div class="layout-header">
+        <div class="flexbox row shrink panel padding no-br">
+            <div id="deforum_header_top" class="flexbox row no-wrap shrink no-labels flex-start group-row">
+                <button title="Settings" tabItemId="#deforum_settings_tabitem" tabGroup="deforum" id="deforum_settings" class="xtabs-tab shrink">
+                    <div class="mask-icon icon-settings"></div>
+                    <span>Settings</span>
+                </button>
+                <button title="Parameters" tabItemId="#deforum_params_tabitem" tabGroup="deforum" id="deforum_params" active="true" class="xtabs-tab shrink">
+                    <div class="mask-icon icon-equalize"></div>
+                    <span>Params</span>
+                </button>
+                <button title="deforum Results" tabItemId="#deforum_results_mobile_tabitem" tabGroup="deforum" id="deforum_results_mobile" class="xtabs-tab mobile">
+                    <div class="mask-icon icon-results"></div>
+                    <span>Results</span>
+                </button>
+            </div>
+            <div id="deforum_generate_group" class="flexbox row flex-end group-row">
+                <!--
+                <div title="Skip" data-selector="#deforum_skip" data-parent-selector="#tab_deforum_interface" droppable="true" class="portal invisible shrink no-bg no-padding-one disable">
+                    <div class="mask-icon icon-skip">
+                    </div>
+                </div>
+                -->
+                <div title="Interrupt" data-selector="#deforum_interrupt" data-parent-selector="#tab_deforum_interface" droppable="true" class="portal invisible shrink no-bg no-padding-one disable">
+                    <div class="mask-icon icon-stop"></div>
+                </div>
+                <button title="Generate" class="ae-button generate no-rr">
+                    <div data-selector="#deforum_generate" data-parent-selector="#tab_deforum_interface" droppable="true" class="portal no-bg shrink invisible">
+                        <div class="mask-icon icon-generate"></div>
+                        <span>Generate</span>
+                    </div>
+                </button>
+                <!--
+				<button title="Generate forever" id="deforum_loop" toggle="true" class="ae-button no-lr shrink">
+					<div  class="mask-icon icon-loop">
+					</div>
+				</button>
+                -->
+            </div>
+        </div>
+    </div>
+    <div class="layout-content">
+        <div class="xtabs panel auto no-tr">
+            <div class="flexbox col shrink">
+                <div id="deforum_params_tabitem_group" class="flexbox col no-padding">
+                    <div id="deforum_params_tabitem" class="xtabs-item">
+                        <!--<div data-parent-selector="gradio-app" data-selector="#deforum_progress_row > div:first-child" class="portal no-bg">
+                        </div>-->
+                        <div data-parent-selector="gradio-app" data-selector="#deforum_progress_row > div > .tabs" class="portal no-bg"></div>
+                    </div>
+                </div>
+                <div id="deforum_settings_tabitem_group" class="flexbox col">
+                    <div id="deforum_settings_tabitem" class="xtabs-item">
+                        <div data-parent-selector="gradio-app" data-selector="#deforum_progress_row > div > div > .gradio-checkbox" class="portal no-bg"></div>
+                        <div class="flexbox col group">
+                            <div data-parent-selector="gradio-app" data-selector="#deforum_settings_path" class="portal"></div>
+                            <div class="flexbox no-border row">
+                                <div data-parent-selector="gradio-app" data-selector="#deforum_save_settings_btn" class="portal no-bg"></div>
+                                <div data-parent-selector="gradio-app" data-selector="#deforum_load_settings_btn" class="portal no-bg"></div>
+                                <div data-parent-selector="gradio-app" data-selector="#deforum_load_video_settings_btn" class="portal no-bg"></div>
+                            </div>
+                        </div>
+                        <div data-parent-selector="gradio-app" data-selector="#main_top_info_accord" class="portal padding no-bg"></div>
+                    </div>
+                </div>
+                <div id="deforum_results_mobile_tabitem_group" class="flexbox col mobile">
+                    <div id="deforum_results_mobile_tabitem" mobile="#template-deforum-results" class="xtabs-item"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="layout-footer hidden">
+        <div class="xtabs-tabs row panel">
+            <div id="dportal-40ee" data-parent-selector="gradio-app" data-selector="#tab_deforum_interface" class="portal"></div>
+        </div>
+    </div>
+</div>

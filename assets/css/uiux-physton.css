@@ -1,0 +1,25 @@
+.icon-physton {
+    -webkit-mask-image: url(../svg/pantone-line.svg);
+}
+
+.physton-prompt {
+    margin: 0 !important;
+}
+
+.physton-prompt .prompt-header .prompt-header-extend.prompt-append {
+    min-width: 240px;
+    min-height: 26px;
+}
+
+.physton-prompt .prompt-header .prompt-header-extend .extend-content .gradio-checkbox {
+    display: none;
+}
+
+.physton-prompt .show-group-tags {
+    top: -15px;
+    right: 5px;
+}
+
+.physton-prompt .prompt-header .prompt-header-extend.prompt-append .extend-content {
+    margin-right: 20px;
+}

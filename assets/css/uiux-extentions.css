@@ -1,0 +1,159 @@
+* #extensions_installed_top {
+    display: flex !important;
+    align-items: flex-end;
+}
+
+.tabs_extensions table {
+    width: 100%;
+}
+
+.tabs_extensions thead {
+    display: none;
+}
+
+.tabs_extensions tbody {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--ae-gap-size);
+    content-visibility: auto;
+}
+
+.tabs_extensions tr {
+    flex-direction: column;
+    display: flex;
+    padding: var(--ae-panel-padding);
+    background-color: var(--ae-panel-bg-color);
+    gap: 5px;
+    border: var(--ae-border-size) solid var(--ae-panel-border-color);
+    border-radius: var(--ae-border-radius);
+    position: relative;
+}
+
+.tabs_extensions td {
+    display: flex;
+    text-wrap: wrap;
+    flex-direction: row;
+    overflow-wrap: anywhere;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.tabs_extensions td:has(p.info) {
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.tabs_extensions td p.info:has(span) {
+    flex-direction: row;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    flex-grow: 0;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.tabs_extensions span.date_added {
+    max-width: 130px;
+    text-align: justify;
+    text-align-last: justify;
+    color: var(--ae-secondary-label-color);
+    background-color: var(--ae-input-bg-color);
+    padding: var(--ae-panel-padding);
+    border-radius: var(--ae-border-radius);
+    font-size: 11px;
+}
+
+span.star_count {
+    background-color: var(--ae-input-bg-color);
+    padding: 5px 10px 5px 5px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    border-radius: 5px;
+    font-size: 0;
+    line-height: 0;
+    justify-items: end;
+    gap: 2px;
+    align-items: center;
+}
+
+span.star_count b {
+    font-size: 12px;
+}
+
+.tabs_extensions td br {
+    flex-basis: 100%;
+    content: "";
+}
+
+.tabs_extensions td a {
+    font-size: 14px;
+    padding: 5px;
+    display: block;
+}
+
+.tabs_extensions td button {
+    display: flex;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+}
+
+.tabs_extensions td label:has(input) {
+    display: flex;
+    gap: 5px;
+    font-size: 14px;
+    border-radius: 5px;
+    align-items: center;
+}
+
+.tabs_extensions td label>input {
+    align-self: flex-start;
+}
+
+.tabs_extensions tr:has(a[href=""]) {
+    background-color: var(--ae-input-bg-color);
+    border-color: var(--ae-input-border-color);
+}
+
+.tabs_extensions td:empty,
+.tabs_extensions td:has(a:empty) {
+    display: none !important;
+}
+
+.tabs_extensions td:nth-child(1) a,
+.tabs_extensions td:nth-child(2) a {
+    background-color: transparent;
+    color: var(--ae-primary-color);
+    padding: 0;
+    font-size: 12px;
+}
+
+.tabs_extensions td:nth-child(1) a:hover,
+.tabs_extensions td:nth-child(2) a:hover {
+    color: var(--ae-label-color);
+}
+
+.tabs_extensions td:nth-child(1) a {
+    font-size: 14px;
+}
+
+span.settings-category {
+    padding: 0 var(--ae-input-padding);
+    font-weight: bold;
+    line-height: var(--ae-input-height);
+    color: var(--ae-primary-color);
+}
+
+#extensions_disable_all {
+    min-width: 170px;
+}
+
+#extensions_installed_top>button:nth-child(1),
+#extensions_installed_top>button:nth-child(2) {
+    width: max(140px, 40%);
+    flex-grow: 1;
+}
