@@ -108,10 +108,10 @@ async function initApp() {
     })();
 
     setupAnimations();
-
-    const iibrowserStylesToInject = ["user.css", "uiux-iibrowser.css"];
-    injectStylesToIframe("#infinite_image_browsing_container_wrapper iframe", iibrowserStylesToInject);
-
+    setTimeout(() => {
+        const iibrowserStylesToInject = ["user.css", "uiux-iibrowser.css"];
+        injectStylesToIframe("#infinite_image_browsing_container_wrapper iframe", iibrowserStylesToInject);
+    }, 3000);
 }
 
 async function run() {
