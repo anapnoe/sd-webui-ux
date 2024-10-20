@@ -110,6 +110,7 @@ shared.options_templates.update(
         {
             "uiux_enable_console_log": shared.OptionInfo(False, "Enable console log"),
             "uiux_enable_dev_mode": shared.OptionInfo(False, "Enable Development Mode (Needs Restart)"),
+            "uiux_nodejs_path": shared.OptionInfo("C:/Program Files/nodejs/npm.cmd", "Dev mode set Nodejs path to compile from src (Needs Restart)"),
             "uiux_enable_theme_editor": shared.OptionInfo(True, "Enable Theme Editor (Needs Restart)"),
             "uiux_enable_event_delegation": shared.OptionInfo(False, "Enable Event Delegation for Extra Networks (Needs Restart)"),
             "uiux_max_resolution_output": shared.OptionInfo(
@@ -192,7 +193,7 @@ def check_and_create_dev():
 def run_vite_build():
     try:
         # Call 'npm run build' 
-        result = subprocess.run(['C:/Program Files/nodejs/npm.cmd', 'run', 'build'], check=True, capture_output=True, text=True, cwd=basedir) 
+        result = subprocess.run([shared.opts.uiux_nodejs_path, 'run', 'build'], check=True, capture_output=True, text=True, cwd=basedir) 
         print(result.stdout)
         
     except subprocess.CalledProcessError as e:
