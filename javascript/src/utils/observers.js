@@ -1,3 +1,5 @@
+import {VERSION_DATA} from "../constants.js";
+
 export function setupGenerateObservers() {
     const keys = ['#txt2img', '#img2img', '#deforum'];
     keys.forEach((key) => {
@@ -53,50 +55,40 @@ export function setupGenerateObservers() {
 }
 
 export function setupCheckpointChangeObserver() {
-    const ch_input = document.querySelector("#setting_sd_model_checkpoint .wrap .secondary-wrap input") ||
-    document.querySelector(".gradio-dropdown.model_selection .wrap .secondary-wrap input");
-    let hash_old_value = ch_input.value;
-    let oldcard = document.querySelector(`#txt2img_checkpoints_cards .card[data-apply*="${hash_old_value}"]`);
+
+    const ch_input = document.querySelector("#setting_sd_model_checkpoint .wrap .secondary-wrap input") || document.querySelector(".gradio-dropdown.model_selection .wrap .secondary-wrap input");
+    const ch_preload = document.querySelector("#setting_sd_model_checkpoint .wrap") || document.querySelector(".gradio-dropdown.model_selection .wrap");
 
     const ch_footer_selected = document.querySelector("#txt2img_checkpoints_main_footer .model-selected");
-    const ch_preload = document.querySelector("#setting_sd_model_checkpoint .wrap") ||
-    document.querySelector(".gradio-dropdown.model_selection .wrap");
     const ch_footer_preload = document.querySelector("#txt2img_checkpoints_main_footer .model-preloader");
-
-    // Set up the initial state
-    if (oldcard) {
-        oldcard.classList.add("selected");
-        ch_footer_selected.textContent = hash_old_value; // Initialize footer with old value
-        console.log("Checkpoint name:", oldcard.getAttribute("data-name"), "<br>");
-    }
-
-    // Append the preload section
     ch_footer_preload.append(ch_preload);
 
+    let hash_value;
     // Function to handle checkpoint selection
-    const selectCard = (new_card, new_value) => {
-        if (new_card && oldcard !== new_card) {
+    const selectCard = (value) => {
+        if (hash_value !== value) {
+            console.log("Checkpoint:", value);
+            const oldcard = document.querySelector(`#txt2img_checkpoints_cards .card.selected`);
             oldcard?.classList.remove("selected");
-            new_card.classList.add("selected");
-            oldcard = new_card;
-            ch_footer_selected.textContent = new_value;
-            console.log("Checkpoint:", new_value);
+
+            const new_card = document.querySelector(`#txt2img_checkpoints_cards .card[data-apply*="${value}"]`) || document.querySelector(`#txt2img_checkpoints_cards .card[onclick*="${value}"]`);
+            new_card?.classList.add("selected");
+
+            ch_footer_selected.textContent = value;
+            console.log("Checkpoint:", value);
+
+            hash_value = value;
         }
     };
 
+    selectCard(ch_input.value);
+
     const combinedObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(m) {
-            if (m.type === "attributes" && m.target === ch_input) {
-                const new_hash_value = ch_input.value;
-                const new_card = document.querySelector(`#txt2img_checkpoints_cards .card[data-apply*="${new_hash_value}"]`);
-                selectCard(new_card, new_hash_value);
-            }
-
-            // Handle changes in the preloaded model
-            const hash_target = document.querySelector('#sd_checkpoint_hash');
-            const hash_value = hash_target?.textContent;
-            const card = document.querySelector(`#txt2img_checkpoints_cards .card[data-apply*="${hash_value}"]`);
-            selectCard(card, ch_input.value);
+            //if (m.type === "attributes" && m.target === ch_input) {
+            //    selectCard(ch_input.value);
+            //}
+            setTimeout(() => selectCard(ch_input.value), 1000);
         });
     });
 
@@ -119,11 +111,11 @@ export function setupExtraNetworksAddToPromptObserver() {
         matchedWords.push(match[1]); // match[1] gives us the text
     }
 
-    let oldCards = document.querySelectorAll(`.extra-network-cards:not(#txt2img_checkpoints_cards) .card[data-apply]`);
+    let oldCards = document.querySelectorAll(`.extra-network-cards:not(#txt2img_checkpoints_cards) .card[data-apply]`) || document.querySelector(`#txt2img_checkpoints_cards .card[onclick*="${value}"]`);
     let matchingCards = [];
 
     oldCards.forEach(card => {
-        let dataApplyValue = card.getAttribute('data-apply');
+        let dataApplyValue = card.getAttribute('data-apply') || card.getAttribute('onclick');
         matchedWords.forEach(word => {
             if (dataApplyValue.includes(word)) {
                 matchingCards.push(card); // Add to matching cards
@@ -131,6 +123,6 @@ export function setupExtraNetworksAddToPromptObserver() {
         });
     });
 
-    console.log(matchingCards);
+    //console.log(matchingCards);
 
 }
