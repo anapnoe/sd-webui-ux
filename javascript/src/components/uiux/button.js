@@ -99,9 +99,11 @@ export async function initButtonComponents(contentDiv) {
                     }, 1000);
                 }
 
-                document.querySelectorAll(adc).forEach((el) => {
-                    el.click();
-                });
+                setTimeout(() => {
+                    document.querySelectorAll(adc).forEach((el) => {
+                        el.click();
+                    });
+                }, 500);
 
             });
         }
