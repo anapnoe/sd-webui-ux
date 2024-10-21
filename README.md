@@ -47,7 +47,7 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - Fork the Gradio project and contribute to enhancing their components.
 
 
-# Advanced Theme Style Configurator (in progress)
+## Advanced Theme Style Configurator (in progress)(upcoming feature)
 A sophisticated theme editor allowing you to personalize any aspect of the UI-UX. Tailor the visual experience of the user interface with the Advanced Theme Style configurator.
 
 [🌟 Get early access to Advanced Theme Style Configurator! 🌟](https://buymeacoffee.com/dayanbayah)
@@ -55,7 +55,7 @@ A sophisticated theme editor allowing you to personalize any aspect of the UI-UX
 ![anapnoe-ui-ux-theme-editor-advanced](https://github.com/anapnoe/sd-webui-ux/blob/main/assets/images/anapnoe-ui-ux-theme-editor-advanced.png)
 
 
-# Workspaces UI-UX (in progress)
+## Workspaces UI-UX (in progress)(upcoming extension)
 The workspaces extension empowers you to create customized views and organize them according to your unique preferences. With an intuitive drag-and-drop interface, you can design workflows that are perfectly tailored to your specific requirements, giving you ultimate control over your work environment.
 
 [🌟 Get early access to Workspaces! 🌟](https://buymeacoffee.com/dayanbayah)
