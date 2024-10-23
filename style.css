@@ -2793,9 +2793,16 @@ div[data-testid="image"] canvas {
 }
 
 
-
 #tab_img2img div.center.boundedheight.flex {
     display: block !important;
+}
+
+.image-container>.boundedheight.flex>img {
+    display: block !important;
+}
+
+.gap:has(>.gradio-image) {
+    overflow: hidden;
 }
 
 * .center.boundedheight>div:has(.brush),
