@@ -1,0 +1,116 @@
+.tree-view .nested {
+    display: none;
+}
+
+.tree-view .active {
+    display: block;
+}
+
+.tree-view {
+    --spacing_x: 10px;
+    --spacing_y: 20px;
+    --radius: 8px;
+    --lw: 1px;
+    line-height: 20px;
+    font-size: 14px;
+    margin-left: 0px;
+}
+
+.tree-view li {
+    display: block;
+    position: relative;
+    padding-left: calc(2 * var(--spacing_x) - var(--radius) - var(--lw));
+}
+
+.tree-view ul {
+    margin-left: calc(var(--radius) - var(--spacing_x));
+    padding-left: 0;
+}
+
+.tree-view ul li {
+    border-left: var(--lw) solid var(--ae-main-bg-color);
+}
+
+.tree-view ul li:last-child {
+    border-color: transparent;
+}
+
+.tree-view ul li::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: calc(var(--spacing_y) / -2 + var(--radius));
+    left: calc(var(--lw) * -1);
+    width: calc(var(--spacing_x) - var(--radius));
+    height: calc(var(--spacing_y) - var(--radius));
+    border: solid var(--ae-main-bg-color);
+    border-width: 0 0 var(--lw) var(--lw);
+}
+
+.tree-view summary {
+    display: block;
+    cursor: pointer;
+    margin-left: calc(var(--radius));
+}
+
+.tree-view summary::marker,
+.tree-view summary::-webkit-details-marker {
+    display: none;
+}
+
+.tree-view summary:focus {
+    outline: none;
+}
+
+.tree-view summary:focus-visible {
+    outline: var(--lw) dotted var(--ae-primary-color);
+}
+
+.tree-view summary.tree-file::before,
+.tree-view summary::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: calc(var(--spacing_y) / 2 - var(--radius));
+    left: calc(var(--spacing_x) - var(--radius) - var(--lw));
+    width: calc(2 * var(--radius));
+    height: calc(2 * var(--radius));
+    border-radius: 50%;
+    background-color: var(--ae-primary-color);
+}
+
+/*
+.tree-view summary.tree-file {
+  
+    margin-left: calc(var(--spacing_x)* -1 + var(--radius)* 2);
+
+} 
+*/
+
+.tree-view summary.tree-folder {
+    color: var(--ae-primary-color);
+}
+
+.tree-view summary.tree-file::before {
+
+    top: calc(var(--spacing_y) / 2 - var(--radius) * 0.5);
+    left: calc(var(--spacing_x) - var(--radius) * 0.5 - var(--lw));
+    width: calc(2 * var(--radius) * 0.5);
+    height: calc(2 * var(--radius) *0.5);
+    background-color: var(--ae-main-bg-color);
+    /*
+    -webkit-mask-image: url(../svg/file-info-line.svg);
+    */
+}
+
+.tree-view ul li.li-file::before {
+    width: calc(var(--spacing_x) - var(--radius)* 0.5);
+}
+
+.tree-view .caret.tree-folder::before {
+    -webkit-mask-image: url(../svg/add-circle-fill.svg);
+}
+
+.tree-view .caret-down.tree-folder::before {
+    -webkit-mask-image: url(../svg/indeterminate-circle-fill.svg);
+}

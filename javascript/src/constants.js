@@ -17,7 +17,7 @@ export const DEFAULT_TEMPLATES_FORGE_GRADIO_4 = `${DEFAULT_TEMPLATES_PATH}forge-
 export const EXTENSION_TEMPLATE_MAP = {
     'template-deforum-params.html': 'deforum',
     'template-deforum-results.html': 'deforum',
-    'template-stylez.html': 'enable_Stylez'
+    'template-stylez.html': 'Stylez'
 };
 
 export const CSS_INCLUDES = [
@@ -28,14 +28,18 @@ export const CSS_INCLUDES = [
     'uiux-extra-networks.css',
     'uiux-settings.css',
     'uiux-range.css',
-    'uiux-gradio.css'
+    'uiux-gradio.css' 'uiux-stylez.css'
     */
     /*'style-v2.css',*/
     'uiux-icons.css',
     'uiux-theme-editor.css',
     'uiux-deforum.css',
     'uiux-iibrowser.css',
-    'uiux-physton.css'
+    'uiux-physton.css',
+    'uiux-virtual.css',
+    'uiux-tree.css',
+    'spotlight.css',
+
 ];
 
 let cachedAnapnoeApp = null;

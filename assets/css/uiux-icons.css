@@ -303,3 +303,19 @@ button.active .icon-sort {
 .icon-gallery {
     -webkit-mask-image: url(../svg/gallery-line.svg);
 }
+
+.icon-stylez {
+    -webkit-mask-image: url(../svg/markup-line.svg);
+}
+
+.icon-rebuild-thumbs {
+    -webkit-mask-image: url(../svg/image-circle-ai-line.svg);
+}
+
+.icon-civitai-images {
+    -webkit-mask-image: url(../svg/image-ai-line.svg);
+}
+
+.icon-civitai-models {
+    -webkit-mask-image: url(../svg/planet-line.svg);
+}

@@ -1,0 +1,289 @@
+<div id="layout-civitai-explorer-group" class="flexbox col">
+    <div id="layout-civitai-explorer" class="layout no-padding">
+        <div class="layout-header">
+            <div class="flexbox padding">
+                <button title="civitai_images" id="civitai_nav_images" tabItemId="#civitai_images_tabitem" tabGroup="civitai_explorer_group" class="xtabs-tab" active="true">
+                    <div class="mask-icon icon-civitai-images"></div>
+                    <span>Images</span>
+                </button>    
+                <button title="civitai_models" id="civitai_nav_models" tabItemId="#civitai_models_tabitem" tabGroup="civitai_explorer_group" class="xtabs-tab">
+                    <div class="mask-icon icon-civitai-models"></div>
+                    <span>Models</span>
+                </button>    
+                
+                <button title="Checkpoints" id="checkpoints_nav" tabItemId="#checkpoints_tabitem" tabGroup="civitai_explorer_group" class="xtabs-tab">
+                    <div class="mask-icon icon-checkpoints"></div>
+                    <span>Checkpoints</span>
+                </button>  
+                <button title="Textual Inversion" id="textual_inversion_nav" tabItemId="#textual_inversion_tabitem" tabGroup="civitai_explorer_group" class="xtabs-tab">
+                    <div class="mask-icon icon-textual-inversion"></div>
+                    <span>Textual Inversion</span>
+                </button>  
+                <button title="LORA" id="lora_nav" tabItemId="#lora_tabitem" tabGroup="civitai_explorer_group" class="xtabs-tab">
+                    <div class="mask-icon icon-lora"></div>
+                    <span>LORA</span>
+                </button>
+                <button title="Hypernetworks" id="hypernetwork_nav" tabItemId="#hypernetwork_tabitem" tabGroup="civitai_explorer_group" class="xtabs-tab">
+                    <div class="mask-icon icon-hypernetworks"></div>
+                    <span>Hypernetworks</span>
+                </button>  
+            </div>
+        </div>
+
+        <div class="layout-content">
+            <div class="xtabs flexbox col">
+
+                <div id="civitai_images_tabitem" class="xtabs-item">
+                    <div id="layout-civitai-cards-images" class="layout">
+                        <div class="layout-header">
+                            <div class="flexbox">
+                            <select id="civit_nsfw_images">
+                                <option selected value="None">None</option>
+                                <option value="Soft">Soft</option>
+                                <option value="Mature">Mature</option>
+                                <option value="X">X</option>
+                            </select>
+                            <select id="civit_sort_images">
+                                <option selected value="Most Reactions">Most Reactions</option>
+                                <option value="Most Comments">Most Comments</option>
+                                <option value="Newest">Newest</option>                              
+                            </select>
+                            <select id="civit_period_images">
+                                <option selected value="AllTime">AllTime</option>
+                                <option value="Year">Year</option>
+                                <option value="Month">Month</option> 
+                                <option value="Week">Week</option>
+                                <option value="Day">Day</option>                   
+                            </select>
+                            <input id="civit_search_images" type="text" placeholder="Search User.." class="flex-width">                           
+                            <button id="civit_search_images_clear" class="ae-button shrink">
+                                <div class="mask-icon icon-cancel"></div>
+                            </button>
+                               
+                            </div>
+                            <!--
+                            <div data-selector="#civit_json" data-parent-selector="gradio-app" class="portal no-padding no-bg"></div>
+                            -->
+                        </div>
+                        <div class="layout-content">
+                            <div id="civitai_cardholder_images" class="ae-virtual-cardholder"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="civitai_models_tabitem" class="xtabs-item">
+                    <div id="layout-civitai-cards-models" class="layout">
+                        <div class="layout-header">
+                            <div class="flexbox">                      
+                            <select id="civit_nsfw_models">
+                                <option selected value="false">NSFW</option>
+                                <option value="true">Disabled</option>
+                            </select>
+                            <select id="civit_type_models">
+                                <option selected value="">All</option>
+                                <option value="Checkpoint">Checkpoint</option>
+                                <option value="LORA">LORA</option> 
+                                <option value="TextualInversion">TextualInversion</option>
+                                <option value="Hypernetwork">Hypernetwork</option> 
+                                <option value="AestheticGradient">AestheticGradient</option> 
+                                <option value="Controlnet">Controlnet</option>
+                                <option value="Poses">Poses</option>                           
+                            </select>
+                            <select id="civit_sort_models">
+                                <option selected value="Highest Rated">Highest Rated</option>
+                                <option value="Most Downloaded">Most Downloaded</option>
+                                <option value="Most Liked">Most Liked</option>
+                                <option value="Most Discussed">Most Discussed</option> 
+                                <option value="Most Collected">Most Collected</option> 
+                                <option value="Most Images">Most Images</option> 
+                                <option value="Newest">Newest</option>
+                                <option value="Oldest">Oldest</option>                           
+                            </select>
+                            <select id="civit_period_models">
+                                <option selected value="AllTime">AllTime</option>
+                                <option value="Year">Year</option>
+                                <option value="Month">Month</option> 
+                                <option value="Week">Week</option>
+                                <option value="Day">Day</option>                   
+                            </select>
+                            <input id="civit_search_models" type="text" placeholder="Search.." class="flex-width">
+                            <button id="civit_search_models_clear" class="ae-button shrink">
+                                <div class="mask-icon icon-cancel"></div>
+                            </button>
+                            </div>
+                        </div>
+                        <div class="layout-content">
+                            <div id="civitai_cardholder_models" class="ae-virtual-cardholder"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="checkpoints_tabitem" class="xtabs-item">
+                    <div id="layout-checkpoints-cards" class="layout">
+                        <div class="layout-header">
+                            <div class="flexbox"> 
+                            <input id="checkpoints_search" type="text" placeholder="Search..">
+                            <button id="checkpoints_clear" class="ae-button shrink">
+                                <div class="mask-icon icon-cancel"></div>
+                            </button>
+                            <select id="checkpoints_search_in">
+                                <option selected value="filename">Path</option>
+                                <option value="hash">Hash</option>
+                                <option value="description">Description</option>
+                                <option value="notes">Notes</option>
+                                <option value="tags">Tags</option>
+                            </select>
+                            <select id="checkpoints_sort">
+                                <option selected value="id">Default Sort</option>
+                                <option value="date_created">Date Created</option>
+                                <option value="date_modified">Date Modified</option>
+                                <option value="name">Name</option>
+                            </select>
+                            <button id="checkpoints_order" toggle="true" class="ae-button shrink reverse-order">
+                                <div class="mask-icon icon-sort"></div>
+                            </button>
+                            <button id="checkpoints_refresh" class="ae-button shrink reverse-order">
+                                <div class="mask-icon refresh"></div>
+                            </button>
+                            <button title="Rebuild thumbnails" id="checkpoints_rebuild" class="ae-button shrink reverse-order">
+                                <div class="mask-icon icon-rebuild-thumbs"></div>
+                            </button>
+                            </div>
+                        </div>
+                        <div class="layout-content">
+                            <div id="checkpoints_cardholder" class="ae-virtual-cardholder"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="textual_inversion_tabitem" class="xtabs-item">
+                    <div id="layout-textual_inversion-cards" class="layout">
+                        <div class="layout-header">
+                            <div class="flexbox"> 
+                            <input id="textual_inversion_search" type="text" placeholder="Search..">
+                            <button id="textual_inversion_clear" class="ae-button shrink">
+                                <div class="mask-icon icon-cancel"></div>
+                            </button>
+                            <select id="textual_inversion_search_in">
+                                <option selected value="filename">Path</option>
+                                <option value="hash">Hash</option>
+                                <option value="description">Description</option>
+                                <option value="notes">Notes</option>
+                                <option value="tags">Tags</option>
+                            </select>
+                            <select id="textual_inversion_sort">
+                                <option selected value="id">Default Sort</option>
+                                <option value="date_created">Date Created</option>
+                                <option value="date_modified">Date Modified</option>
+                                <option value="name">Name</option>
+                            </select>
+                            <button id="textual_inversion_order" toggle="true" class="ae-button shrink reverse-order">
+                                <div class="mask-icon icon-sort"></div>
+                            </button>
+                            <button id="textual_inversion_refresh" class="ae-button shrink reverse-order">
+                                <div class="mask-icon refresh"></div>
+                            </button>
+                            <button title="Rebuild thumbnails" id="textual_inversion_rebuild" class="ae-button shrink reverse-order">
+                                <div class="mask-icon icon-rebuild-thumbs"></div>
+                            </button>
+                            </div>
+                        </div>
+                        <div class="layout-content">
+                            <div id="textual_inversion_cardholder" class="ae-virtual-cardholder"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="lora_tabitem" class="xtabs-item">
+                    <div id="layout-lora-cards" class="layout">
+                        <div class="layout-header">
+                            <div class="flexbox"> 
+                            <input id="lora_search" type="text" placeholder="Search..">
+                            <button id="lora_clear" class="ae-button shrink">
+                                <div class="mask-icon icon-cancel"></div>
+                            </button>
+                            <select id="lora_search_in">
+                                <option selected value="filename">Path</option>
+                                <option value="hash">Hash</option>
+                                <option value="description">Description</option>
+                                <option value="notes">Notes</option>
+                                <option value="tags">Tags</option>
+                            </select>
+                            <select id="lora_sd_version">
+                                <option selected value="">All</option>
+                                <option value="SD1">SD1</option>
+                                <option value="SD2">SD2</option>
+                                <option value="SDXL">SDXL</option>
+                                <option value="Unknown">Unknown</option>
+                            </select>
+                            <select id="lora_sort">
+                                <option selected value="id">Default Sort</option>
+                                <option value="date_created">Date Created</option>
+                                <option value="date_modified">Date Modified</option>
+                                <option value="name">Name</option>
+                            </select>
+                            <button id="lora_order" toggle="true" class="ae-button shrink reverse-order">
+                                <div class="mask-icon icon-sort"></div>
+                            </button>
+                            <button id="lora_refresh" class="ae-button shrink reverse-order">
+                                <div class="mask-icon refresh"></div>
+                            </button>
+                            <button title="Rebuild thumbnails" id="lora_rebuild" class="ae-button shrink reverse-order">
+                                <div class="mask-icon icon-rebuild-thumbs"></div>
+                            </button>
+                        
+                            </div>
+                        </div>
+                        <div class="layout-content">
+                            <div id="lora_cardholder" class="ae-virtual-cardholder"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="hypernetwork_tabitem" class="xtabs-item">
+                    <div id="layout-hypernetwork-cards" class="layout">
+                        <div class="layout-header">
+                            <div class="flexbox"> 
+                            <input id="hypernetwork_search" type="text" placeholder="Search..">
+                            <button id="hypernetwork_clear" class="ae-button shrink">
+                                <div class="mask-icon icon-cancel"></div>
+                            </button>
+                            <select id="hypernetwork_search_in">
+                                <option selected value="filename">Path</option>
+                                <option value="hash">Hash</option>
+                                <option value="description">Description</option>
+                                <option value="notes">Notes</option>
+                                <option value="tags">Tags</option>
+                            </select>
+                            <select id="hypernetwork_sort">
+                                <option selected value="id">Default Sort</option>
+                                <option value="date_created">Date Created</option>
+                                <option value="date_modified">Date Modified</option>
+                                <option value="name">Name</option>
+                            </select>
+                            <button id="hypernetwork_order" toggle="true" class="ae-button shrink reverse-order">
+                                <div class="mask-icon icon-sort"></div>
+                            </button>
+                            <button id="hypernetwork_refresh" class="ae-button shrink reverse-order">
+                                <div class="mask-icon refresh"></div>
+                            </button>
+                            <button title="Rebuild thumbnails" id="hypernetwork_rebuild" class="ae-button shrink reverse-order">
+                                <div class="mask-icon icon-rebuild-thumbs"></div>
+                            </button>
+                            </div>
+                        </div>
+                        <div class="layout-content">
+                            <div id="hypernetwork_cardholder" class="ae-virtual-cardholder"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="layout-footer">
+            <div class="flexbox padding">
+            </div>
+        </div>
+
+    </div>
+</div>

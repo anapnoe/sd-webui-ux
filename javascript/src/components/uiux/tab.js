@@ -51,6 +51,7 @@ export async function initTabComponents(contentDiv) {
 
                 el.classList.add('active');
                 callToAction(el, tids, pid);
+
             }
 
         });
@@ -73,6 +74,7 @@ export async function initTabComponents(contentDiv) {
             tabItem.classList.remove('fade-out');
             tabItem.classList.add('fade-in');
         });
+
         callToAction(el, tids, pid);
         // console.log('tab', tids, el);
     }));

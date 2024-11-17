@@ -126,3 +126,42 @@ export function setupExtraNetworksAddToPromptObserver() {
     //console.log(matchingCards);
 
 }
+
+export function setupInputObservers(paramsMapping, apiParams, vScroll, modifyParamsCallback = null) {
+    Object.keys(paramsMapping).forEach((inputId) => {
+        const inputElement = document.querySelector(`${inputId}`);
+        if (inputElement) {
+            const paramKey = paramsMapping[inputId];
+            const eventType = (inputElement.tagName === 'SELECT' && inputElement.multiple) ? 'change' :
+                (inputElement.tagName === 'SELECT' ||
+                (inputElement.type === 'checkbox' || inputElement.type === 'radio') ||
+                (inputElement.type !== 'range' && inputElement.type !== 'color' && inputElement.type !== 'text')) ? 'change' : 'input';
+
+            const updateParams = () => {
+                let paramValue;
+                if (inputElement.tagName === 'SELECT' && inputElement.multiple) {
+                    paramValue = Array.from(inputElement.selectedOptions).map(option => option.value);
+                    apiParams[paramKey] = paramValue;
+                } else if (inputElement.type === 'checkbox' || inputElement.type === 'radio') {
+                    paramValue = inputElement.checked;
+                } else {
+                    paramValue = inputElement.value;
+                }
+                // Apply the callback if provided
+                const modifiedParams = modifyParamsCallback ? modifyParamsCallback({[paramKey]: paramValue}) : {[paramKey]: paramValue};
+                vScroll.updateParamsAndFetch(modifiedParams, 1000);
+            };
+
+            inputElement.addEventListener(eventType, updateParams);
+            // Initialize apiParams with the current values of the inputs
+            //updateParams();
+        } else {
+            console.warn(`Input element with id ${inputId} not found.`);
+        }
+    });
+    return apiParams;
+}
+
+
+
+

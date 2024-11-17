@@ -12,6 +12,8 @@ import {setupGenerateObservers, setupCheckpointChangeObserver} from './utils/obs
 import {createTabsForExtensions, injectStylesToIframe, injectStylesAfterUIUX, replaceStylesheet} from './components/extensions.js';
 import {setupThemeEditor} from './components/theme_editor.js';
 import {UIUX} from './utils/module.js';
+import {setupCivitaiExplorer} from './components/civitai_explorer.js';
+import {setupExtraNetworks} from './components/extra_networks.js';
 
 function onUiUxReady(content_div) {
 
@@ -33,7 +35,7 @@ function onUiUxReady(content_div) {
     uiuxOptionSettings();
     showContributors();
     switchMobile();
-    setupCheckpointChangeObserver();
+    //setupCheckpointChangeObserver();
 
     document.querySelectorAll("#txt2img_styles_edit_button, #img2img_styles_edit_button").forEach((elm) => {
         elm.addEventListener("click", function(e) {
@@ -54,6 +56,7 @@ function onUiUxReady(content_div) {
             setFocusPrompt(closestId);
         });
     });
+
     /*
     document.querySelectorAll("#txt2img_nav, #img2img_nav").forEach(button => {
         button.addEventListener("click", (e) => {
@@ -77,6 +80,17 @@ function onUiUxReady(content_div) {
     if (window.opts.uiux_enable_theme_editor) {
         setupThemeEditor();
     }
+
+    if (window.opts.uiux_enable_civitai_explorer) {
+        const caiexp = document.querySelector("#civitai_explorer_nav");
+        caiexp.classList.remove("hidden");
+        //caiexp.addEventListener('click', () => {
+        setupCivitaiExplorer();
+        //}, {once: true});
+    }
+
+
+    setupExtraNetworks();
 
     setTimeout(() => {
         document.querySelector("#btn_checkpoints")?.click();

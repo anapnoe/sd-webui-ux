@@ -1,9 +1,15 @@
 import {getAnapnoeApp} from '../constants.js';
 
 export function updateInput(inputElement) {
-    // Implementation of how to update the input
     if (inputElement) {
-        const event = new Event('input', {bubbles: true});
+        const event = new Event('input', {bubbles: true, cancelable: true});
+        inputElement.dispatchEvent(event);
+    }
+}
+
+export function updateChange(inputElement) {
+    if (inputElement) {
+        const event = new Event('change', {bubbles: true, cancelable: true});
         inputElement.dispatchEvent(event);
     }
 }

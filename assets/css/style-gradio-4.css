@@ -3968,3 +3968,10 @@ select,
 .about-image-container:hover .about-image-fade:last-child {
     opacity: 1;
 }
+
+.flex-width {
+    width: 0%;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: min(calc(var(--ae-uiux_min_wrap_size)* 1px), 100%);
+}

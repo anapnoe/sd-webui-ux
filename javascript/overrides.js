@@ -85,10 +85,10 @@ window.onAfterUiUpdate(() => {
     let active_main_tab = gradioApp().getElementById('tab_txt2img');
 
     window.get_uiCurrentTabContent = function() {
-        // console.log(active_main_tab);
-        if (active_main_tab.id === 'tab_txt2img') {
+        //console.log(active_main_tab);
+        if (active_main_tab?.id === 'tab_txt2img') {
             return document.getElementById('txt2img_tabitem');
-        } if (active_main_tab.id === 'tab_img2img') {
+        } if (active_main_tab?.id === 'tab_img2img') {
             return document.getElementById('img2img_tabitem');
         }
     };

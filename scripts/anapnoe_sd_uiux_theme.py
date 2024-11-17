@@ -48,7 +48,7 @@ def check_and_use_theme_v2():
     ui_theme_v2_path = os.path.join(scripts_folder, 'ui_theme_v2.py')
     if os.path.exists(ui_theme_v2_path) or shared.opts.uiux_enable_theme_editor is False:
         return  # Do not execute on_ui_tabs if ui_theme_v2.py is present
-    # If ui_theme_v2.py is not present, call the on_ui_tabs function to create UI
+    
     return on_ui_tabs()
 
 def on_ui_tabs():

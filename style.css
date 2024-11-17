@@ -2411,7 +2411,8 @@ td.gridjs-td {
 
 .additional,
 .additional ul {
-    display: none !important;
+    display: none;
+    /* !important;*/
 }
 
 .additional,
@@ -3824,4 +3825,45 @@ select,
 
 .about-image-container:hover .about-image-fade:last-child {
     opacity: 1;
+}
+
+.flex-width {
+    width: 0%;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: min(calc(var(--ae-uiux_min_wrap_size)* 1px), 100%);
+}
+
+.no-top-padding {
+    padding-top: 0;
+}
+
+.no-bottom-padding {
+    padding-bottom: 0;
+}
+
+
+table.non-editable-table {
+    display: block;
+    text-align: left;
+}
+
+table.non-editable-table td {
+    line-break: anywhere;
+    text-wrap: wrap;
+    min-width: 100px;
+    vertical-align: top;
+}
+
+.non-editable-div img.thumbnail-image {
+    max-height: 180px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    min-width: 120px;
+    display: block;
+}
+
+.non-editable-info {
+    justify-content: space-between !important;
 }
