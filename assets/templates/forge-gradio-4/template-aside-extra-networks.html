@@ -54,6 +54,7 @@
                 </div>
                 <span>Spaces</span>
             </button>
+            <div class="flexbox col spacer-v"></div>
             <button title="Extensions" tabItemId="#layout-extensions" tabGroup="extra_networks" id="btn_extensions" class="xtabs-tab">
                 <div class="mask-icon icon-extensions"></div>
                 <span>Extensions</span>
@@ -67,49 +68,58 @@
                 <span>Console Log</span>
             </button>
         </div>
-        <div id="sidebar_extra_networks" class="flexbox col shrink">
-            <button title="Checkpoints" tabItemId="#layout_txt2img_checkpoints" id="btn_checkpoints" tabGroup="extra_networks" data-click="#tab_txt2img" active="true" class="xtabs-tab">
+        <div id="sidebar_extra_networks_db" class="flexbox col shrink">
+            <button title="Checkpoints" id="checkpoints_nav" tabItemId="#layout_db_checkpoints" tabGroup="extra_networks" class="xtabs-tab" active="true">
                 <div class="mask-icon icon-checkpoints"></div>
                 <span>Checkpoints</span>
             </button>
-            <button title="Textual Inversion" tabItemId="#layout_txt2img_textual_inversion" id="btn_textual_inversion" tabGroup="extra_networks" data-click="#tab_txt2img" class="xtabs-tab">
+            <button title="Textual Inversion" id="textual_inversion_nav" tabItemId="#layout_db_textual_inversion" tabGroup="extra_networks" class="xtabs-tab">
                 <div class="mask-icon icon-textual-inversion"></div>
                 <span>Textual Inversion</span>
             </button>
-            <!--
-            <button title="Hypernetworks" tabItemId="#layout_txt2img_hypernetworks" id="btn_hypernetworks" tabGroup="extra_networks" data-click="#tab_txt2img" class="xtabs-tab">
+            <button title="LORA" id="lora_nav" tabItemId="#layout_db_lora" tabGroup="extra_networks" class="xtabs-tab">
+                <div class="mask-icon icon-lora"></div>
+                <span>LORA</span>
+            </button>
+            <button title="Hypernetworks" id="hypernetwork_nav" tabItemId="#layout_db_hypernetworks" tabGroup="extra_networks" class="xtabs-tab">
                 <div class="mask-icon icon-hypernetworks"></div>
                 <span>Hypernetworks</span>
             </button>
-            -->
-            <button title="Lora" tabItemId="#layout_txt2img_lora" id="btn_lora" tabGroup="extra_networks" data-click="#tab_txt2img" class="xtabs-tab">
-                <div class="mask-icon icon-lora"></div>
-                <span>Lora</span>
-            </button>
             <div class="flexbox col spacer-v"></div>
-            <button title="CivitAI" data-func="setupCivitaiBrowser" tabItemId="#layout-civitai-explorer" tabGroup="extra_networks" id="btn_civitai_explorer" class="xtabs-tab hidden">
-                <div class="mask-icon icon-stylez"></div>
-                <span>CivitAI</span>
-            </button>
+            <div id="civitai_explorer_nav" class="flexbox col shrink hidden">
+                <button title="Civitai Images" id="civitai_nav_images" tabItemId="#civitai_images_tabitem" tabGroup="extra_networks" class="xtabs-tab">
+                    <div class="mask-icon icon-civitai-images"></div>
+                    <span>Images</span>
+                </button>
+                <button title="Civitai Models" id="civitai_nav_models" tabItemId="#civitai_models_tabitem" tabGroup="extra_networks" class="xtabs-tab">
+                    <div class="mask-icon icon-civitai-models"></div>
+                    <span>Models</span>
+                </button>
+                <div class="flexbox col spacer-v"></div>
+            </div>
             <!--
-            <button title="Stylez" tabItemId="#layout_stylez" id="btn_stylez" tabGroup="extra_networks" data-click="#tab_txt2img" class="xtabs-tab">
-                <div class="mask-icon icon-lora"></div>
+            <button title="Stylez" tabItemId="#layout-stylez" tabGroup="extra_networks" id="btn_stylez" class="xtabs-tab hidden">
+                <div class="mask-icon icon-stylez"></div>
                 <span>Stylez</span>
             </button>
             -->
         </div>
     </div>
     <div class="accordion-container">
-        <div template="template-extra-networks" key="txt2img_checkpoints" id="en_txt2img_checkpoints" class="template"></div>
-        <div template="template-extra-networks" key="txt2img_textual_inversion" id="en_txt2img_textual_inversion" class="template"></div>
-        <!--<div template="template-extra-networks" key="txt2img_hypernetworks" id="en_txt2img_hypernetworks" class="template"></div>-->
-        <div template="template-extra-networks" key="txt2img_lora" id="en_txt2img_lora" class="template"></div>
         <div id="template-pnginfo" class="template"></div>
         <div id="template-quicksettings" class="template"></div>
         <div id="template-extensions" class="template"></div>
         <div id="template-settings" class="template"></div>
         <div id="template-model-merger" class="template"></div>
         <div id="template-console-log" class="template"></div>
+        <!--
+        <div id="template-stylez" class="template"></div>
+    -->
+        <div id="template-civitai-explorer" class="template"></div>
+        <div template="template-extra-networks-db" key="checkpoints" id="exn_checkpoints" class="template"></div>
+        <div template="template-extra-networks-db" key="textual_inversion" id="exn_textual_inversion" class="template"></div>
+        <div template="template-extra-networks-db" key="hypernetworks" id="exn_hypernetworks" class="template"></div>
+        <div template="template-extra-networks-db" key="lora" id="exn_lora" class="template"></div>
         <div id="layout-theme" class="flexbox col padding">
             <div show-button="#btn_theme_editor" data-selector="[id^='tab_ui_theme'] > div" data-parent-selector="gradio-app" class="portal no-bg"></div>
         </div>
@@ -117,40 +127,5 @@
 			<div data-selector="#tab_space > div" data-parent-selector="gradio-app" class="portal no-bg">
 			</div>
         </div>
-        <div id="template-civitai-explorer" class="template"></div>
-        <!--
-        <div id="layout-extra" class="layout no-padding">
-            <div class="layout-content xtabs">
-                <div template="template-extra-networks" key="txt2img_checkpoints" id="en_txt2img_checkpoints" class="template"></div>
-                <div template="template-extra-networks" key="txt2img_textual_inversion" id="en_txt2img_textual_inversion" class="template"></div>
-                <div template="template-extra-networks" key="txt2img_hypernetworks" id="en_txt2img_hypernetworks" class="template"></div>
-                <div template="template-extra-networks" key="txt2img_lora" id="en_txt2img_lora" class="template"></div>
-                <div id="template-pnginfo" class="template"></div>
-                <div id="template-quicksettings" class="template"></div>
-                <div id="template-extensions" class="template"></div>
-                <div id="template-settings" class="template"></div>
-                <div id="template-model-merger" class="template"></div>
-                <div id="template-console-log" class="template"></div>
-                <div id="layout-theme" class="flexbox col padding">
-                    <div show-button="#btn_theme_editor" data-selector="[id^='tab_ui_theme'] > div" data-parent-selector="gradio-app" class="portal no-bg"></div>
-                </div>
-            </div>
-            <div class="layout-footer">
-                <div class="flexbox padding">
-                    <div data-selector="#setting_uiux_exnet_aspect_ratio_x" data-parent-selector="gradio-app" class="portal"></div>
-                    <div data-selector="#setting_uiux_exnet_aspect_ratio_y" data-parent-selector="gradio-app" class="portal"></div>
-                    <div data-selector="#uiux_exnet_fit_size" data-parent-selector="gradio-app" class="portal"></div>
-                </div>
-            </div>
-        -->
     </div>
-    <!--
-        <div id="template-stylez" class="template"></div>
-        -->
-    <!--
-        <div id="layout-stylez" class="flexbox col padding">
-            <div show-button="#btn_stylez" data-selector="#Stylez" data-parent-selector="gradio-app" class="portal no-bg"></div>
-        </div>
-        -->
-</div>
 </div>
