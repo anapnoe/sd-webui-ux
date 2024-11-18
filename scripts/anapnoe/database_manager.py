@@ -35,12 +35,10 @@ class DatabaseManager:
         return sqlite3.connect(self.db_name, check_same_thread=False)
     
     def get_table_columns(self, table_name):
-
-        with self.connect() as conn:
-            cursor = conn.cursor()
-            cursor.execute("PRAGMA table_info(?)", (table_name,))
-            columns_info = cursor.fetchall()
-
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute(f"PRAGMA table_info({table_name});")
+        columns_info = cursor.fetchall()
         column_names = [column[1] for column in columns_info]
         return column_names
 
