@@ -108,9 +108,6 @@ DynamicForm.prototype.createElement = function(type, field, value, attributes = 
     return element;
 };
 
-
-
-
 DynamicForm.prototype.addElementToForm = function(field, config) {
     const fieldContainer = document.createElement('div');
     fieldContainer.classList.add('panel', 'col', 'padding');
@@ -126,10 +123,11 @@ DynamicForm.prototype.addElementToForm = function(field, config) {
     this.form.appendChild(fieldContainer);
 };
 
-
 DynamicForm.prototype.createForm = function(fields) {
     Object.entries(fields).forEach(([field, config]) => {
-        this.addElementToForm(field, config);
+        if (this.itemData.hasOwnProperty(field)) {
+            this.addElementToForm(field, config);
+        }
     });
 
     const savePanel = document.createElement('div');
@@ -144,7 +142,6 @@ DynamicForm.prototype.createForm = function(fields) {
 
     return this.form;
 };
-
 
 DynamicForm.prototype.createValueElement = function(type, field, value) {
     const elementConfig = {

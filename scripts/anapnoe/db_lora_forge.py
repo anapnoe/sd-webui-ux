@@ -50,8 +50,10 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
             "filesize": (item["filesize"], "INTEGER"),
             "date_created": (item["date_created"], "INTEGER"),
             "date_modified": (item["date_modified"], "INTEGER"),
-            "prompt": (item.get("prompt", ""), "TEXT"),
-            "negative_prompt": (item.get("negative_prompt", ""), "TEXT"),
+            "prompt": (item["prompt"], "TEXT"),
+            "negative_prompt": (item["negative_prompt"], "TEXT"),
+            "activation_text": (item["activation_text"], "TEXT"),
+            "preferred_weight": (item["preferred_weight"], "REAL"),
             "allow_update": (False, "BOOLEAN")
         }
 
@@ -67,6 +69,7 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
         mtime, ctime = self.lister.mctime(lora_on_disk.filename)
         hash = lora_on_disk.hash if lora_on_disk.hash else None
         stats = os.stat(lora_on_disk.filename)
+        default_multiplier = "opts.extra_networks_default_multiplier"
 
         item = { 
             "name": name, 
@@ -82,21 +85,17 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
             "type": "LORA", 
             "filesize": stats.st_size,
             "date_created": int(mtime), 
-            "date_modified": int(ctime) 
+            "date_modified": int(ctime),
+            "prompt" : f'<lora:{alias}:{default_multiplier}>',
+            "allow_update": (False, "BOOLEAN")
         }
 
         self.read_user_metadata(item)
-        activation_text = item["user_metadata"].get("activation text")
-        preferred_weight = item["user_metadata"].get("preferred weight", 0.0)
-        default_multiplier = "opts.extra_networks_default_multiplier"
+        
+        item["negative_prompt"] = item["user_metadata"].get("negative text", "")
+        item["activation_text"] = item["user_metadata"].get("activation text", "")
+        item["preferred_weight"] = item["user_metadata"].get("preferred weight", 0.0)
 
-        item["prompt"] = f'<lora:{alias}:{preferred_weight if preferred_weight else default_multiplier}>'
-        if activation_text:
-            item["prompt"] += f' {activation_text}'
-
-        negative_prompt = item["user_metadata"].get("negative text", "")
-        item["negative_prompt"] = f'({negative_prompt}:1)' if negative_prompt else ""
-        #   filter displayed loras by UI setting
         sd_version = item["user_metadata"].get("sd version")
         if sd_version in network.SdVersion.__members__:
             item["sd_version"] = sd_version
@@ -121,7 +120,7 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
         return [shared.cmd_opts.lora_dir]
 
     def create_user_metadata_editor(self, ui, tabname):
-        return LoraUserMetadataEditor(ui, tabname, self)
+        return ui_edit_user_metadata.LoraUserMetadataEditor(ui, tabname, self)
     
     def get_internal_metadata(self, name):
         lora_on_disk = networks.available_networks.get(name)

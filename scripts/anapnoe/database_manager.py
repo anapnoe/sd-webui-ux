@@ -49,6 +49,11 @@ class DatabaseManager:
         conn.commit()
         conn.close()
 
+    def get_table_columns(self, table_name):
+        query = f"PRAGMA table_info({table_name});"
+        result = self.execute_query(query)
+        return [row['name'] for row in result]
+
     def default_value_for_key(self, key):
         default_values = {
             'description': '',
@@ -447,25 +452,37 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         sd_version = payload.get('sd_version')
         local_preview = payload.get('local_preview')
         name = payload.get('name')
+        activation_text = payload.get('activation_text')
+        preferred_weight = payload.get('preferred_weight')
+        negative_prompt = payload.get('negative_prompt')
 
         if not table_name:
             raise HTTPException(status_code=422, detail="DB table_name is required")
 
         db_manager = DatabaseManager.get_instance()
-        item = {       
+        table_columns = db_manager.get_table_columns(table_name)
+
+        item = {
             'description': description,
             'notes': notes,
             'tags': tags,
             'sd_version': sd_version,
             'local_preview': local_preview,
-            'name':name
+            'name': name
         }
+        optional_fields = {
+            'activation_text': activation_text,
+            'preferred_weight': preferred_weight,
+            'negative_prompt': negative_prompt
+        }
+        item.update({key: value for key, value in optional_fields.items() if key in table_columns})
 
         try:
             db_manager.update_item(table_name, item)
             return {"message": "Item updated successfully"}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
 
     @app.post("/sd_webui_ux/generate-thumbnails")
     async def generate_thumbnails(payload: dict = Body(...)):

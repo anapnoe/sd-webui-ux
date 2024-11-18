@@ -12,8 +12,8 @@ import {setupGenerateObservers, setupCheckpointChangeObserver} from './utils/obs
 import {createTabsForExtensions, injectStylesToIframe, injectStylesAfterUIUX, replaceStylesheet} from './components/extensions.js';
 import {setupThemeEditor} from './components/theme_editor.js';
 import {UIUX} from './utils/module.js';
-import {setupCivitaiExplorer} from './components/civitai_explorer.js';
-import {setupExtraNetworks} from './components/extra_networks.js';
+import {setupCivitaiExplorerImages, setupCivitaiExplorerModels} from './components/civitai_explorer.js';
+import {setupExtraNetworksCheckpoints, setupExtraNetworksTextualinversion, setupExtraNetworksLora, setupExtraNetworksHypernetworks} from './components/extra_networks.js';
 
 function onUiUxReady(content_div) {
 
@@ -24,13 +24,16 @@ function onUiUxReady(content_div) {
         logger_screen.remove();
     }
 
+    /*
     content_div.querySelectorAll(".extra-network-cards, .extra-network-tree").forEach((el) => {
         optimizeExtraNetworksCards(el);
     });
+    */
 
     console.log("Finishing optimizations for Extra Networks");
 
-    optimizeExtraNetworksSearchSort();
+    //optimizeExtraNetworksSearchSort();
+
     setupGenerateObservers();
     uiuxOptionSettings();
     showContributors();
@@ -84,17 +87,39 @@ function onUiUxReady(content_div) {
     if (window.opts.uiux_enable_civitai_explorer) {
         const caiexp = document.querySelector("#civitai_explorer_nav");
         caiexp.classList.remove("hidden");
-        //caiexp.addEventListener('click', () => {
-        setupCivitaiExplorer();
-        //}, {once: true});
+        const civitai_nav_images = document.querySelector("#civitai_nav_images");
+        const civitai_nav_models = document.querySelector("#civitai_nav_models");
+        civitai_nav_images.addEventListener('click', () => {
+            setupCivitaiExplorerImages();
+        }, {once: true});
+        civitai_nav_models.addEventListener('click', () => {
+            setupCivitaiExplorerModels();
+        }, {once: true});
     }
 
+    //const checkpoints_nav = document.querySelector("#checkpoints_nav");
+    const textual_inversion_nav = document.querySelector("#textual_inversion_nav");
+    const lora_nav = document.querySelector("#lora_nav");
+    const hypernetwork_nav = document.querySelector("#hypernetwork_nav");
 
-    setupExtraNetworks();
+    //checkpoints_nav.addEventListener('click', () => {
+    //setupExtraNetworksCheckpoints();
+    //}, {once: true});
+    textual_inversion_nav.addEventListener('click', () => {
+        setupExtraNetworksTextualinversion();
+    }, {once: true});
+    lora_nav.addEventListener('click', () => {
+        setupExtraNetworksLora();
+    }, {once: true});
+
+    hypernetwork_nav.addEventListener('click', () => {
+        setupExtraNetworksHypernetworks();
+    }, {once: true});
 
     setTimeout(() => {
-        document.querySelector("#btn_checkpoints")?.click();
+        setupExtraNetworksCheckpoints();
     }, 500);
+
 
     //const totalListeners = countEventListeners(document.body);
     //console.warn(`Total event listeners: ${totalListeners}`);

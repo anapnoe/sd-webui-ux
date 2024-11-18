@@ -184,10 +184,20 @@ async function removeRedundantExtraNetworks() {
         gradioApp.querySelector("#img2img_hypernetworks_cards_html")?.remove();
         gradioApp.querySelector("#img2img_lora_cards_html")?.remove();
 
+        gradioApp.querySelector("#txt2img_textual_inversion_cards_html")?.remove();
+        gradioApp.querySelector("#txt2img_checkpoints_cards_html")?.remove();
+        gradioApp.querySelector("#txt2img_hypernetworks_cards_html")?.remove();
+        gradioApp.querySelector("#txt2img_lora_cards_html")?.remove();
+
         console.log("Remove element #img2img_textual_inversion_cards_html");
         console.log("Remove element #img2img_checkpoints_cards_html");
         console.log("Remove element #img2img_hypernetworks_cards_html");
         console.log("Remove element #img2img_lora_cards_html");
+
+        console.log("Remove element #txt2img_textual_inversion_cards_html");
+        console.log("Remove element #txt2img_checkpoints_cards_html");
+        console.log("Remove element #txt2img_hypernetworks_cards_html");
+        console.log("Remove element #txt2img_lora_cards_html");
     }
 }
 

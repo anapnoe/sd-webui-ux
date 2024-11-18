@@ -39,6 +39,22 @@ export async function setupExtraNetworks() {
     setupExtraNetwork('hypernetworks', "hypernetwork", "hypernetworks/");
 }
 
+export async function setupExtraNetworksCheckpoints() {
+    setupExtraNetwork('checkpoints', "checkpoint", "stable-diffusion/");
+}
+
+export async function setupExtraNetworksTextualinversion() {
+    setupExtraNetwork('textual_inversion', "textualinversion", "embeddings/");
+}
+
+export async function setupExtraNetworksLora() {
+    setupExtraNetwork('lora', "lora", "lora/");
+}
+
+export async function setupExtraNetworksHypernetworks() {
+    setupExtraNetwork('hypernetworks', "hypernetwork", "hypernetworks/");
+}
+
 function extraNetworksCopyPath(path) {
     navigator.clipboard.writeText(path);
     console.log(path);
@@ -233,6 +249,9 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         const fields = {
             local_preview: {type: 'input'},
             sd_version: {type: 'select', options: ['SD1', 'SD2', 'SD3', 'SDXL', 'PONY', 'FLUX', 'Unknown']},
+            preferred_weight: {type: 'slider'},
+            activation_text: {type: 'textarea'},
+            negative_prompt: {type: 'textarea'},
             description: {type: 'textarea'},
             notes: {type: 'textarea'},
             tags: {type: 'textarea'}
@@ -287,7 +306,8 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
     function applyExtraNetworkPrompts(target, itemData, index) {
         const prompt_focused = window.UIUX.FOCUS_PROMPT;
-        const prompt = itemData.prompt?.replace("opts.extra_networks_default_multiplier", opts.extra_networks_default_multiplier) || "";
+        let prompt = itemData.prompt?.replace("opts.extra_networks_default_multiplier", itemData.preferred_weight || opts.extra_networks_default_multiplier) || "";
+        prompt += itemData.activation_text || "";
         const neg_prompt = itemData.negative_prompt || "";
 
         if (target.classList.contains("copy-path")) {
@@ -295,9 +315,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         } else if (target.classList.contains("show-meta")) {
             requestGetMetaData(itemData.type, itemData.name, vScroll, container);
         } else if (target.classList.contains("edit-meta")) {
-            //createUserMetadataForm(table_name, itemData, vScroll, container, apiParams);
             createUserMetaForm(itemData, index);
-
         } else if (itemData.type === "Checkpoint") {
             window.selectCheckpoint(itemData.name);
         } else if (itemData.type === "TextualInversion") {
