@@ -33,6 +33,14 @@ class DatabaseManager:
 
     def connect(self):
         return sqlite3.connect(self.db_name, check_same_thread=False)
+    
+    def get_table_columns(self, table_name):
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute(f"PRAGMA table_info({table_name});")
+        columns_info = cursor.fetchall()
+        column_names = [column[1] for column in columns_info]
+        return column_names
 
     def create_table(self, table_name, columns):
         conn = self.connect()
@@ -48,11 +56,6 @@ class DatabaseManager:
 
         conn.commit()
         conn.close()
-
-    def get_table_columns(self, table_name):
-        query = f"PRAGMA table_info({table_name});"
-        result = self.execute_query(query)
-        return [row['name'] for row in result]
 
     def default_value_for_key(self, key):
         default_values = {
