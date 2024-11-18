@@ -8,11 +8,20 @@ from modules import script_callbacks, shared
 from fastapi import FastAPI, HTTPException, Query, Body
 from typing import Optional, List, Dict, Any
 
+import launch
+commit = launch.commit_hash()
+tag = launch.git_tag()
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from anapnoe.db_lora import ExtraNetworksPageLora 
+if tag.startswith('f2.0.'): 
+    from anapnoe.db_textual_inversion_forge import ExtraNetworksPageTextualInversion
+    from anapnoe.db_lora_forge import ExtraNetworksPageLora 
+else: 
+    from anapnoe.db_textual_inversion import ExtraNetworksPageTextualInversion
+    from anapnoe.db_lora import ExtraNetworksPageLora 
+
 from anapnoe.db_checkpoints import ExtraNetworksPageCheckpoints
-from anapnoe.db_textual_inversion import ExtraNetworksPageTextualInversion
 from anapnoe.db_hypernets import ExtraNetworksPageHypernetworks
 from anapnoe.database_manager import DatabaseManager, api_uiux_db
 
@@ -23,7 +32,8 @@ webui_dir = Path(basedir).parents[1]
 scripts_folder = os.path.join(basedir, "scripts")
 data_folder = os.path.join(basedir, "data")
 
-db_manager = DatabaseManager('sd_models.db')
+DB_FILE = 'sd_models.db'
+db_manager = DatabaseManager(DB_FILE)
 DatabaseManager.set_instance(db_manager)
 
 # Initialize the page instances once
@@ -60,7 +70,9 @@ def check_and_use_db_extra_networks():
     #    return
     return on_ui_tabs()
 
-#extra_networks_init_refresh_db()
+
+if not os.path.exists(DB_FILE): 
+    extra_networks_init_refresh_db()
 
 def on_ui_tabs():
     with gr.Blocks(analytics_enabled=False) as anapnoe_sd_uiux_db_extra_networks:

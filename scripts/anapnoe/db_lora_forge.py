@@ -14,7 +14,7 @@ def import_module_from_path(module_name, paths):
     raise FileNotFoundError(f"Module file not found in specified paths: {paths}")
 
 
-paths = ["extensions-builtin/LORA"]
+paths = ["extensions-builtin/sd_forge_lora"]
 
 try:
     network = import_module_from_path("network", paths)
@@ -23,13 +23,15 @@ try:
 except FileNotFoundError as e:
     print(e)
 
+
 class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
     def __init__(self):
         super().__init__('Lora')
+        self.allow_negative_prompt = True
 
     def refresh(self):
         networks.list_available_networks()
-
+    
     @staticmethod
     def add_types_to_item(item):
         return {
@@ -59,9 +61,10 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
             return
 
         path, ext = os.path.splitext(lora_on_disk.filename)
-        mtime, ctime = self.lister.mctime(lora_on_disk.filename)
 
         alias = lora_on_disk.get_alias()
+
+        mtime, ctime = self.lister.mctime(lora_on_disk.filename)
         hash = lora_on_disk.hash if lora_on_disk.hash else None
         stats = os.stat(lora_on_disk.filename)
 
@@ -93,27 +96,16 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
 
         negative_prompt = item["user_metadata"].get("negative text", "")
         item["negative_prompt"] = f'({negative_prompt}:1)' if negative_prompt else ""
-
-
+        #   filter displayed loras by UI setting
         sd_version = item["user_metadata"].get("sd version")
         if sd_version in network.SdVersion.__members__:
             item["sd_version"] = sd_version
             sd_version = network.SdVersion[sd_version]
         else:
-            sd_version = lora_on_disk.sd_version
+            sd_version = lora_on_disk.sd_version        #   use heuristics
+            #sd_version = network.SdVersion.Unknown     #   avoid heuristics 
 
-        if shared.opts.lora_show_all or not enable_filter or not shared.sd_model:
-            pass
-        elif sd_version == network.SdVersion.Unknown:
-            model_version = network.SdVersion.SDXL if shared.sd_model.is_sdxl else network.SdVersion.SD2 if shared.sd_model.is_sd2 else network.SdVersion.SD1
-            if model_version.name in shared.opts.lora_hide_unknown_for_versions:
-                return None
-        elif shared.sd_model.is_sdxl and sd_version != network.SdVersion.SDXL:
-            return None
-        elif shared.sd_model.is_sd2 and sd_version != network.SdVersion.SD2:
-            return None
-        elif shared.sd_model.is_sd1 and sd_version != network.SdVersion.SD1:
-            return None
+        #item["sd_version_str"] = str(sd_version)
 
         return self.add_types_to_item(item)
 
@@ -126,14 +118,11 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
                 yield item
 
     def allowed_directories_for_previews(self):
-        return [shared.cmd_opts.lora_dir, shared.cmd_opts.lyco_dir_backcompat]
+        return [shared.cmd_opts.lora_dir]
 
     def create_user_metadata_editor(self, ui, tabname):
-        return ui_edit_user_metadata.LoraUserMetadataEditor(ui, tabname, self)
+        return LoraUserMetadataEditor(ui, tabname, self)
     
     def get_internal_metadata(self, name):
         lora_on_disk = networks.available_networks.get(name)
         return lora_on_disk.metadata if lora_on_disk else None
-
-
-
