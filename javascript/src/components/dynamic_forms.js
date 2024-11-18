@@ -151,7 +151,7 @@ DynamicForm.prototype.createValueElement = function(type, field, value) {
         "filename": {textContent: this.formatFilename(value)},
         "filesize": {textContent: this.formatFileSize(value)},
         'date-format': {textContent: this.formatDate(value)},
-        "img": {tag: 'img', attributes: {src: 'file=' + value, alt: field, class: 'thumbnail-image'}},
+        "img": {tag: 'img', attributes: {src: './sd_extra_networks/thumb?filename=' + value, alt: field, class: 'thumbnail-image'}},
         "button": {tag: 'button', textContent: field, attributes: {class: 'ae-button', name: field}},
         "default": {textContent: value || ''}
     };
