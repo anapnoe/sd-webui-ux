@@ -311,7 +311,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     // User ExtraNetwork
     function applyExtraNetworkPrompts(target, itemData, index) {
         const prompt_focused = window.UIUX.FOCUS_PROMPT;
-        let prompt = itemData.prompt?.replace("opts.extra_networks_default_multiplier", itemData.preferred_weight || opts.extra_networks_default_multiplier) || "";
+        let prompt = itemData.prompt?.replace("opts.extra_networks_default_multiplier", itemData.preferred_weight > 0 ? itemData.preferred_weight : opts.extra_networks_default_multiplier) || "";
         prompt += itemData.activation_text || "";
         const neg_prompt = itemData.negative_prompt || "";
 
