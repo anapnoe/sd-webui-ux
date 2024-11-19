@@ -1,7 +1,6 @@
-import html
 import os
 
-from modules import shared, ui_extra_networks, sd_models, sysinfo
+from modules import shared, ui_extra_networks, sd_models, sd_vae, sysinfo
 from modules.ui_extra_networks_checkpoints_user_metadata import CheckpointUserMetadataEditor
 
 
@@ -24,7 +23,6 @@ class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
         mtime, ctime = self.lister.mctime(checkpoint.filename)
         hash = checkpoint.sha256 if checkpoint.sha256 else None
         stats = os.stat(checkpoint.filename)
-        #file_size = sysinfo.pretty_bytes(stats.st_size)
 
         return {
             "name": (checkpoint.name_for_extra, "TEXT"),
@@ -34,14 +32,15 @@ class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
             "thumbnail": ("", "TEXT"),
             "description": (self.find_description(path), "TEXT"),
             "notes": ("", "TEXT"),
-            "tags": ("", "TEXT"),
-            "js_func": ("selectCheckpoint", "TEXT"),
+            "tags": ("", "TEXT"),         
             "local_preview": (f"{path}.{shared.opts.samples_format}", "TEXT"),
             "metadata_exists": (bool(checkpoint.metadata), "BOOLEAN"),
             "sd_version": ("Unknown", "TEXT"),
+            "vae": ("None", "TEXT"),
             "type": ("Checkpoint", "TEXT"),
             "filesize": (stats.st_size, "INTEGER"),
             "date_created": (int(mtime), "INTEGER"),
+            "date_modified": (int(ctime), "INTEGER"),
             "date_modified": (int(ctime), "INTEGER"),
             "allow_update": (False, "BOOLEAN")
         }
@@ -64,4 +63,7 @@ class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
         checkpoint: sd_models.CheckpointInfo = sd_models.checkpoint_aliases.get(name)
         return checkpoint.metadata if checkpoint else None
 
+    def get_available_VAE_list(self):
+        choices=["Automatic", "None"] + list(sd_vae.vae_dict)
+        return choices
         

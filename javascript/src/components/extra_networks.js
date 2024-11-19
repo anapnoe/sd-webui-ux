@@ -60,29 +60,6 @@ function extraNetworksCopyPath(path) {
     console.log(path);
 }
 
-
-const extraPageUserMetadataEditors = {};
-
-function extraNetworksEditMetadata(tabname, extraPage, cardname) {
-    const id = tabname + '_' + extraPage + '_edit_user_metadata';
-    let editor = extraPageUserMetadataEditors[id];
-    if (!editor) {
-        editor = {};
-        editor.page = gradioApp().getElementById(id);
-        editor.nameTextarea = gradioApp().querySelector("#" + id + "_name" + ' textarea');
-        editor.button = gradioApp().querySelector("#" + id + "_button");
-        extraPageUserMetadataEditors[id] = editor;
-    }
-
-    editor.nameTextarea.value = cardname;
-    updateInput(editor.nameTextarea);
-    editor.button.click();
-
-    console.log(editor);
-
-    return editor.page;
-}
-
 function extraNetworksRefreshSingleCard(page, tabname, name) {
     requestGet("./sd_extra_networks/get-single-card", {page: page, tabname: tabname, name: name}, function(data) {
         if (data && data.html) {
@@ -205,7 +182,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         }
     };
 
-    //Render: Item Node Renderer Overwite
+    // Render: Item Node Renderer Overwite
     vScroll.createItemElement = function(item) {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'item card';
@@ -244,16 +221,17 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         return itemDiv;
     };
 
+    // User Metadata
     function createUserMetaForm(itemData, index) {
 
         const fields = {
             local_preview: {type: 'input'},
             sd_version: {type: 'select', options: ['SD1', 'SD2', 'SD3', 'SDXL', 'PONY', 'FLUX', 'Unknown']},
             preferred_weight: {type: 'slider'},
-            activation_text: {type: 'textarea'},
+            activation_text: {type: 'textarea', rows: 2},
             negative_prompt: {type: 'textarea'},
-            description: {type: 'textarea'},
-            notes: {type: 'textarea'},
+            description: {type: 'textarea', rows: 4},
+            notes: {type: 'textarea', rows: 2},
             tags: {type: 'textarea'}
         };
 
@@ -271,39 +249,66 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             replace_preview: {type: 'button', showLabel: false},
         };
 
+        const murl = `/sd_webui_ux/get_internal_metadata?type=${encodeURIComponent(itemData.type)}&name=${encodeURIComponent(itemData.name)}`;
+        requestGetData(murl, function(metadata) {
 
-        const url = '/sd_webui_ux/update_user_metadata';
-        const formContainer = document.getElementById('formContainer');
-        const dynamicForm = new DynamicForm(url, table, itemData, formContainer);
-        const formEl = dynamicForm.createForm(fields);
-        const tableEl = dynamicForm.createTable(table_data);
-        const imgEl = dynamicForm.createHtmlElement(img_data);
+            const train_tags_metadata = metadata;
 
-        const rowContainer = document.createElement('div');
-        rowContainer.classList.add('non-editable-info', 'flexbox', 'padding', 'shrink');
+            const url = '/sd_webui_ux/update_user_metadata';
+            const formContainer = document.getElementById('formContainer');
+            const dynamicForm = new DynamicForm(url, table, itemData, formContainer);
+            const formEl = dynamicForm.createForm(fields);
+            const tableEl = dynamicForm.createTable(table_data);
+            const imgEl = dynamicForm.createHtmlElement(img_data);
+            const train_tags_El = dynamicForm.createTagsElement(train_tags_metadata, "Train Tags");
 
-        rowContainer.appendChild(imgEl);
-        rowContainer.appendChild(tableEl);
+            if (train_tags_El) {
+                formEl.children[2]?.insertAdjacentElement('afterend', train_tags_El);
+                let areaEl = formEl.querySelector('#activation_text');
 
-        vScroll.showDetail();
-        const dcontainer = container.parentElement.querySelector('.ae-virtual-detail-content');
-        dcontainer.innerHTML = '';
-        dcontainer.appendChild(rowContainer);
-        dcontainer.appendChild(formEl);
+                formEl.addEventListener('click', (e) => {
+                    const textarea = e.target.closest('textarea');
+                    if (textarea) areaEl = textarea;
+                    const target = e.target.closest('button[type=button]');
+                    if (target) {
+                        const tagText = target.childNodes[0].textContent.trim();
+                        const currentValue = areaEl.value;
+                        if (currentValue.includes(tagText)) {
+                            areaEl.value = currentValue
+                                .split(',')
+                                .map(tag => tag.trim())
+                                .filter(tag => tag !== tagText)
+                                .join(', ');
+                        } else {
+                            areaEl.value += (currentValue ? ', ' : '') + tagText;
+                        }
+                    }
+                });
+            }
 
-        dynamicForm.afterFormSubmit = function(data) {
-            vScroll.hideDetail();
-            console.log(data);
-            vScroll.updateDataByIndex(data, index);
-            //apiParams.skip = 0;
-            //vScroll.updateParamsAndFetch(apiParams, 0);
-            //treeView.initialize();
-        };
-        //detailView(container, formEl);
+            const rowContainer = document.createElement('div');
+            rowContainer.classList.add('non-editable-info', 'flexbox', 'padding', 'shrink');
+
+            rowContainer.appendChild(imgEl);
+            rowContainer.appendChild(tableEl);
+
+            vScroll.showDetail();
+            const dcontainer = container.parentElement.querySelector('.ae-virtual-detail-content');
+            dcontainer.innerHTML = '';
+            dcontainer.appendChild(rowContainer);
+            dcontainer.appendChild(formEl);
+
+            dynamicForm.afterFormSubmit = function(data) {
+                vScroll.hideDetail();
+                //console.log(data);
+                vScroll.updateDataByIndex(data, index);
+                treeView.initialize();
+            };
+        });
 
     }
 
-
+    // User ExtraNetwork
     function applyExtraNetworkPrompts(target, itemData, index) {
         const prompt_focused = window.UIUX.FOCUS_PROMPT;
         let prompt = itemData.prompt?.replace("opts.extra_networks_default_multiplier", itemData.preferred_weight || opts.extra_networks_default_multiplier) || "";
@@ -325,7 +330,6 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         }
     }
 
-
     vScroll.clickHandler = function(e) {
         const {target: target, currentTarget: ctarget} = e;
         const index = target.closest('.item.card').dataset.index;
@@ -343,7 +347,6 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             document.getElementById('status').innerText = metadata.message;
         });
         */
-
         requestPostData('/sd_webui_ux/generate-thumbnails', {table_name: table}, function(data) {
             console.log(data);
             //gradio_refresh.click();
@@ -369,6 +372,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     vScroll.updateParamsAndFetch(apiParams, 0);
 
 
+    // TreeView
     const treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_models_by_path', table, base_path);
     treeView.initialize();
 
@@ -380,7 +384,6 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
     treeView.onFileClicked = function(target, itemData) {
         applyExtraNetworkPrompts(target, itemData);
-        //console.log(itemData);
     };
 
     refresh.addEventListener('click', (e) => {

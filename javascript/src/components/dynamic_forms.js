@@ -1,8 +1,9 @@
-export function DynamicForm(url, table_name, itemData, container) {
+export function DynamicForm(url, table_name, itemData, container, submit_label = 'Submit') {
     this.url = url;
     this.table_name = table_name;
     this.itemData = itemData;
     this.container = container;
+    this.submit_label = submit_label;
     this.form = document.createElement('form');
     this.form.setAttribute('id', 'userMetadataForm');
     this.form.classList.add('flexbox', 'padding', 'col', 'shrink');
@@ -40,7 +41,7 @@ DynamicForm.prototype.formatFilename = function(path) {
 
 DynamicForm.prototype.createElement = function(type, field, value, attributes = {}) {
     const elementConfig = {
-        textarea: {tag: 'textarea', attributes: {rows: 4, textContent: value || ''}},
+        textarea: {tag: 'textarea', attributes: {rows: 1, textContent: value || ''}},
         select: {
             tag: 'select',
             attributes: {},
@@ -56,7 +57,8 @@ DynamicForm.prototype.createElement = function(type, field, value, attributes = 
         radio: {tag: 'input', attributes: {type: 'radio', checked: value}},
         slider: {tag: 'input', attributes: {type: 'range', value: value}},
         img: {tag: 'img', attributes: {src: 'file=' + value, alt: field, class: 'thumbnail-image'}},
-        button: {tag: 'button', textContent: value, attributes: {class: 'ae-button', name: field}},
+        button: {tag: 'button', textContent: value, attributes: {type: 'button', class: 'ae-button', name: field}},
+        placeholder: {tag: 'div', attributes: attributes},
         default: {tag: 'input', attributes: {type: 'text', value: value || ''}}
     };
 
@@ -125,7 +127,7 @@ DynamicForm.prototype.addElementToForm = function(field, config) {
 
 DynamicForm.prototype.createForm = function(fields) {
     Object.entries(fields).forEach(([field, config]) => {
-        if (this.itemData.hasOwnProperty(field)) {
+        if (this.itemData.hasOwnProperty(field) || config.type === 'placeholder') {
             this.addElementToForm(field, config);
         }
     });
@@ -134,10 +136,11 @@ DynamicForm.prototype.createForm = function(fields) {
     savePanel.classList.add('panel', 'row', 'flex-end');
     const submitButton = document.createElement('button');
     submitButton.setAttribute('type', 'submit');
-    submitButton.textContent = 'Save';
-    submitButton.classList.add('submit-button');
+    submitButton.textContent = this.submit_label;
+    submitButton.classList.add('ae-submit-button');
     savePanel.appendChild(submitButton);
     this.form.appendChild(savePanel);
+
     this.form.addEventListener('submit', (event) => this.handleSubmit(event));
 
     return this.form;
@@ -195,11 +198,11 @@ DynamicForm.prototype.createTable = function(table_data) {
     return table;
 };
 
-DynamicForm.prototype.createHtmlElement = function(table_data) {
+DynamicForm.prototype.createHtmlElement = function(div_data) {
     const div = document.createElement('div');
     div.classList.add('non-editable-div', 'flexbox', 'col', 'shrink');
 
-    Object.entries(table_data).forEach(([field, config]) => {
+    Object.entries(div_data).forEach(([field, config]) => {
         const row = document.createElement('div');
         row.classList.add('panel', field);
 
@@ -216,6 +219,83 @@ DynamicForm.prototype.createHtmlElement = function(table_data) {
     });
 
     return div;
+};
+
+
+DynamicForm.prototype.buildTags = function(metadata) {
+
+    const reWord = /[-_\w']+/g;
+    const reComma = / *, */;
+
+    function isNonCommaTagset(tags) {
+        const averageTagLength = Object.keys(tags).reduce((sum, tag) => sum + tag.length, 0) / Object.keys(tags).length;
+        return averageTagLength >= 16;
+    }
+    const tags = {};
+
+    const ssTagFrequency = metadata.ss_tag_frequency || {};
+    for (const tagsDict of Object.values(ssTagFrequency)) {
+        for (const [tag, tagCount] of Object.entries(tagsDict)) {
+            const trimmedTag = tag.trim();
+            tags[trimmedTag] = (tags[trimmedTag] || 0) + parseInt(tagCount, 10);
+        }
+    }
+
+    if (Object.keys(tags).length > 0 && isNonCommaTagset(tags)) {
+        const newTags = {};
+        for (const [text, textCount] of Object.entries(tags)) {
+            const words = text.match(reWord) || [];
+            for (const word of words) {
+                if (word.length >= 3) {
+                    newTags[word] = (newTags[word] || 0) + textCount;
+                }
+            }
+        }
+        return Object.entries(newTags)
+            .sort(([, countA], [, countB]) => countB - countA)
+            .map(([tag, count]) => [tag, count]);
+    }
+
+    return Object.entries(tags)
+        .sort(([, countA], [, countB]) => countB - countA)
+        .map(([tag, count]) => [tag, count]);
+};
+
+DynamicForm.prototype.createTagsElement = function(metadata, label) {
+    const train_tags = this.buildTags(metadata);
+    if (train_tags.length > 0) {
+
+        const div = document.createElement('div');
+        div.classList.add('non-editable-tags', 'flexbox', 'shrink');
+
+        const row = document.createElement('div');
+        row.classList.add('panel', 'flexbox', 'row', 'padding');
+
+        if (label) {
+            const labelCell = document.createElement('label');
+            labelCell.textContent = label.toUpperCase();
+            row.appendChild(labelCell);
+        }
+
+        Object.entries(train_tags).forEach((tag) => {
+            const tagEl = document.createElement('button');
+            tagEl.type = 'button';
+
+            tagEl.textContent = tag[1][0];
+            const tagNum = document.createElement('span');
+            tagNum.classList.add('tag-num');
+
+            tagNum.textContent = tag[1][1];
+            tagEl.appendChild(tagNum);
+
+            row.appendChild(tagEl);
+        });
+
+        div.appendChild(row);
+        return div;
+    }
+
+    return false;
 };
 
 DynamicForm.prototype.handleSubmit = async function(event) {
@@ -248,9 +328,6 @@ DynamicForm.prototype.handleSubmit = async function(event) {
     }
 };
 
-DynamicForm.prototype.afterFormSubmit = function() {
-    /*
-    this.vScroll.showDetail();
-    detailView(this.container, this.form);
-    */
+DynamicForm.prototype.afterFormSubmit = function(fdata, message) {
+
 };

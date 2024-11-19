@@ -347,7 +347,6 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
-
     def generate_thumbnails(self, table_name, size=(512, 512)):
         try:
             conn = self.connect()
@@ -486,7 +485,6 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
-
     @app.post("/sd_webui_ux/generate-thumbnails")
     async def generate_thumbnails(payload: dict = Body(...)):
         table_name = payload.get('table_name')
@@ -514,7 +512,6 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         if "Error" in response["message"]:
             raise HTTPException(status_code=500, detail=response["message"])
         return response
-    
     
     @app.get("/sd_webui_ux/get_models_by_path")
     def get_models_by_path_endpoint(

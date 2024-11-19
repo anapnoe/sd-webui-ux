@@ -3867,3 +3867,27 @@ table.non-editable-table td {
 .non-editable-info {
     justify-content: space-between !important;
 }
+
+.non-editable-tags label {
+    width:100%;
+    text-align: left;
+}
+
+.non-editable-tags button{
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.non-editable-tags span.tag-num {
+    background: var(--ae-primary-color);
+    line-height: 18px;
+    border-radius: var(--ae-border-radius);
+    padding: 0 4px;
+}
+
+.non-editable-tags > .panel {
+    max-height: 160px;
+    overflow-y: auto;
+}
+
