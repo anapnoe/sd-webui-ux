@@ -425,23 +425,11 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
                 raise HTTPException(status_code=400, detail="Invalid type specified")
 
             metadata = page.get_internal_metadata(name)
-            if metadata is None:
-                raise HTTPException(status_code=404, detail="File not found")
-            return metadata
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-    
-    @app.get("/sd_webui_ux/get_user_metadata_editor")
-    def get_user_metadata_editor_endpoint(type: str, name: str):
-        try:
-            page = db_tables_pages.get(type)
-            if not page:
-                raise HTTPException(status_code=400, detail="Invalid type specified")
 
-            #metadata = page.create_user_metadata_editor(name)
-            #if metadata is None:
-            #    raise HTTPException(status_code=404, detail="File not found")
-            #return metadata
+            if metadata is None:
+                return {}
+                #raise HTTPException(status_code=404, detail="File not found")
+            return metadata
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
