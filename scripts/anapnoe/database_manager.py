@@ -41,12 +41,15 @@ class DatabaseManager:
 
 
     def get_table_columns(self, table_name):
+        validate_name(table_name, "table")
+        
         conn = self.connect()
         cursor = conn.cursor()
-        # Use a parameterized query to prevent SQL injection
-        cursor.execute("PRAGMA table_info(?)", (table_name,))
+        
+        cursor.execute(f"PRAGMA table_info({table_name})")
         columns_info = cursor.fetchall()
         column_names = [column[1] for column in columns_info]
+        
         return column_names
 
 
