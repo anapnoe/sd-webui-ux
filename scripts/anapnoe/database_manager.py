@@ -262,7 +262,7 @@ class DatabaseManager:
         validate_name(table_name, "table")  # Validate table
 
         
-        valid_sort_columns = ["id", "name", "filename" "date_created", "date_modified"]  # whitelist
+        valid_sort_columns = ["id", "name", "filename", "date_created", "date_created"]  # whitelist
         if sort_by not in valid_sort_columns:
             raise ValueError(f"Invalid sort column: {sort_by}")
         
