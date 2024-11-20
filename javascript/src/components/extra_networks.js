@@ -242,13 +242,13 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             window.selectCheckpoint(itemData.name);
         } else if (itemData.type === "TextualInversion") {
             window.cardClicked(prompt_focused, prompt, neg_prompt, true);
-            selected_networks[`${prompt_focused}_textualinversion`].push({id: itemData.name, value: prompt});
+            selected_networks[`${prompt_focused}_textualinversion`].push({id: itemData.id, name: itemData.name, value: prompt});
         } else if (itemData.type === "LORA") {
             window.cardClicked(prompt_focused, prompt, neg_prompt, false);
-            selected_networks[`${prompt_focused}_lora`].push({id: itemData.name, value: `<lora:${prompt.split(':')[1]}`});
+            selected_networks[`${prompt_focused}_lora`].push({id: itemData.id, name: itemData.name, value: `<lora:${prompt.split(':')[1]}`});
         } else if (itemData.type === "Hypernetwork") {
             window.cardClicked(prompt_focused, prompt, neg_prompt, false);
-            selected_networks[`${prompt_focused}_hypernetwork`].push({id: itemData.name, value: prompt});
+            selected_networks[`${prompt_focused}_hypernetwork`].push({id: itemData.id, name: itemData.name, value: prompt});
         }
     }
 
@@ -298,6 +298,17 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     const treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_models_by_path', table, base_path);
     treeView.initialize();
 
+    treeView.createFileItem = function(tree, key) {
+        const li = document.createElement('li');
+        li.dataset.id = tree[key].id;
+        if (this.selected?.has(tree[key].id)) {
+            li.classList.add('active');
+        }
+        li.innerHTML = `<summary class="tree-file" data-id="${tree[key].id}">${tree[key].name}</summary>`;
+        li.classList.add('li-file');
+        return li;
+    };
+
     treeView.onFolderClicked = function(target, path, active) {
         //console.log(path, active);
         //searchInput.value = active ? path : "";
@@ -321,22 +332,26 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     function selectItems(e) {
         const prompt_focused = window.UIUX.FOCUS_PROMPT;
         const currNetwork = selected_networks[`${prompt_focused}_${table}`];
-
         setTimeout(() => {
             let txt_value = '';
             document.querySelectorAll(`#${prompt_focused}_prompt textarea, #${prompt_focused}_neg_prompt textarea`).forEach(textarea => {
                 txt_value += textarea.value;
             });
+
             const cleanedNetwork = currNetwork.filter(network => {
                 return network && network.value && txt_value.includes(network.value);
             });
 
             selected_networks[`${prompt_focused}_${table}`] = cleanedNetwork;
 
-            const selectedIds = cleanedNetwork ? new Set(Object.values(cleanedNetwork).map(network => network.id)) : new Set();
-            vScroll.selected = selectedIds;
+            const selectedNames = new Set(cleanedNetwork.map(network => network.name));
+            const selectedIds = new Set(cleanedNetwork.map(network => network.id));
+
+            vScroll.selected = selectedNames;
+            treeView.selected = selectedIds;
+
             vScroll.renderItems();
-            //console.log(cleanedNetwork);
+            treeView.updateSelectedItems();
 
         }, 100);
     }

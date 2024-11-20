@@ -31,6 +31,14 @@
     border-left: var(--lw) solid var(--ae-main-bg-color);
 }
 
+.tree-view ul li.active {
+    background-color: var(--ae-main-bg-color);
+}
+
+.tree-view li.active summary.tree-file::before {
+    background-color: var(--ae-primary-color);
+}
+
 .tree-view ul li:last-child {
     border-color: transparent;
 }

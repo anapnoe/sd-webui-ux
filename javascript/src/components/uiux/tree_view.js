@@ -3,21 +3,36 @@ export function TreeView(css_selector, fetchUrl, tableName, rootPath = '') {
     this.fetchUrl = fetchUrl;
     this.tableName = tableName;
     this.rootPath = rootPath.replace(/\\/g, '/').toLowerCase(); // Normalize rootPath once here
+    this.selected;
 }
 
 TreeView.prototype.initialize = async function() {
     this.container.innerHTML = "";
     const data = await this.fetchData(this.rootPath);
-    this.itemMap = data.reduce((acc, item) => {
-        acc[item.id] = item;
-        return acc;
-    }, {});
+
     const tree = this.buildTree(data);
     const treeView = this.createTreeView(tree);
     this.container.appendChild(treeView);
     this.attachEventListeners();
+
+    this.itemMap = data.reduce((acc, item) => {
+        acc[item.id] = item;
+        return acc;
+    }, {});
 };
 
+TreeView.prototype.updateSelectedItems = function() {
+    this.container.querySelectorAll('.li-file.active').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    this.selected?.forEach(id => {
+        const item = this.container.querySelector(`.li-file[data-id="${id}"]`);
+        if (item) {
+            item.classList.add('active');
+        }
+    });
+};
 
 TreeView.prototype.fetchData = async function(path) {
     const response = await fetch(`${this.fetchUrl}?table_name=${this.tableName}&path=${encodeURIComponent(path)}`);
@@ -58,32 +73,37 @@ TreeView.prototype.buildTree = function(items) {
 };
 
 
+TreeView.prototype.createFileItem = function(tree, key) {
+    const li = document.createElement('li');
+    li.dataset.id = tree[key].id;
+    li.innerHTML = `<summary class="tree-file" data-id="${tree[key].id}">${tree[key].name}</summary>`;
+    li.classList.add('li-file');
+    return li;
+};
+
+TreeView.prototype.createFolderItem = function(tree, key, path) {
+    const li = document.createElement('li');
+    li.innerHTML = `<summary class="tree-folder caret" data-path="${path}${key}">${key}</summary>`;
+    const nestedUl = this.createTreeView(tree[key], `${path}/${key}`);
+    nestedUl.classList.add('nested');
+    li.appendChild(nestedUl);
+    return li;
+};
+
 TreeView.prototype.createTreeView = function(tree, path = '') {
     const ul = document.createElement('ul');
     ul.classList.add('tree-view');
 
     for (const key in tree) {
-        const li = document.createElement('li');
-
+        let li;
         if (typeof tree[key] === 'object' && !Array.isArray(tree[key])) {
-            // directory
             if (key.includes(".safetensors") || key.includes(".pt")) {
-                // file find a better way detect file
-                li.innerHTML = `<summary class="tree-file" data-id="${tree[key].id}" >${tree[key].name}</summary>`;
-                li.classList.add('li-file');
-
+                li = this.createFileItem(tree, key);
             } else {
-                li.innerHTML = `<summary class="tree-folder caret" data-path="${path}${key}">${key}</summary>`;
-                const nestedUl = this.createTreeView(tree[key], `${path}/${key}`);
-                nestedUl.classList.add('nested');
-                li.appendChild(nestedUl);
-
+                li = this.createFolderItem(tree, key, path);
             }
         } else {
-            // file
-            li.classList.add('li-file');
-            li.innerHTML = `<summary class="tree-file" data-id="${tree[key].id}" >${tree[key].name}</summary>`;
-
+            li = this.createFileItem(tree, key);
         }
         ul.appendChild(li);
     }
@@ -92,20 +112,31 @@ TreeView.prototype.createTreeView = function(tree, path = '') {
 };
 
 TreeView.prototype.attachEventListeners = function() {
+
+    if (this.eventListenerAdded) {
+        return;
+    }
+
     this.container.addEventListener('click', async(event) => {
-        if (event.target.dataset.id) {
-            const itemId = event.target.dataset.id;
+        //console.log('Clicked element:', event.target); // Log the clicked element
+        const target = event.target;
+        if (target.dataset.id) {
+            const itemId = target.dataset.id;
             const itemData = this.getItemProperties(itemId);
-            this.onFileClicked(event.target, itemData);
-        } else if (event.target.classList.contains('caret')) {
-            event.target.classList.toggle('caret-down');
-            const nestedList = event.target.nextElementSibling;
+            this.onFileClicked(target, itemData);
+        } else if (target.classList.contains('caret')) {
+            target.classList.toggle('caret-down');
+            const nestedList = target.nextElementSibling;
             if (nestedList.classList.contains('nested')) {
                 nestedList.classList.toggle('active');
             }
-            this.onFolderClicked(event.target, event.target.getAttribute('data-path'), nestedList.classList.contains('active'));
+            this.onFolderClicked(target, target.getAttribute('data-path'), nestedList.classList.contains('active'));
         }
     });
+
+    this.eventListenerAdded = true;
+
+
     /*
     this.container.addEventListener('click', async(event) => {
         if (event.target.dataset.id) {
