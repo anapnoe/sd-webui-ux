@@ -15,6 +15,10 @@ from PIL import Image
 import gradio as gr
 from modules import script_callbacks
 
+def validate_name(name, message):
+    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', name):
+        raise ValueError(f"Invalid {message} name. Must start with a letter or underscore and contain only alphanumeric characters and underscores.")
+
 class DatabaseManager:
     _instance = None
 
@@ -31,22 +35,35 @@ class DatabaseManager:
             raise Exception("DatabaseManager instance is not set.")
         return cls._instance
 
+
     def connect(self):
         return sqlite3.connect(self.db_name, check_same_thread=False)
-    
+
+
     def get_table_columns(self, table_name):
         conn = self.connect()
         cursor = conn.cursor()
-        cursor.execute(f"PRAGMA table_info({table_name});")
+        # Use a parameterized query to prevent SQL injection
+        cursor.execute("PRAGMA table_info(?)", (table_name,))
         columns_info = cursor.fetchall()
         column_names = [column[1] for column in columns_info]
         return column_names
 
+
     def create_table(self, table_name, columns):
+       
+        validate_name(table_name, "table")
+
+        # Validate column definitions
+        valid_columns = []
+        for column, col_type in columns.items():
+            validate_name(column, "column")
+            valid_columns.append(f"{column} {col_type}")
+
+        columns_definition = ', '.join(valid_columns)
+
         conn = self.connect()
         cursor = conn.cursor()
-
-        columns_definition = ', '.join([f"{column} {col_type}" for column, col_type in columns.items()])
         cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS {table_name} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,6 +74,7 @@ class DatabaseManager:
         conn.commit()
         conn.close()
 
+
     def default_value_for_key(self, key):
         default_values = {
             'description': '',
@@ -65,6 +83,7 @@ class DatabaseManager:
             'negative_prompt': ''
         }
         return default_values.get(key, '')
+
 
     def filter_and_normalize_paths(self, item):
         item_filtered = {k: v for k, v in item.items() if k != 'thumbnail'}
@@ -77,7 +96,9 @@ class DatabaseManager:
         
         return item_filtered
     
+
     def item_exists(self, table_name, file_name):
+        validate_name(table_name, "table")  # Validate table name
         conn = self.connect()
         cursor = conn.cursor()
         
@@ -89,10 +110,12 @@ class DatabaseManager:
         conn.close()
         return exists
 
+
     def item_exists_in_source(self, path):
         path = os.path.normpath(path)
         return os.path.exists(path)
     
+
     def insert_item(self, table_name, item):
         try:
             cleaned_item = {k: v[0] if v is not None else None for k, v in item.items()}
@@ -105,16 +128,20 @@ class DatabaseManager:
                 logger.info(f"Item {cleaned_item['name']} does not exist. Deleting from database.")
                 self.delete_item(table_name, cleaned_item['name'])
                 return
+            
             elif item_exists_by_name and not item_exists_in_source:
                 logger.info(f"Item {cleaned_item['name']} not found in source. Updating paths.")
                 self.update_item_paths(table_name, cleaned_item)
                 return
+            
             elif item_exists_by_name:
                 if item_allow_update:
                     logger.info(f"Updating item: {cleaned_item['name']} {cleaned_item.get('hash', 'N/A')} (allow_update=True)")
                     self.update_item(table_name, cleaned_item)
                 return
+            
             else:
+                validate_name(table_name, "table")  # Validate table 
                 logger.info(f"Inserting item: {cleaned_item['name']} {cleaned_item.get('hash', 'N/A')}")
                 conn = self.connect()
                 cursor = conn.cursor()
@@ -139,7 +166,10 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
+
     def update_item_paths(self, table_name, item):
+        validate_name(table_name, "table")  # Validate table
+        conn = None
         try:
             conn = self.connect()
             cursor = conn.cursor()
@@ -163,35 +193,57 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
+
     def update_item(self, table_name, item):
+        validate_name(table_name, "table")  # Validate table
+        conn = None
+        try:
+            conn = self.connect()
+            cursor = conn.cursor()
 
-        conn = self.connect()
-        cursor = conn.cursor()
+            item_filtered = self.filter_and_normalize_paths(item)
 
-        item_filtered = self.filter_and_normalize_paths(item)
+            keys = ', '.join([f"{k} = ?" for k in item_filtered.keys()])
+            values = tuple(json.dumps(val) if isinstance(val, (dict, list)) else val for val in item_filtered.values()) + (item['name'],)
 
-        keys = ', '.join([f"{k} = ?" for k in item_filtered.keys()])
-        values = tuple(json.dumps(val) if isinstance(val, (dict, list)) else val for val in item_filtered.values()) + (item['name'],)
+            cursor.execute(f'''
+            UPDATE {table_name} SET {keys} WHERE name = ?
+            ''', values)
 
-        cursor.execute(f'''
-        UPDATE {table_name} SET {keys} WHERE name = ?
-        ''', values)
-        
-        conn.commit()
-        conn.close()
+            conn.commit()
+            logger.info(f"Item {item['name']} updated successfully.")
+        except sqlite3.Error as e:
+            logger.error(f"Database error while updating item: {e}")
+            if conn:
+                conn.rollback()
+        except Exception as e:
+            logger.error(f"Error updating item: {e}")
+            if conn:
+                conn.rollback()
+        finally:
+            if conn:
+                conn.close()
+
 
     def delete_item(self, table_name, item):
+        validate_name(table_name, "table")  # Validate table
+        conn = None
         try:
             conn = self.connect()
             cursor = conn.cursor()
             cursor.execute(f'DELETE FROM {table_name} WHERE name = ?', (item['name'],))
             conn.commit()
-            conn.close()
             logger.info(f"Item {item['name']} deleted from {table_name}.")
         except sqlite3.Error as e:
             logger.error(f"Database error while deleting item: {e}")
+            if conn:
+                conn.rollback()
         except Exception as e:
             logger.error(f"Error deleting item: {e}")
+        finally:
+            if conn:
+                conn.close()
+
 
     def get_items(
             self, 
@@ -204,12 +256,20 @@ class DatabaseManager:
             search_columns: Optional[List[str]] = None,
             sd_version: str = "") -> dict:
         
+        validate_name(table_name, "table")  # Validate table
+
+        
+        valid_sort_columns = ["id", "name", "filename" "date_created", "date_modified"]  # whitelist
+        if sort_by not in valid_sort_columns:
+            raise ValueError(f"Invalid sort column: {sort_by}")
+        
+        if search_columns:
+            for col in search_columns:
+                validate_name(col, "search column")  # Validate search columns
+
         try:
             conn = self.connect()
             cursor = conn.cursor()
-
-            if not search_columns:
-                search_columns = ["filename"]
 
             where_clauses = []
             
@@ -234,6 +294,7 @@ class DatabaseManager:
             like_search_term = f"%{search_term.lower()}%"
             query_params.extend([like_search_term] * len(search_columns))
             
+            # Fetch limit + 1 to check if there are more items
             query_params.extend([limit + 1, skip])
 
             cursor.execute(query, tuple(query_params))
@@ -256,7 +317,10 @@ class DatabaseManager:
                 "nextCursor": None
             }
 
+
     def get_items_by_path(self, table_name: str, path: str) -> List[dict]:
+        validate_name(table_name, "table")  # Validate table
+        conn = None
         try:
             conn = self.connect()
             cursor = conn.cursor()
@@ -273,12 +337,15 @@ class DatabaseManager:
 
             rows = cursor.fetchall()
             column_names = [description[0] for description in cursor.description]
-            conn.close()
-
+            
             return [dict(zip(column_names, row)) for row in rows]
         except sqlite3.Error as e:
             logger.error(f"Database error: {e}")
             return []
+        finally:
+            if conn:
+                conn.close()
+
 
     def get_image_path(self, file_path):
         file_path = Path(file_path).as_posix()
@@ -295,6 +362,7 @@ class DatabaseManager:
                 return preview_image_path
             
         return None
+
 
     def create_and_save_thumbnail(self, image_path, size=(512, 512)):
         image_path = self.get_image_path(image_path)
@@ -321,7 +389,9 @@ class DatabaseManager:
             logger.error(f"Error generating thumbnail for {image_path}: {e}")
             return None
 
+
     def generate_thumbnail(self, table_name, file_id, size=(512, 512)):
+        validate_name(table_name, "table")  # Validate table
         conn = None
         try:
             conn = self.connect()
@@ -347,7 +417,9 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
+
     def generate_thumbnails(self, table_name, size=(512, 512)):
+        validate_name(table_name, "table")  # Validate table
         try:
             conn = self.connect()
             cursor = conn.cursor()
