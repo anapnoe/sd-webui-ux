@@ -59,6 +59,9 @@
     display: block;
     cursor: pointer;
     margin-left: calc(var(--radius));
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .tree-view summary::marker,
@@ -121,4 +124,25 @@
 
 .tree-view .caret-down.tree-folder::before {
     -webkit-mask-image: url(../svg/indeterminate-circle-fill.svg);
+}
+
+.tree-view li > .item-actions {
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform-origin: top right;
+    transform: scale(0.8);
+    padding: 0;
+}
+
+.tree-view ul > li:hover > .item-actions {
+     display: flex;
+}
+
+.tree-view ul > li:hover > summary {
+    width: calc(100% - 60px);
+}
+
+.tree-view ul:hover > li[data-name]:hover {
+    background-color: var(--ae-main-bg-color);
 }

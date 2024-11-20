@@ -76,7 +76,8 @@ TreeView.prototype.buildTree = function(items) {
 TreeView.prototype.createFileItem = function(tree, key) {
     const li = document.createElement('li');
     li.dataset.name = tree[key].name;
-    li.innerHTML = `<summary class="tree-file" data-id="${tree[key].id}">${tree[key].name}</summary>`;
+    li.dataset.id = tree[key].id;
+    li.innerHTML = `<summary class="tree-file">${tree[key].name}</summary>`;
     li.classList.add('li-file');
     return li;
 };
@@ -117,13 +118,19 @@ TreeView.prototype.attachEventListeners = function() {
         return;
     }
 
-    this.container.addEventListener('click', async(event) => {
-        //console.log('Clicked element:', event.target); // Log the clicked element
-        const target = event.target;
-        if (target.dataset.id) {
-            const itemId = target.dataset.id;
+    this.container.addEventListener('click', async(e) => {
+        console.log('Clicked element:', e.target); // Log the clicked element
+        const target = e.target;
+        const listItem = target.closest('li[data-id]');
+        const buttonItem = target.tagName === 'BUTTON';
+        if (buttonItem) {
+            const itemId = listItem.dataset.id;
             const itemData = this.getItemProperties(itemId);
             this.onFileClicked(target, itemData);
+        } else if (listItem) {
+            const itemId = listItem.dataset.id;
+            const itemData = this.getItemProperties(itemId);
+            this.onFileClicked(listItem, itemData);
         } else if (target.classList.contains('caret')) {
             target.classList.toggle('caret-down');
             const nestedList = target.nextElementSibling;
@@ -132,6 +139,8 @@ TreeView.prototype.attachEventListeners = function() {
             }
             this.onFolderClicked(target, target.getAttribute('data-path'), nestedList.classList.contains('active'));
         }
+
+        //e.stopPropagation();
     });
 
     this.eventListenerAdded = true;

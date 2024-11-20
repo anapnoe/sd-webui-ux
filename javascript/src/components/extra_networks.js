@@ -232,6 +232,8 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         prompt += itemData.activation_text || "";
         const neg_prompt = itemData.negative_prompt || "";
 
+        console.log(target);
+
         if (target.classList.contains("copy-path")) {
             extraNetworksCopyPath(itemData.filename);
         } else if (target.classList.contains("show-meta")) {
@@ -301,11 +303,33 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     treeView.createFileItem = function(tree, key) {
         const li = document.createElement('li');
         li.dataset.name = tree[key].name;
+        li.dataset.id = tree[key].id;
         if (this.selected?.has(tree[key].name)) {
             li.classList.add('active');
         }
-        li.innerHTML = `<summary class="tree-file" data-id="${tree[key].id}">${tree[key].name}</summary>`;
+        li.innerHTML = `<summary class="tree-file">${tree[key].name}</summary>`;
         li.classList.add('li-file');
+
+        const itemEditMeta = document.createElement('button');
+        itemEditMeta.className = `edit-meta edit-button card-button`;
+
+        const copyPath = document.createElement('button');
+        copyPath.className = `copy-path copy-path-button card-button`;
+
+        const itemActions = document.createElement('div');
+        itemActions.className = `item-actions`;
+
+        itemActions.appendChild(copyPath);
+
+        if (tree[key].metadata_exists) {
+            const itemShowMeta = document.createElement('button');
+            itemShowMeta.className = `show-meta metadata-button card-button`;
+            itemActions.appendChild(itemShowMeta);
+        }
+
+        itemActions.appendChild(itemEditMeta);
+
+        li.appendChild(itemActions);
         return li;
     };
 
@@ -316,7 +340,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     };
 
     treeView.onFileClicked = function(target, itemData) {
-        applyExtraNetworkPrompts(target, itemData);
+        applyExtraNetworkPrompts(target, itemData, itemData.id);
     };
 
     refresh.addEventListener('click', (e) => {
@@ -345,10 +369,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             selected_networks[`${prompt_focused}_${table}`] = cleanedNetwork;
 
             const selectedNames = new Set(cleanedNetwork.map(network => network.name));
-            //const selectedIds = new Set(cleanedNetwork.map(network => network.id));
-
             vScroll.selected = treeView.selected = selectedNames;
-            //treeView.selected = selectedIds;
 
             vScroll.renderItems();
             treeView.updateSelectedItems();
