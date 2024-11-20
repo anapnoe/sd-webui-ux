@@ -119,7 +119,7 @@ TreeView.prototype.attachEventListeners = function() {
     }
 
     this.container.addEventListener('click', async(e) => {
-        console.log('Clicked element:', e.target); // Log the clicked element
+        //console.log('Clicked element:', e.target); // Log the clicked element
         const target = e.target;
         const listItem = target.closest('li[data-id]');
         const buttonItem = target.tagName === 'BUTTON';
@@ -140,7 +140,7 @@ TreeView.prototype.attachEventListeners = function() {
             this.onFolderClicked(target, target.getAttribute('data-path'), nestedList.classList.contains('active'));
         }
 
-        //e.stopPropagation();
+        e.stopPropagation();
     });
 
     this.eventListenerAdded = true;

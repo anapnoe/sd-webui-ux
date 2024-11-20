@@ -232,7 +232,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         prompt += itemData.activation_text || "";
         const neg_prompt = itemData.negative_prompt || "";
 
-        console.log(target);
+        //console.log(target);
 
         if (target.classList.contains("copy-path")) {
             extraNetworksCopyPath(itemData.filename);
