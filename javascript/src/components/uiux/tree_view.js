@@ -26,8 +26,8 @@ TreeView.prototype.updateSelectedItems = function() {
         item.classList.remove('active');
     });
 
-    this.selected?.forEach(id => {
-        const item = this.container.querySelector(`.li-file[data-id="${id}"]`);
+    this.selected?.forEach(name => {
+        const item = this.container.querySelector(`.li-file[data-name="${name}"]`);
         if (item) {
             item.classList.add('active');
         }
@@ -75,7 +75,7 @@ TreeView.prototype.buildTree = function(items) {
 
 TreeView.prototype.createFileItem = function(tree, key) {
     const li = document.createElement('li');
-    li.dataset.id = tree[key].id;
+    li.dataset.name = tree[key].name;
     li.innerHTML = `<summary class="tree-file" data-id="${tree[key].id}">${tree[key].name}</summary>`;
     li.classList.add('li-file');
     return li;

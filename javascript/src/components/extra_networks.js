@@ -300,8 +300,8 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
     treeView.createFileItem = function(tree, key) {
         const li = document.createElement('li');
-        li.dataset.id = tree[key].id;
-        if (this.selected?.has(tree[key].id)) {
+        li.dataset.name = tree[key].name;
+        if (this.selected?.has(tree[key].name)) {
             li.classList.add('active');
         }
         li.innerHTML = `<summary class="tree-file" data-id="${tree[key].id}">${tree[key].name}</summary>`;
@@ -345,10 +345,10 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             selected_networks[`${prompt_focused}_${table}`] = cleanedNetwork;
 
             const selectedNames = new Set(cleanedNetwork.map(network => network.name));
-            const selectedIds = new Set(cleanedNetwork.map(network => network.id));
+            //const selectedIds = new Set(cleanedNetwork.map(network => network.id));
 
-            vScroll.selected = selectedNames;
-            treeView.selected = selectedIds;
+            vScroll.selected = treeView.selected = selectedNames;
+            //treeView.selected = selectedIds;
 
             vScroll.renderItems();
             treeView.updateSelectedItems();
@@ -362,7 +362,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             textarea.addEventListener('focus', selectItems);
         });
     } else {
-        setupCheckpointChangeObserver(vScroll);
+        setupCheckpointChangeObserver(vScroll, treeView);
     }
 
 

@@ -54,7 +54,7 @@ export function setupGenerateObservers() {
     });
 }
 
-export function setupCheckpointChangeObserver(vScroll) {
+export function setupCheckpointChangeObserver(vScroll, treeView) {
 
     const ch_input = document.querySelector("#setting_sd_model_checkpoint .wrap .secondary-wrap input") || document.querySelector(".gradio-dropdown.model_selection .wrap .secondary-wrap input");
     const ch_preload = document.querySelector("#setting_sd_model_checkpoint .wrap") || document.querySelector(".gradio-dropdown.model_selection .wrap");
@@ -68,8 +68,9 @@ export function setupCheckpointChangeObserver(vScroll) {
     const selectCard = (value) => {
         if (hash_value !== value) {
             const name = value.split('.').slice(0, -1).join();
-            vScroll.selected = new Set([name]);
+            vScroll.selected = treeView.selected = new Set([name]);
             vScroll.renderItems();
+            treeView.updateSelectedItems();
             ch_footer_selected.textContent = value;
             console.log("Checkpoint:", value, name);
             hash_value = value;
