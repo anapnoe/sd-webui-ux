@@ -13,7 +13,7 @@ import {createTabsForExtensions, injectStylesToIframe, injectStylesAfterUIUX, re
 import {setupThemeEditor} from './components/theme_editor.js';
 import {UIUX} from './utils/module.js';
 import {setupCivitaiExplorerImages, setupCivitaiExplorerModels} from './components/civitai_explorer.js';
-import {setupExtraNetworksCheckpoints, setupExtraNetworksTextualinversion, setupExtraNetworksLora, setupExtraNetworksHypernetworks} from './components/extra_networks.js';
+import {setupExtraNetworkCheckpoints, setupExtraNetworkTextualinversion, setupExtraNetworkLora, setupExtraNetworkHypernetworks} from './components/extra_networks.js';
 
 function onUiUxReady(content_div) {
 
@@ -42,7 +42,7 @@ function onUiUxReady(content_div) {
 
     document.querySelectorAll("#txt2img_styles_edit_button, #img2img_styles_edit_button").forEach((elm) => {
         elm.addEventListener("click", function(e) {
-            /* eslint-disable no-undef */
+
             window.popup_trigger.click();
             //appendPopupContent();
         });
@@ -105,21 +105,20 @@ function onUiUxReady(content_div) {
     //checkpoints_nav.addEventListener('click', () => {
     //setupExtraNetworksCheckpoints();
     //}, {once: true});
+    setTimeout(() => {
+        setupExtraNetworkCheckpoints();
+    }, 500);
+
     textual_inversion_nav.addEventListener('click', () => {
-        setupExtraNetworksTextualinversion();
+        setupExtraNetworkTextualinversion();
     }, {once: true});
     lora_nav.addEventListener('click', () => {
-        setupExtraNetworksLora();
+        setupExtraNetworkLora();
     }, {once: true});
 
     hypernetwork_nav.addEventListener('click', () => {
-        setupExtraNetworksHypernetworks();
+        setupExtraNetworkHypernetworks();
     }, {once: true});
-
-    setTimeout(() => {
-        setupExtraNetworksCheckpoints();
-    }, 500);
-
 
     //const totalListeners = countEventListeners(document.body);
     //console.warn(`Total event listeners: ${totalListeners}`);

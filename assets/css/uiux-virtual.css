@@ -78,6 +78,13 @@
     text-align: center;
 }
 
+.ae-virtual-wrapper .active .title {
+    background-color: var(--ae-primary-color);
+}
+.ae-virtual-wrapper .item.active {
+    border: 2px solid var(--ae-primary-color);
+}
+
 option {
     background-color: var(--ae-main-bg-color);
 }

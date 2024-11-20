@@ -54,29 +54,24 @@ export function setupGenerateObservers() {
     });
 }
 
-export function setupCheckpointChangeObserver() {
+export function setupCheckpointChangeObserver(vScroll) {
 
     const ch_input = document.querySelector("#setting_sd_model_checkpoint .wrap .secondary-wrap input") || document.querySelector(".gradio-dropdown.model_selection .wrap .secondary-wrap input");
     const ch_preload = document.querySelector("#setting_sd_model_checkpoint .wrap") || document.querySelector(".gradio-dropdown.model_selection .wrap");
 
-    const ch_footer_selected = document.querySelector("#txt2img_checkpoints_main_footer .model-selected");
-    const ch_footer_preload = document.querySelector("#txt2img_checkpoints_main_footer .model-preloader");
+    const ch_footer_selected = document.querySelector("#checkpoints_main_footer_db .model-selected");
+    const ch_footer_preload = document.querySelector("#checkpoints_main_footer_db .model-preloader");
     ch_footer_preload.append(ch_preload);
 
-    let hash_value;
-    // Function to handle checkpoint selection
+    let hash_value = "";
+
     const selectCard = (value) => {
         if (hash_value !== value) {
-            console.log("Checkpoint:", value);
-            const oldcard = document.querySelector(`#txt2img_checkpoints_cards .card.selected`);
-            oldcard?.classList.remove("selected");
-
-            const new_card = document.querySelector(`#txt2img_checkpoints_cards .card[data-apply*="${value}"]`) || document.querySelector(`#txt2img_checkpoints_cards .card[onclick*="${value}"]`);
-            new_card?.classList.add("selected");
-
+            const name = value.split('.').slice(0, -1).join();
+            vScroll.selected = new Set([name]);
+            vScroll.renderItems();
             ch_footer_selected.textContent = value;
-            console.log("Checkpoint:", value);
-
+            console.log("Checkpoint:", value, name);
             hash_value = value;
         }
     };
@@ -85,9 +80,6 @@ export function setupCheckpointChangeObserver() {
 
     const combinedObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(m) {
-            //if (m.type === "attributes" && m.target === ch_input) {
-            //    selectCard(ch_input.value);
-            //}
             setTimeout(() => selectCard(ch_input.value), 1000);
         });
     });

@@ -4,7 +4,7 @@ import {DynamicForm} from './dynamic_forms.js';
 import {DEFAULT_PATH} from '../constants.js';
 import {Spotlight} from "../spotlight/js/spotlight3.js";
 import {updateInput, updateChange} from "../utils/helpers.js";
-import {setupInputObservers} from '../utils/observers.js';
+import {setupInputObservers, setupCheckpointChangeObserver} from '../utils/observers.js';
 
 export async function refreshDirectory(directory) {
 
@@ -32,26 +32,20 @@ export async function refreshDirectory(directory) {
     }
 }
 
-export async function setupExtraNetworks() {
-    setupExtraNetwork('checkpoints', "checkpoint", "stable-diffusion/");
-    setupExtraNetwork('textual_inversion', "textualinversion", "embeddings/");
-    setupExtraNetwork('lora', "lora", "lora/");
-    setupExtraNetwork('hypernetworks', "hypernetwork", "hypernetworks/");
-}
 
-export async function setupExtraNetworksCheckpoints() {
+export async function setupExtraNetworkCheckpoints() {
     setupExtraNetwork('checkpoints', "checkpoint", "stable-diffusion/");
 }
 
-export async function setupExtraNetworksTextualinversion() {
+export async function setupExtraNetworkTextualinversion() {
     setupExtraNetwork('textual_inversion', "textualinversion", "embeddings/");
 }
 
-export async function setupExtraNetworksLora() {
+export async function setupExtraNetworkLora() {
     setupExtraNetwork('lora', "lora", "lora/");
 }
 
-export async function setupExtraNetworksHypernetworks() {
+export async function setupExtraNetworkHypernetworks() {
     setupExtraNetwork('hypernetworks', "hypernetwork", "hypernetworks/");
 }
 
@@ -125,6 +119,7 @@ async function requestGetMetaData(type, name, vScroll, container) {
     });
 }
 
+const selected_networks = {};
 
 export async function setupExtraNetwork(netkey, table, base_path) {
 
@@ -139,6 +134,9 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     //const treeViewContainer = document.querySelector(`#${netkey}_tree_view`);
 
     const gradio_refresh = document.querySelector("#refresh_database");
+
+    selected_networks[`txt2img_${table}`] = [];
+    selected_networks[`img2img_${table}`] = [];
 
     const limit = 100;
     const apiUrl = `/sd_webui_ux/get_models_from_db`;
@@ -182,10 +180,16 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         }
     };
 
-    // Render: Item Node Renderer Overwite
-    vScroll.createItemElement = function(item) {
+    // Render: Item Node Renderer Overwrite
+    vScroll.createItemElement = function(item, actualIndex) {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'item card';
+
+        if (this.selected?.has(item.name)) {
+            itemDiv.classList.add('active');
+        } else {
+            itemDiv.classList.remove('active');
+        }
 
         const imageUrl = item.thumbnail;
         if (imageUrl) {
@@ -221,7 +225,133 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         return itemDiv;
     };
 
-    // User Metadata
+    // ExtraNetwork
+    function applyExtraNetworkPrompts(target, itemData, index) {
+        const prompt_focused = window.UIUX.FOCUS_PROMPT;
+        let prompt = itemData.prompt?.replace("opts.extra_networks_default_multiplier", itemData.preferred_weight > 0 ? itemData.preferred_weight : opts.extra_networks_default_multiplier) || "";
+        prompt += itemData.activation_text || "";
+        const neg_prompt = itemData.negative_prompt || "";
+
+        if (target.classList.contains("copy-path")) {
+            extraNetworksCopyPath(itemData.filename);
+        } else if (target.classList.contains("show-meta")) {
+            requestGetMetaData(itemData.type, itemData.name, vScroll, container);
+        } else if (target.classList.contains("edit-meta")) {
+            createUserMetaForm(itemData, index);
+        } else if (itemData.type === "Checkpoint") {
+            window.selectCheckpoint(itemData.name);
+        } else if (itemData.type === "TextualInversion") {
+            window.cardClicked(prompt_focused, prompt, neg_prompt, true);
+            selected_networks[`${prompt_focused}_textualinversion`].push({id: itemData.name, value: prompt});
+        } else if (itemData.type === "LORA") {
+            window.cardClicked(prompt_focused, prompt, neg_prompt, false);
+            selected_networks[`${prompt_focused}_lora`].push({id: itemData.name, value: `<lora:${prompt.split(':')[1]}`});
+        } else if (itemData.type === "Hypernetwork") {
+            window.cardClicked(prompt_focused, prompt, neg_prompt, false);
+            selected_networks[`${prompt_focused}_hypernetwork`].push({id: itemData.name, value: prompt});
+        }
+    }
+
+    vScroll.clickHandler = function(e) {
+        const {target: target, currentTarget: ctarget} = e;
+        const index = target.closest('.item.card').dataset.index;
+        const itemData = this.data[index];
+        if (itemData) {
+            applyExtraNetworkPrompts(target, itemData, index);
+            //console.log(itemData);
+        }
+        e.stopPropagation();
+    };
+
+    rebuild_thumbs.addEventListener('click', (e) => {
+        /*
+        requestPostData('/sd_webui_ux/generate-thumbnail', {table_name: table, file_id: parseInt(fileId)}, (metadata) => {
+            document.getElementById('status').innerText = metadata.message;
+        });
+        */
+        requestPostData('/sd_webui_ux/generate-thumbnails', {table_name: table}, function(data) {
+            console.log(data);
+            //gradio_refresh.click();
+            setTimeout(() => {
+                apiParams.skip = 0;
+                vScroll.updateParamsAndFetch(apiParams, 0);
+            }, 1000);
+        });
+    });
+
+    orderButton.addEventListener('click', (e) => {
+        const val = orderButton.classList.contains("active");
+        apiParams.skip = 0;
+        apiParams.order = val ? "desc" : "asc";
+        vScroll.updateParamsAndFetch(apiParams, 0);
+    });
+
+    searchClear.addEventListener('click', (e) => {
+        searchInput.value = "";
+        updateInput(searchInput);
+    });
+
+    vScroll.updateParamsAndFetch(apiParams, 0);
+
+
+    // TreeView
+    const treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_models_by_path', table, base_path);
+    treeView.initialize();
+
+    treeView.onFolderClicked = function(target, path, active) {
+        //console.log(path, active);
+        //searchInput.value = active ? path : "";
+        //updateInput(searchInput);
+    };
+
+    treeView.onFileClicked = function(target, itemData) {
+        applyExtraNetworkPrompts(target, itemData);
+    };
+
+    refresh.addEventListener('click', (e) => {
+        gradio_refresh.click();
+        setTimeout(() => {
+            apiParams.skip = 0;
+            vScroll.updateParamsAndFetch(apiParams, 0);
+            treeView.initialize();
+        }, 1000);
+    });
+
+    // Highlight Selected Items
+    function selectItems(e) {
+        const prompt_focused = window.UIUX.FOCUS_PROMPT;
+        const currNetwork = selected_networks[`${prompt_focused}_${table}`];
+
+        setTimeout(() => {
+            let txt_value = '';
+            document.querySelectorAll(`#${prompt_focused}_prompt textarea, #${prompt_focused}_neg_prompt textarea`).forEach(textarea => {
+                txt_value += textarea.value;
+            });
+            const cleanedNetwork = currNetwork.filter(network => {
+                return network && network.value && txt_value.includes(network.value);
+            });
+
+            selected_networks[`${prompt_focused}_${table}`] = cleanedNetwork;
+
+            const selectedIds = cleanedNetwork ? new Set(Object.values(cleanedNetwork).map(network => network.id)) : new Set();
+            vScroll.selected = selectedIds;
+            vScroll.renderItems();
+            //console.log(cleanedNetwork);
+
+        }, 100);
+    }
+
+    if (table !== 'checkpoint') {
+        document.querySelectorAll('#txt2img_prompt textarea, #img2img_prompt textarea, #txt2img_neg_prompt textarea, #img2img_neg_prompt textarea').forEach(textarea => {
+            textarea.addEventListener('input', selectItems);
+            textarea.addEventListener('focus', selectItems);
+        });
+    } else {
+        setupCheckpointChangeObserver(vScroll);
+    }
+
+
+    // User Metadata Form
     function createUserMetaForm(itemData, index) {
 
         const fields = {
@@ -307,93 +437,6 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         });
 
     }
-
-    // User ExtraNetwork
-    function applyExtraNetworkPrompts(target, itemData, index) {
-        const prompt_focused = window.UIUX.FOCUS_PROMPT;
-        let prompt = itemData.prompt?.replace("opts.extra_networks_default_multiplier", itemData.preferred_weight > 0 ? itemData.preferred_weight : opts.extra_networks_default_multiplier) || "";
-        prompt += itemData.activation_text || "";
-        const neg_prompt = itemData.negative_prompt || "";
-
-        if (target.classList.contains("copy-path")) {
-            extraNetworksCopyPath(itemData.filename);
-        } else if (target.classList.contains("show-meta")) {
-            requestGetMetaData(itemData.type, itemData.name, vScroll, container);
-        } else if (target.classList.contains("edit-meta")) {
-            createUserMetaForm(itemData, index);
-        } else if (itemData.type === "Checkpoint") {
-            window.selectCheckpoint(itemData.name);
-        } else if (itemData.type === "TextualInversion") {
-            window.cardClicked(prompt_focused, prompt, neg_prompt, true);
-        } else if (itemData.type === "LORA" || itemData.type === "Hypernetwork") {
-            window.cardClicked(prompt_focused, prompt, neg_prompt, false);
-        }
-    }
-
-    vScroll.clickHandler = function(e) {
-        const {target: target, currentTarget: ctarget} = e;
-        const index = target.closest('.item.card').dataset.index;
-        const itemData = this.data[index];
-        if (itemData) {
-            applyExtraNetworkPrompts(target, itemData, index);
-            console.log(itemData);
-        }
-        e.stopPropagation();
-    };
-
-    rebuild_thumbs.addEventListener('click', (e) => {
-        /*
-        requestPostData('/sd_webui_ux/generate-thumbnail', {table_name: table, file_id: parseInt(fileId)}, (metadata) => {
-            document.getElementById('status').innerText = metadata.message;
-        });
-        */
-        requestPostData('/sd_webui_ux/generate-thumbnails', {table_name: table}, function(data) {
-            console.log(data);
-            //gradio_refresh.click();
-            setTimeout(() => {
-                apiParams.skip = 0;
-                vScroll.updateParamsAndFetch(apiParams, 0);
-            }, 1000);
-        });
-    });
-
-    orderButton.addEventListener('click', (e) => {
-        const val = orderButton.classList.contains("active");
-        apiParams.skip = 0;
-        apiParams.order = val ? "desc" : "asc";
-        vScroll.updateParamsAndFetch(apiParams, 0);
-    });
-
-    searchClear.addEventListener('click', (e) => {
-        searchInput.value = "";
-        updateInput(searchInput);
-    });
-
-    vScroll.updateParamsAndFetch(apiParams, 0);
-
-
-    // TreeView
-    const treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_models_by_path', table, base_path);
-    treeView.initialize();
-
-    treeView.onFolderClicked = function(target, path, active) {
-        //console.log(path, active);
-        //searchInput.value = active ? path : "";
-        //updateInput(searchInput);
-    };
-
-    treeView.onFileClicked = function(target, itemData) {
-        applyExtraNetworkPrompts(target, itemData);
-    };
-
-    refresh.addEventListener('click', (e) => {
-        gradio_refresh.click();
-        setTimeout(() => {
-            apiParams.skip = 0;
-            vScroll.updateParamsAndFetch(apiParams, 0);
-            treeView.initialize();
-        }, 1000);
-    });
 
 
 }

@@ -16,6 +16,7 @@ export function VirtualScroll(container, data, itemsPerPage = 10, keys = {title:
     this.useDataFetching = true;
     this.isInit = false;
     this.resolvedRenderMethod = this.renderItems;//ByIndex;
+    this.selected;
     this.createContainer();
     this.createSentinels();
     this.createDetail();
@@ -87,7 +88,7 @@ VirtualScroll.prototype.createDetail = function() {
 
 };
 
-VirtualScroll.prototype.createItemElement = function(item) {
+VirtualScroll.prototype.createItemElement = function(item, actualIndex) {
     const itemDiv = document.createElement('div');
     itemDiv.className = 'item card';
 
@@ -118,10 +119,12 @@ VirtualScroll.prototype.renderItems = function() {
     this.itemsWrapper.innerHTML = '';
     const itemsToRender = this.getItemsToRender();
     const itemsFragment = document.createDocumentFragment();
+
     itemsToRender.forEach((item, index) => {
         const actualIndex = this.startIndex + index;
-        const itemDiv = this.createItemElement(item);
+        const itemDiv = this.createItemElement(item, actualIndex);
         itemDiv.dataset.index = actualIndex;
+        //itemDiv.dataset.id = item.id;
         itemsFragment.appendChild(itemDiv);
     });
     this.itemsWrapper.appendChild(itemsFragment);
@@ -185,7 +188,7 @@ VirtualScroll.prototype.cleanupRenderedItems = function() {
         }
     }
 };
-
+/******/
 
 /* Updates */
 VirtualScroll.prototype.updateSentinels = function() {
@@ -412,7 +415,11 @@ VirtualScroll.prototype.updateDataByIndex = function(data, index) {
     this.renderItems();
 };
 
-
+VirtualScroll.prototype.setSelectedItems = function(items) {
+    this.selected = items;
+    console.log(items);
+    this.renderItems();
+};
 
 /* Fetch Async Data */
 VirtualScroll.prototype.fetchData = async function(updateIndicator) {
