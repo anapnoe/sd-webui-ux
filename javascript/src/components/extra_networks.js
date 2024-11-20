@@ -226,7 +226,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     };
 
     // ExtraNetwork
-    function applyExtraNetworkPrompts(target, itemData, index) {
+    function applyExtraNetworkPrompts(target, itemData, id) {
         const prompt_focused = window.UIUX.FOCUS_PROMPT;
         let prompt = itemData.prompt?.replace("opts.extra_networks_default_multiplier", itemData.preferred_weight > 0 ? itemData.preferred_weight : opts.extra_networks_default_multiplier) || "";
         prompt += itemData.activation_text || "";
@@ -239,7 +239,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         } else if (target.classList.contains("show-meta")) {
             requestGetMetaData(itemData.type, itemData.name, vScroll, container);
         } else if (target.classList.contains("edit-meta")) {
-            createUserMetaForm(itemData, index);
+            createUserMetaForm(itemData, itemData.id);
         } else if (itemData.type === "Checkpoint") {
             window.selectCheckpoint(itemData.name);
         } else if (itemData.type === "TextualInversion") {
@@ -255,15 +255,16 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     }
 
     vScroll.clickHandler = function(e) {
-        const {target: target, currentTarget: ctarget} = e;
-        const index = target.closest('.item.card').dataset.index;
-        const itemData = this.data[index];
+        const {target, currentTarget: ctarget} = e;
+        const itemId = target.closest('.item.card').dataset.id;
+        const itemData = this.data.find(item => item.id.toString() === itemId);
+        //console.log(itemId, target, this.data);
         if (itemData) {
-            applyExtraNetworkPrompts(target, itemData, index);
-            //console.log(itemData);
+            applyExtraNetworkPrompts(target, itemData, itemId);
         }
         e.stopPropagation();
     };
+
 
     rebuild_thumbs.addEventListener('click', (e) => {
         /*
@@ -388,7 +389,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
 
     // User Metadata Form
-    function createUserMetaForm(itemData, index) {
+    function createUserMetaForm(itemData, id) {
 
         const fields = {
             local_preview: {type: 'input'},
@@ -467,8 +468,8 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             dynamicForm.afterFormSubmit = function(data) {
                 vScroll.hideDetail();
                 //console.log(data);
-                vScroll.updateDataByIndex(data, index);
-                treeView.initialize();
+                vScroll.updateDataById(data, id);
+                treeView.updateDataById(data, id);
             };
         });
 

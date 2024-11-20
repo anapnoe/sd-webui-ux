@@ -124,7 +124,7 @@ VirtualScroll.prototype.renderItems = function() {
         const actualIndex = this.startIndex + index;
         const itemDiv = this.createItemElement(item, actualIndex);
         itemDiv.dataset.index = actualIndex;
-        //itemDiv.dataset.id = item.id;
+        itemDiv.dataset.id = item.id;
         itemsFragment.appendChild(itemDiv);
     });
     this.itemsWrapper.appendChild(itemsFragment);
@@ -141,6 +141,7 @@ VirtualScroll.prototype.forceRenderItems = function() {
         const actualIndex = this.startIndex + index;
         const itemDiv = this.createItemElement(item);
         itemDiv.dataset.index = actualIndex;
+        itemDiv.dataset.id = item.id;
         itemsFragment.appendChild(itemDiv);
         this.renderedItems[actualIndex] = itemDiv;
     });
@@ -159,6 +160,7 @@ VirtualScroll.prototype.renderItemsByIndex = function(scrollDirection = 'down') 
             //console.log("add:", actualIndex);
             const itemDiv = this.createItemElement(item);
             itemDiv.dataset.index = actualIndex;
+            itemDiv.dataset.id = item.id;
             itemsFragment.appendChild(itemDiv);
             this.renderedItems[actualIndex] = itemDiv;
         }
@@ -415,9 +417,23 @@ VirtualScroll.prototype.updateDataByIndex = function(data, index) {
     this.renderItems();
 };
 
+VirtualScroll.prototype.updateDataById = function(data, id) {
+    const item = this.originalData.find(item => item.id === id);
+    if (item) {
+        for (const [key, value] of Object.entries(data)) {
+            item[key] = value;
+        }
+        this.data = this.originalData;
+        this.renderItems();
+    } else {
+        console.error(`Item with ID ${id} not found.`);
+    }
+};
+
+
 VirtualScroll.prototype.setSelectedItems = function(items) {
     this.selected = items;
-    console.log(items);
+    //console.log(items);
     this.renderItems();
 };
 

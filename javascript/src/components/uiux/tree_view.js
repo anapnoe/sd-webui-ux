@@ -177,6 +177,19 @@ TreeView.prototype.getItemProperties = function(itemId) {
     return this.itemMap[itemId];
 };
 
+TreeView.prototype.updateDataById = function(data, id) {
+    const item = this.itemMap[id];
+    if (item) {
+        for (const [key, value] of Object.entries(data)) {
+            item[key] = value;
+        }
+    } else {
+        console.error(`Item with ID ${id} not found.`);
+    }
+};
+
+
+
 TreeView.prototype.onFolderClicked = function(target, path, active) {
 };
 
