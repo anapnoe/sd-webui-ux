@@ -378,10 +378,68 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         }, 100);
     }
 
+    function extractLoraInfo(word) {
+        if (word.includes('<lora:')) {
+            const name = word.split('<lora:')[1].split(':')[0];
+            return { original: `<lora:${name}:opts.extra_networks_default_multiplier>` };
+        }
+        return { original: word };
+    }
+
+
+    function selectItemsFromDB(e) {
+        const prompt_focused = window.UIUX.FOCUS_PROMPT;
+        const currNetwork = selected_networks[`${prompt_focused}_${table}`];
+        let txt_value = '';
+
+        document.querySelectorAll(`#${prompt_focused}_prompt textarea, #${prompt_focused}_neg_prompt textarea`).forEach(textarea => {
+            txt_value += ` ${textarea.value}`;
+        });
+
+        if(txt_value.length > 2){
+            const words = txt_value.trim().split(/[\s,]+/);
+            const processedWords = words.map(word => extractLoraInfo(word));
+
+            const url = '/sd_webui_ux/search_words_in_tables_columns';
+            const params = {
+                textarea: processedWords.map(w => w.original).join(' '),
+                tables: table, 
+                columns: 'prompt'
+            }
+
+            requestPostData(url, params, function(result) {
+                const data = result[table]
+                console.log(data);
+                const cleanedNetwork = data.map(itemData => {
+                    return {
+                        id: itemData.id,
+                        name: itemData.name,
+                        value: table === 'lora' ? `<lora:${itemData.prompt.split(':')[1]}` : itemData.prompt         
+                    }
+                });
+            
+                selected_networks[`${prompt_focused}_${table}`] = cleanedNetwork;
+
+                vScroll.selected = treeView.selected = new Set(cleanedNetwork.map(network => network.name));
+            
+                vScroll.renderItems();
+                treeView.updateSelectedItems();
+            });
+         
+        }else{
+
+            vScroll.selected = treeView.selected = new Set();
+            vScroll.renderItems();
+            treeView.updateSelectedItems();
+        }
+    }
+
+
     if (table !== 'checkpoint') {
         document.querySelectorAll('#txt2img_prompt textarea, #img2img_prompt textarea, #txt2img_neg_prompt textarea, #img2img_neg_prompt textarea').forEach(textarea => {
             textarea.addEventListener('input', selectItems);
-            textarea.addEventListener('focus', selectItems);
+            //textarea.addEventListener('focus', selectItems);
+            textarea.addEventListener('focus', selectItemsFromDB);
         });
     } else {
         setupCheckpointChangeObserver(vScroll, treeView);

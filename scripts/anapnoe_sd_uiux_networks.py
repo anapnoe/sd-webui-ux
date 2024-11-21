@@ -32,7 +32,8 @@ webui_dir = Path(basedir).parents[1]
 scripts_folder = os.path.join(basedir, "scripts")
 data_folder = os.path.join(basedir, "data")
 
-DB_FILE = 'sd_models.db'
+DB_FILE = os.path.join(basedir, 'sd_webui_ux.db')
+#DB_FILE = 'sd_models.db'
 db_manager = DatabaseManager(DB_FILE)
 DatabaseManager.set_instance(db_manager)
 

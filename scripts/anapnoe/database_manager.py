@@ -54,7 +54,6 @@ class DatabaseManager:
 
 
     def create_table(self, table_name, columns):
-       
         validate_name(table_name, "table")
 
         # Validate column definitions
@@ -76,6 +75,56 @@ class DatabaseManager:
 
         conn.commit()
         conn.close()
+
+
+    def search_words_in_tables_columns(self, words, tables, columns):
+        # Create a temp table 
+        conn = self.connect()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('CREATE TEMPORARY TABLE temp_words (word TEXT)')
+
+            for word in words:
+                #print(f"Inserting word: {word}")
+                if not isinstance(word, str):
+                    raise ValueError(f"Unsupported type for word: {type(word)}")
+                cursor.execute('INSERT INTO temp_words (word) VALUES (?)', (word,))
+
+            results = {}
+            for table, cols in zip(tables, columns):
+                validate_name(table, "table")  # Validate table
+                results[table] = []
+                for col in cols:
+                    validate_name(col, "column")  # Validate column
+                    
+                    #conditions = ' OR '.join([f"{col} LIKE ?" for _ in words])
+                    #values = [f"%{word}%" for word in words]
+
+                    conditions = ' OR '.join([f"{col} = ?" for _ in words])
+                    values = words
+
+                    cursor.execute(f'''
+                        SELECT * FROM {table}
+                        WHERE {conditions}
+                    ''', values)
+
+                    rows = cursor.fetchall()
+                    column_names = [description[0] for description in cursor.description]
+                    results[table].extend([dict(zip(column_names, row)) for row in rows])  # Add found to the table
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            results = {"error": str(e)}  # Return the error message in the response
+
+        finally:
+            # DROP temp
+            cursor.execute('DROP TABLE IF EXISTS temp_words')
+            conn.commit()
+            conn.close()
+
+        return results
+
 
 
     def default_value_for_key(self, key):
@@ -359,7 +408,7 @@ class DatabaseManager:
             image_path = base_path + ext
             if os.path.exists(image_path):
                 return image_path
-            
+
             preview_image_path = base_path + ".preview" + ext
             if os.path.exists(preview_image_path):
                 return preview_image_path
@@ -384,8 +433,13 @@ class DatabaseManager:
                     base_name = Path(image_path).stem
 
                 thumb_path = thumb_dir / f"{base_name}.thumb.webp"
-                img.save(thumb_path, "WEBP")
 
+                exif_data = img.info.get('exif')
+                if exif_data:
+                    img.save(thumb_path, "WEBP", exif=exif_data)
+                else:
+                    img.save(thumb_path, "WEBP")
+                
                 logger.info(f"Thumbnail saved to {thumb_path}")
                 return thumb_path.as_posix()
         except Exception as e:
@@ -583,6 +637,34 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         db_manager = DatabaseManager.get_instance()
         items = db_manager.get_items_by_path(table_name, path)
         return {"data": items}
+
+
+    @app.post("/sd_webui_ux/search_words_in_tables_columns")
+    async def search_words_in_tables_columns_endpoint(payload: dict = Body(...)):
+        textarea = payload.get("textarea")
+        tables = payload.get("tables")
+        columns = payload.get("columns")
+
+        # Validate
+        if not textarea or not tables or not columns:
+            raise HTTPException(status_code=400, detail="Invalid input")
+
+        words = textarea.split()
+        table_list = tables.split(',')  
+
+        if ';' in columns:
+            column_list = [col.split(',') for col in columns.split(';')]  # Different col for each table
+        else:
+            column_list = [columns.split(',')] * len(table_list)  # Same col for all tables
+
+        db_manager = DatabaseManager.get_instance()
+
+        try:
+            results = db_manager.search_words_in_tables_columns(words, table_list, column_list)
+            return results
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
 
 
     
