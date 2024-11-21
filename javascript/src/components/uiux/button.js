@@ -59,7 +59,16 @@ export async function initButtonComponents(contentDiv) {
         }
 
         //maybe move this alsewhere
+    /*
         const adc = el.getAttribute("data-click");
+        if (adc) {
+            setTimeout(() => {
+                document.querySelectorAll(adc).forEach((el) => {
+                    el.click();
+                });
+            }, 500);
+        }*/
+        /*
         if (adc) {
             el.addEventListener('click', (e) => {
                 if (el.classList.contains("refresh-extra-networks")) {
@@ -74,13 +83,13 @@ export async function initButtonComponents(contentDiv) {
 
                     elementsToAppend.forEach(element => {
                         if (element) {
-                            /*
-                            element.querySelectorAll("[data-apply]").forEach((ca) => {
-                                const data_apply = ca.getAttribute("data-apply");
-                                ca.setAttribute("onClick", data_apply);
-                                ca.removeAttribute("data-apply");
+                            
+                            //element.querySelectorAll("[data-apply]").forEach((ca) => {
+                            //    const data_apply = ca.getAttribute("data-apply");
+                            //    ca.setAttribute("onClick", data_apply);
+                            //    ca.removeAttribute("data-apply");
                             });
-                            */
+                            
                             cpane.append(element);
                         }
                     });
@@ -106,7 +115,8 @@ export async function initButtonComponents(contentDiv) {
                 }, 500);
 
             });
-        }
+        }*/
+
     }));
 
 }
