@@ -11,6 +11,7 @@ import os
 import re
 from pathlib import Path
 from PIL import Image
+import shutil
 
 import gradio as gr
 from modules import script_callbacks
@@ -246,7 +247,36 @@ class DatabaseManager:
                 conn.close()
 
 
-    def update_item(self, table_name, item):
+    def check_and_copy_local_preview(self, table_name, item_filtered):
+        validate_name(table_name, "table")  # Validate table
+        conn = None
+        try:
+            conn = self.connect()
+            cursor = conn.cursor()
+
+            cursor.execute(f'SELECT local_preview FROM {table_name} WHERE name = ?', (item_filtered['name'],))
+            curr_local_preview = cursor.fetchone()
+
+            if curr_local_preview and curr_local_preview[0] != item_filtered.get('local_preview'):
+                old_local_preview_path = curr_local_preview[0]
+                new_local_preview_path = item_filtered.get('local_preview')
+
+                # Copy, overwrite if exists
+                if os.path.exists(new_local_preview_path):
+                    shutil.copy2(new_local_preview_path, old_local_preview_path)
+                    logger.info(f"Copied new local_preview from {new_local_preview_path} to {old_local_preview_path}")
+                    
+                return old_local_preview_path  # Path updated
+            return None  # No Path update
+        except Exception as e:
+            logger.error(f"Error checking and copying local_preview: {e}")
+            return None
+        finally:
+            if conn:
+                conn.close()
+
+
+    def update_item(self, table_name, item, update_local_preview=False):
         validate_name(table_name, "table")  # Validate table
         conn = None
         try:
@@ -254,6 +284,13 @@ class DatabaseManager:
             cursor = conn.cursor()
 
             item_filtered = self.filter_and_normalize_paths(item)
+
+            # Check and copy local_preview if the flag is set
+            if update_local_preview:
+                updated_local_preview_path = self.check_and_copy_local_preview(table_name, item_filtered)
+                if updated_local_preview_path:
+                    item_filtered['local_preview'] = updated_local_preview_path
+                    item_filtered['thumbnail'] = self.create_and_save_thumbnail(updated_local_preview_path)
 
             keys = ', '.join([f"{k} = ?" for k in item_filtered.keys()])
             values = tuple(json.dumps(val) if isinstance(val, (dict, list)) else val for val in item_filtered.values()) + (item['name'],)
@@ -416,15 +453,14 @@ class DatabaseManager:
         return None
 
 
-    def create_and_save_thumbnail(self, image_path, size=(512, 512)):
+    def create_and_save_thumbnail(self, image_path, save_path=None, size=(512, 512)):
         image_path = self.get_image_path(image_path)
         if not image_path:
             return None
         try:
             with Image.open(image_path) as img:
-                img.thumbnail(size)
-
-                thumb_dir = Path(image_path).parent / 'thumbnails'
+                img.thumbnail(size)  
+                thumb_dir = Path(save_path or image_path).parent / 'thumbnails'
                 thumb_dir.mkdir(parents=True, exist_ok=True)
 
                 if ".preview" in image_path:
@@ -447,45 +483,27 @@ class DatabaseManager:
             return None
 
 
-    def generate_thumbnail(self, table_name, file_id, size=(512, 512)):
+    def generate_thumbnails(self, table_name, size=(512, 512), file_id=None):
         validate_name(table_name, "table")  # Validate table
         conn = None
         try:
             conn = self.connect()
             cursor = conn.cursor()
-            cursor.execute(f'SELECT local_preview FROM {table_name} WHERE id = ?', (file_id,))
-            row = cursor.fetchone()
-            if not row:
-                return {"message": f"Image path not found for file_id {file_id}"}
             
-            image_path = row[0]
-            thumb_path = self.create_and_save_thumbnail(image_path, size)
-            
-            if thumb_path:
-                cursor.execute(f'UPDATE {table_name} SET thumbnail = ? WHERE id = ?', (thumb_path, file_id))
-                conn.commit()
-                return {"message": f"Thumbnail generated and updated for file_id: {file_id}"}
+            # if file_id execute one
+            if file_id is not None:
+                cursor.execute(f'SELECT id, local_preview, filename FROM {table_name} WHERE id = ? AND local_preview IS NOT NULL', (file_id,))
             else:
-                return {"message": f"Error generating thumbnail for file_id {file_id}"}
-        except Exception as e:
-            logger.error(f"Error processing file_id {file_id}: {e}")
-            return {"message": f"Error processing file_id {file_id}: {e}"}
-        finally:
-            if conn:
-                conn.close()
-
-
-    def generate_thumbnails(self, table_name, size=(512, 512)):
-        validate_name(table_name, "table")  # Validate table
-        try:
-            conn = self.connect()
-            cursor = conn.cursor()
-            cursor.execute(f'SELECT id, local_preview FROM {table_name} WHERE local_preview IS NOT NULL')
+                cursor.execute(f'SELECT id, local_preview, filename FROM {table_name} WHERE local_preview IS NOT NULL')
+            
             rows = cursor.fetchall()
 
+            if not rows:
+                return {"message": f"No images found for file_id {file_id}" if file_id else "No images found."}
+
             for row in rows:
-                file_id, image_path = row
-                thumb_path = self.create_and_save_thumbnail(image_path, size)
+                file_id, image_path, save_path = row
+                thumb_path = self.create_and_save_thumbnail(image_path, save_path, size)
                 if thumb_path:
                     try:
                         cursor.execute(f'UPDATE {table_name} SET thumbnail = ? WHERE id = ?', (thumb_path, file_id))
@@ -493,10 +511,12 @@ class DatabaseManager:
                         logger.error(f"Error updating database for file_id {file_id}: {e}")
 
             conn.commit()
-            conn.close()
-            return {"message": "Thumbnails generated and updated successfully"}
+            return {"message": "Thumbnails generated and updated successfully" if not file_id else f"Thumbnail generated and updated for file_id: {file_id}"}
         except Exception as e:
             return {"message": f"Error generating thumbnails: {e}"}
+        finally:
+            if conn:
+                conn.close()
 
 
 def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
@@ -597,7 +617,7 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         item.update({key: value for key, value in optional_fields.items() if key in table_columns})
 
         try:
-            db_manager.update_item(table_name, item)
+            db_manager.update_item(table_name, item, update_local_preview=True)
             return {"message": "Item updated successfully"}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -625,10 +645,11 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
             raise HTTPException(status_code=422, detail="File ID is required")
 
         db_manager = DatabaseManager.get_instance()
-        response = db_manager.generate_thumbnail(table_name, file_id)
+        response = db_manager.generate_thumbnails(table_name, file_id=file_id)
         if "Error" in response["message"]:
             raise HTTPException(status_code=500, detail=response["message"])
         return response
+
     
     @app.get("/sd_webui_ux/get_models_by_path")
     def get_models_by_path_endpoint(

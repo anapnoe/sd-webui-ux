@@ -135,6 +135,11 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
     const gradio_refresh = document.querySelector("#refresh_database");
 
+    //const txt2img_local_preview = document.querySelector('#txt2img_gallery [test-id="detailed-image"]');
+    //const img2img_local_preview = document.querySelector('#txt2img_gallery [test-id="detailed-image"]');
+
+    
+
     selected_networks[`txt2img_${table}`] = [];
     selected_networks[`img2img_${table}`] = [];
 
@@ -193,7 +198,8 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
         const imageUrl = item.thumbnail;
         if (imageUrl) {
-            itemDiv.style.backgroundImage = `url(./sd_extra_networks/thumb?filename=${imageUrl})`;
+            //itemDiv.style.backgroundImage = `url('./sd_extra_networks/thumb?filename=${imageUrl}')`;
+            itemDiv.style.backgroundImage = `url('./file=${imageUrl}')`;
         }
 
         const itemTitle = document.createElement('span');
@@ -471,7 +477,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
         const img_data = {
             thumbnail: {type: 'img', showLabel: false},
-            replace_preview: {type: 'button', showLabel: false},
+            replace_preview: {type: 'button',  label:'Replace Preview', showLabel: false},
         };
 
         const murl = `/sd_webui_ux/get_internal_metadata?type=${encodeURIComponent(itemData.type)}&name=${encodeURIComponent(itemData.name)}`;
@@ -511,6 +517,9 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                 });
             }
 
+            //const txt2img_local_preview = document.querySelector('#txt2img_gallery [test-id="detailed-image"]');
+            //const img2img_local_preview = document.querySelector('#txt2img_gallery [test-id="detailed-image"]');
+
             const rowContainer = document.createElement('div');
             rowContainer.classList.add('non-editable-info', 'flexbox', 'padding', 'shrink');
 
@@ -523,12 +532,49 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             dcontainer.appendChild(rowContainer);
             dcontainer.appendChild(formEl);
 
+            function removeExtension(filename) {
+                const lastDotIndex = filename.lastIndexOf('.');
+                if (lastDotIndex === -1) {
+                    return filename;
+                }
+                return filename.substring(0, lastDotIndex);
+            }
+
+            function getPathAndFilename(filePath) {
+                const lastSlashIndex = filePath.lastIndexOf('/');
+                const path = filePath.substring(0, lastSlashIndex);
+                const filename = filePath.substring(lastSlashIndex + 1);
+                const lastDotIndex = filename.lastIndexOf('.');
+                const filename_no_ext = filename.substring(0, lastDotIndex);
+                
+                return {
+                    path: path,
+                    filename: filename,
+                    filename_no_ext: filename_no_ext
+                };
+            }
+
+
             dynamicForm.afterFormSubmit = function(data) {
                 vScroll.hideDetail();
-                //console.log(data);
+                console.log(data);
+                const lp = getPathAndFilename(itemData.filename);
+                const timestamp = new Date().getTime(); // Get the current timestamp
+                data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp?t=${timestamp}`; // Append timestamp to the URL
                 vScroll.updateDataById(data, id);
                 treeView.updateDataById(data, id);
             };
+            
+            const replace_local_preview = imgEl.querySelector('button.replace_preview');
+            replace_local_preview.addEventListener('click', (e) => {
+                const prompt_focused = window.UIUX.FOCUS_PROMPT;
+                const gallery_img = document.querySelector(`#${prompt_focused}_gallery [data-testid="detailed-image"]`);
+                if(gallery_img){
+                    const local_preview = formEl.querySelector('#local_preview');
+                    local_preview.value = gallery_img.src.split('file=')[1].split('?')[0];
+                }
+            });
+
         });
 
     }

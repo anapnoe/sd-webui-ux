@@ -146,13 +146,13 @@ DynamicForm.prototype.createForm = function(fields) {
     return this.form;
 };
 
-DynamicForm.prototype.createValueElement = function(type, field, value) {
+DynamicForm.prototype.createValueElement = function(type, field, value, label) {
     const elementConfig = {
         "filename": {textContent: this.formatFilename(value)},
         "filesize": {textContent: this.formatFileSize(value)},
         'date-format': {textContent: this.formatDate(value)},
-        "img": {tag: 'img', attributes: {src: './sd_extra_networks/thumb?filename=' + value, alt: field, class: 'thumbnail-image'}},
-        "button": {tag: 'button', textContent: field, attributes: {class: 'ae-button', name: field}},
+        "img": {tag: 'img', attributes: {src: './file=' + value, alt: field, class: 'thumbnail-image'}},
+        "button": {tag: 'button', textContent: label || 'button', attributes: {class: `ae-button ${field}`, name: field}},
         "default": {textContent: value || ''}
     };
 
@@ -211,8 +211,8 @@ DynamicForm.prototype.createHtmlElement = function(div_data) {
             labelCell.textContent = field.replace('_', ' ').toUpperCase();
             row.appendChild(labelCell);
         }
-
-        const valueContent = this.createValueElement(config.type, field, this.itemData[field]);
+       //console.log(field,config);
+        const valueContent = this.createValueElement(config.type, field, this.itemData[field], config.label || '');
         row.appendChild(valueContent);
 
         div.appendChild(row);
