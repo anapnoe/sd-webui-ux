@@ -78,54 +78,56 @@ class DatabaseManager:
         conn.close()
 
 
-    def search_words_in_tables_columns(self, words, tables, columns):
-        # Create a temp table 
+    def search_words_in_tables_columns(self, words, tables, columns, threshold, batch_size=500):
         conn = self.connect()
         cursor = conn.cursor()
         
         try:
-            cursor.execute('CREATE TEMPORARY TABLE temp_words (word TEXT)')
-
-            for word in words:
-                #print(f"Inserting word: {word}")
-                if not isinstance(word, str):
-                    raise ValueError(f"Unsupported type for word: {type(word)}")
-                cursor.execute('INSERT INTO temp_words (word) VALUES (?)', (word,))
-
             results = {}
+            
             for table, cols in zip(tables, columns):
                 validate_name(table, "table")  # Validate table
                 results[table] = []
-                for col in cols:
-                    validate_name(col, "column")  # Validate column
-                    
-                    #conditions = ' OR '.join([f"{col} LIKE ?" for _ in words])
-                    #values = [f"%{word}%" for word in words]
-
-                    conditions = ' OR '.join([f"{col} = ?" for _ in words])
-                    values = words
-
-                    cursor.execute(f'''
-                        SELECT * FROM {table}
-                        WHERE {conditions}
-                    ''', values)
-
+                
+                # Create conditions
+                conditions = ' OR '.join([f"{col} = ?" for col in cols for _ in words])
+                values = words * len(cols)  # Repeat
+                
+                # Process in batches
+                offset = 0
+                while True:
+                    # LIMIT and OFFSET
+                    query = f"SELECT * FROM {table} WHERE {conditions} LIMIT ? OFFSET ?"
+                    cursor.execute(query, values + [batch_size, offset])
                     rows = cursor.fetchall()
+                    if not rows:
+                        break
+                    
                     column_names = [description[0] for description in cursor.description]
-                    results[table].extend([dict(zip(column_names, row)) for row in rows])  # Add found to the table
+                    
+                    for row in rows:
+                        # match the conditions
+                        matches = 0
+                        for col in cols:
+                            description = row[column_names.index(col)]
+                            if description in words:  # exact match
+                                matches += 1
+
+                        #logger.debug(f"Row: {row}, Matches: {matches}")
+                        
+                        if matches >= threshold:
+                            results[table].append(dict(zip(column_names, row)))
+                            
+                    offset += batch_size  # next batch
 
         except Exception as e:
-            print(f"An error occurred: {e}")
-            results = {"error": str(e)}  # Return the error message in the response
+            logger.error(f"An error occurred: {e}")
+            results = {"error": str(e)}
 
         finally:
-            # DROP temp
-            cursor.execute('DROP TABLE IF EXISTS temp_words')
-            conn.commit()
             conn.close()
 
         return results
-
 
 
     def default_value_for_key(self, key):
@@ -148,20 +150,42 @@ class DatabaseManager:
             item_filtered['local_preview'] = Path(item_filtered['local_preview']).as_posix()
         
         return item_filtered
-    
+
+
+    def table_exists(self, table_name):
+        validate_name(table_name, "table")  # Validate table
+        conn = None
+        try:
+            conn = self.connect()
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table_name,))
+            exists = cursor.fetchone() is not None
+            return exists
+        except sqlite3.Error as e:
+            logger.error(f"Database error in table_exists: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error in table_exists: {e}")
+        finally:
+            if conn:
+                conn.close()
+
 
     def item_exists(self, table_name, file_name):
-        validate_name(table_name, "table")  # Validate table name
-        conn = self.connect()
-        cursor = conn.cursor()
-        
-        cursor.execute(f'''
-        SELECT 1 FROM {table_name} WHERE name = ?
-        ''', (file_name,))
-        exists = cursor.fetchone() is not None
-        
-        conn.close()
-        return exists
+        validate_name(table_name, "table")  # Validate table
+        conn = None
+        try:
+            conn = self.connect()
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT 1 FROM {table_name} WHERE name = ?", (file_name,))
+            exists = cursor.fetchone() is not None
+            return exists
+        except sqlite3.Error as e:
+            logger.error(f"Database error in item_exists: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error in item_exists: {e}")
+        finally:
+            if conn:
+                conn.close()
 
 
     def item_exists_in_source(self, path):
@@ -365,7 +389,13 @@ class DatabaseManager:
             if sd_version:
                 where_clauses.append("LOWER(sd_version) LIKE ?")
 
-            where_clauses += [f"LOWER({col}) LIKE ?" for col in search_columns]
+            if search_columns and search_term:
+                terms = search_term.lower().split('+')  # Split by '+'
+                for col in search_columns:
+                    term_clauses = [f"LOWER({col}) LIKE ?" for _ in terms]
+                    where_clauses.append(f"({' OR '.join(term_clauses)})") 
+
+            # where_clauses += [f"LOWER({col}) LIKE ?" for col in search_columns]
             where_clause = " AND ".join(where_clauses) if where_clauses else "1=1"
 
             query = f"""
@@ -380,8 +410,13 @@ class DatabaseManager:
             if sd_version:
                 query_params.append(f"%{sd_version.lower()}%")
             
-            like_search_term = f"%{search_term.lower()}%"
-            query_params.extend([like_search_term] * len(search_columns))
+            if search_columns and search_term:
+                for term in terms:
+                    like_search_term = f"%{term}%"
+                    query_params.extend([like_search_term] * len(search_columns))
+            
+            #like_search_term = f"%{search_term.lower()}%"
+            #query_params.extend([like_search_term] * len(search_columns))
             
             # Fetch limit + 1 to check if there are more items
             query_params.extend([limit + 1, skip])
@@ -544,8 +579,8 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         return response
     '''
 
-    @app.get("/sd_webui_ux/get_models_from_db")
-    def get_models_from_db_endpoint(
+    @app.get("/sd_webui_ux/get_items_from_db")
+    def get_items_from_db_endpoint(
         table_name: str,
         skip: int = 0, 
         limit: int = 10, 
@@ -584,16 +619,16 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
 
     @app.post("/sd_webui_ux/update_user_metadata")
     async def update_user_metadata_endpoint(payload: dict = Body(...)):
-        table_name = payload.get('table_name')
-        description = payload.get('description')
-        notes = payload.get('notes')
-        tags = payload.get('tags')
-        sd_version = payload.get('sd_version')
-        local_preview = payload.get('local_preview')
-        name = payload.get('name')
-        activation_text = payload.get('activation_text')
-        preferred_weight = payload.get('preferred_weight')
-        negative_prompt = payload.get('negative_prompt')
+        table_name:str = payload.get('table_name')
+        description:str = payload.get('description')
+        notes:str = payload.get('notes')
+        tags:str = payload.get('tags')
+        sd_version:str = payload.get('sd_version')
+        local_preview:str = payload.get('local_preview')
+        name:str = payload.get('name')
+        activation_text:str = payload.get('activation_text')
+        preferred_weight: Optional[str] = payload.get('preferred_weight')
+        negative_prompt:str = payload.get('negative_prompt')
 
         if not table_name:
             raise HTTPException(status_code=422, detail="DB table_name is required")
@@ -609,11 +644,19 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
             'local_preview': local_preview,
             'name': name
         }
+
+        if preferred_weight is not None:
+            try:
+                preferred_weight = float(preferred_weight)  # float
+            except ValueError:
+                raise HTTPException(status_code=422, detail="preferred_weight must be a valid number")
+
         optional_fields = {
             'activation_text': activation_text,
             'preferred_weight': preferred_weight,
             'negative_prompt': negative_prompt
         }
+
         item.update({key: value for key, value in optional_fields.items() if key in table_columns})
 
         try:
@@ -624,7 +667,7 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
 
     @app.post("/sd_webui_ux/generate-thumbnails")
     async def generate_thumbnails(payload: dict = Body(...)):
-        table_name = payload.get('table_name')
+        table_name:str = payload.get('table_name')
         if not table_name:
             raise HTTPException(status_code=422, detail="Table name is required")
 
@@ -636,8 +679,8 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
 
     @app.post("/sd_webui_ux/generate-thumbnail")
     async def generate_thumbnail(payload: dict = Body(...)):
-        table_name = payload.get('table_name')
-        file_id = payload.get('file_id')
+        table_name:str = payload.get('table_name')
+        file_id:str = payload.get('file_id')
 
         if not table_name:
             raise HTTPException(status_code=422, detail="Table name is required")
@@ -651,8 +694,8 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         return response
 
     
-    @app.get("/sd_webui_ux/get_models_by_path")
-    def get_models_by_path_endpoint(
+    @app.get("/sd_webui_ux/get_items_by_path")
+    def get_items_by_path_endpoint(
         table_name: str,
         path: str = Query("")):       
         db_manager = DatabaseManager.get_instance()
@@ -661,27 +704,44 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
 
 
     @app.post("/sd_webui_ux/search_words_in_tables_columns")
-    async def search_words_in_tables_columns_endpoint(payload: dict = Body(...)):
-        textarea = payload.get("textarea")
-        tables = payload.get("tables")
-        columns = payload.get("columns")
+    async def search_words_in_tables_columns_endpoint(payload: dict = Body(...)):       
+        tables: str = payload.get("tables")
+        columns: str = payload.get("columns")
+        delimiter: Optional[str] = payload.get("delimiter")  # Optional delimiter
+        words: List[str] = payload.get("words", [])
+        textarea: Optional[str] = payload.get("textarea")
+        threshold: Optional[str] = payload.get("threshold")
 
-        # Validate
-        if not textarea or not tables or not columns:
-            raise HTTPException(status_code=400, detail="Invalid input")
+        # Validate input
+        if textarea:
+            if not textarea.strip():
+                raise HTTPException(status_code=400, detail="Invalid input: textarea is empty")
+            words = textarea.split(delimiter) if delimiter else textarea.split()
 
-        words = textarea.split()
+        if not words or not tables or not columns:
+            raise HTTPException(status_code=400, detail="Invalid input: words, tables, and columns are required")
+
+        if threshold is None:
+            threshold = 1
+        else:
+            try:
+                threshold = int(threshold)  # Convert to int
+                if threshold <= 0:
+                    raise ValueError("Threshold must be a positive integer")
+            except ValueError:
+                raise HTTPException(status_code=422, detail="Threshold must be a positive integer")
+
         table_list = tables.split(',')  
 
         if ';' in columns:
-            column_list = [col.split(',') for col in columns.split(';')]  # Different col for each table
+            column_list = [col.split(',') for col in columns.split(';')]  # Different columns for each table
         else:
-            column_list = [columns.split(',')] * len(table_list)  # Same col for all tables
+            column_list = [columns.split(',')] * len(table_list)  # Same columns for all tables
 
         db_manager = DatabaseManager.get_instance()
 
         try:
-            results = db_manager.search_words_in_tables_columns(words, table_list, column_list)
+            results = db_manager.search_words_in_tables_columns(words, table_list, column_list, threshold)
             return results
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
