@@ -14,7 +14,7 @@ import {setupThemeEditor} from './components/theme_editor.js';
 import {UIUX} from './utils/module.js';
 import {setupCivitaiExplorerImages, setupCivitaiExplorerModels} from './components/civitai_explorer.js';
 import {setupExtraNetworkCheckpoints, setupExtraNetworkTextualinversion, setupExtraNetworkLora, setupExtraNetworkHypernetworks} from './components/extra_networks.js';
-
+import {setupSdStyles} from './components/sd_styles.js';
 function onUiUxReady(content_div) {
 
     const logger_screen = document.querySelector("#logger_screen");
@@ -119,6 +119,17 @@ function onUiUxReady(content_div) {
     hypernetwork_nav.addEventListener('click', () => {
         setupExtraNetworkHypernetworks();
     }, {once: true});
+
+
+    if (window.opts.uiux_enable_sd_styles) {
+        const styles_nav = document.querySelector("#sd_styles_nav");
+        sd_styles_nav.classList.remove("hidden");
+        styles_nav.addEventListener('click', () => {
+            setupSdStyles();
+        }, {once: true});
+    }
+
+
 
     //const totalListeners = countEventListeners(document.body);
     //console.warn(`Total event listeners: ${totalListeners}`);
