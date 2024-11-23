@@ -38,6 +38,7 @@ TreeView.prototype.fetchData = async function(path) {
     const response = await fetch(`${this.fetchUrl}?table_name=${this.tableName}&path=${encodeURIComponent(path)}`);
     const json = await response.json();
     this.data = json.data;
+    console.log("tree data length:", this.data.length)
     return json.data;
 };
 
@@ -98,7 +99,7 @@ TreeView.prototype.createTreeView = function(tree, path = '') {
     for (const key in tree) {
         let li;
         if (typeof tree[key] === 'object' && !Array.isArray(tree[key])) {
-            if (key.includes(".safetensors") || key.includes(".pt")) {
+            if (key.includes(".safetensors") || key.includes(".pt") || key.includes(".png") || key.includes(".jpg") || key.includes(".webp")) {
                 li = this.createFileItem(tree, key);
             } else {
                 li = this.createFolderItem(tree, key, path);

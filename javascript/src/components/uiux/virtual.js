@@ -328,16 +328,16 @@ VirtualScroll.prototype.scrollToEnd = function() {
 
 /* Helper Functions*/
 VirtualScroll.prototype.debounce = function(func, defaultDelay = 1000) {
-    let timeout;
+    
     return function(...args) {
         const context = this;
         const delay = typeof args[args.length - 1] === 'number' ? args.pop() : defaultDelay;
         const later = () => {
-            timeout = null;
+            this.timeout = null;
             func.apply(context, args);
         };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, delay);
+        clearTimeout(this.timeout);
+        this.timeout = setTimeout(later, delay);
     }.bind(this);
 };
 
@@ -518,7 +518,7 @@ VirtualScroll.prototype.updateParamsAndFetch = async function(newParams, delay =
 
     // Pass the boolean argument to fetchUpdateData
     const debouncedFetchUpdateData = this.debounce(this.fetchUpdateData.bind(this, true), delay);
-    await debouncedFetchUpdateData();
+    debouncedFetchUpdateData();
 };
 
 

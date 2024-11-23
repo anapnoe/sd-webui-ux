@@ -54,22 +54,6 @@ function extraNetworksCopyPath(path) {
     console.log(path);
 }
 
-function extraNetworksRefreshSingleCard(page, tabname, name) {
-    requestGet("./sd_extra_networks/get-single-card", {page: page, tabname: tabname, name: name}, function(data) {
-        if (data && data.html) {
-            var card = gradioApp().querySelector(`#${tabname}_${page.replace(" ", "_")}_cards > .card[data-name="${name}"]`);
-
-            var newDiv = document.createElement('DIV');
-            newDiv.innerHTML = data.html;
-            var newCard = newDiv.firstElementChild;
-
-            newCard.style.display = '';
-            card.parentElement.insertBefore(newCard, card);
-            card.parentElement.removeChild(card);
-        }
-    });
-}
-
 async function requestGetData(url, callback) {
     try {
         const response = await fetch(url);
@@ -144,7 +128,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     selected_networks[`img2img_${table}`] = [];
 
     const limit = 100;
-    const apiUrl = `/sd_webui_ux/get_models_from_db`;
+    const apiUrl = `/sd_webui_ux/get_items_from_db`;
     const method = `GET`;
 
     const initApiParams = {
@@ -304,7 +288,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
 
     // TreeView
-    const treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_models_by_path', table, base_path);
+    const treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_items_by_path', table, base_path);
     treeView.initialize();
 
     treeView.createFileItem = function(tree, key) {
@@ -384,15 +368,6 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         }, 100);
     }
 
-    function extractLoraInfo(word) {
-        if (word.includes('<lora:')) {
-            const name = word.split('<lora:')[1].split(':')[0];
-            return { original: `<lora:${name}:opts.extra_networks_default_multiplier>` };
-        }
-        return { original: word };
-    }
-
-
     function selectItemsFromDB(e) {
         const prompt_focused = window.UIUX.FOCUS_PROMPT;
         const currNetwork = selected_networks[`${prompt_focused}_${table}`];
@@ -403,34 +378,61 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         });
 
         if(txt_value.length > 2){
-            const words = txt_value.trim().split(/[\s,]+/);
-            const processedWords = words.map(word => extractLoraInfo(word));
 
-            const url = '/sd_webui_ux/search_words_in_tables_columns';
-            const params = {
-                textarea: processedWords.map(w => w.original).join(' '),
-                tables: table, 
-                columns: 'prompt'
+            function cleanPhrases(input) {
+                return input.replace(/[()]+|:[0-9]+(.[0-9]+)?/g, '').trim();
             }
 
-            requestPostData(url, params, function(result) {
-                const data = result[table]
-                console.log(data);
-                const cleanedNetwork = data.map(itemData => {
-                    return {
-                        id: itemData.id,
-                        name: itemData.name,
-                        value: table === 'lora' ? `<lora:${itemData.prompt.split(':')[1]}` : itemData.prompt         
-                    }
-                });
-            
-                selected_networks[`${prompt_focused}_${table}`] = cleanedNetwork;
+            const words = txt_value.trim().split(/[\s,.]+/);
+            let cleaned_words = words.map(cleanPhrases).filter(Boolean);
 
-                vScroll.selected = treeView.selected = new Set(cleanedNetwork.map(network => network.name));
-            
-                vScroll.renderItems();
-                treeView.updateSelectedItems();
-            });
+            if(table === 'lora' || table === 'hypernetwork'){
+                const tagnet = table === 'lora' ? 'lora' : 'hypernet';
+                function netTagReset(input) {
+                    if (input.includes(`${tagnet}:`)) {
+                        const name = input.split(`${tagnet}:`)[1].split(':')[0];
+                        return `<${tagnet}:${name}:opts.extra_networks_default_multiplier>`;
+                    }
+                    return '';
+                }
+                const tag_words = txt_value.trim().split('<');
+                cleaned_words = tag_words.map(netTagReset).filter(Boolean); // Filter empty
+            }
+
+            if(cleaned_words.length > 0){
+                //console.log(cleaned_words);
+                const url = '/sd_webui_ux/search_words_in_tables_columns';
+                const params = {
+                    tables: table, 
+                    columns: 'prompt',
+                    words: cleaned_words
+                }
+
+                requestPostData(url, params, function(result) {
+                    const data = result[table]
+                    //console.log(data);
+                    const cleanedNetwork = data.map(itemData => {
+                        let data_prompt = itemData.prompt;
+                        if(table === 'lora' || table === 'hypernetwork'){
+                            const tagnet = table === 'lora' ? 'lora' : 'hypernet';
+                            data_prompt = `<${tagnet}:${itemData.prompt.split(':')[1]}`;
+                        }
+                        
+                        return {
+                            id: itemData.id,
+                            name: itemData.name,
+                            value: data_prompt         
+                        }
+                    });
+                
+                    selected_networks[`${prompt_focused}_${table}`] = cleanedNetwork;
+
+                    vScroll.selected = treeView.selected = new Set(cleanedNetwork.map(network => network.name));
+                
+                    vScroll.renderItems();
+                    treeView.updateSelectedItems();
+                });
+            }
          
         }else{
 
@@ -516,9 +518,6 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                     }
                 });
             }
-
-            //const txt2img_local_preview = document.querySelector('#txt2img_gallery [test-id="detailed-image"]');
-            //const img2img_local_preview = document.querySelector('#txt2img_gallery [test-id="detailed-image"]');
 
             const rowContainer = document.createElement('div');
             rowContainer.classList.add('non-editable-info', 'flexbox', 'padding', 'shrink');
