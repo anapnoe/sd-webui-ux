@@ -91,12 +91,12 @@
                 </button>
                 <div class="flexbox col spacer-v"></div>
             </div>
-            <!--
-            <button title="Stylez" tabItemId="#layout-stylez" tabGroup="extra_networks" id="btn_stylez" class="xtabs-tab hidden">
+            
+            <button title="Styles" tabItemId="#layout_db_styles" tabGroup="extra_networks" id="sd_styles_nav" class="xtabs-tab hidden">
                 <div class="mask-icon icon-stylez"></div>
-                <span>Stylez</span>
+                <span>Styles</span>
             </button>
-            -->
+            
         </div>
     </div>
     <div class="accordion-container">
@@ -106,9 +106,7 @@
         <div id="template-settings" class="template"></div>
         <div id="template-model-merger" class="template"></div>
         <div id="template-console-log" class="template"></div>
-        <!--
-        <div id="template-stylez" class="template"></div>
-    -->
+        
         <div id="template-civitai-explorer" class="template"></div>
         <div template="template-extra-networks-db" key="checkpoints" id="exn_checkpoints" class="template"></div>
         <div template="template-extra-networks-db" key="textual_inversion" id="exn_textual_inversion" class="template"></div>
@@ -117,5 +115,7 @@
         <div id="layout-theme" class="flexbox col padding">
             <div show-button="#btn_theme_editor" data-selector="[id^='tab_ui_theme'] > div" data-parent-selector="gradio-app" class="portal no-bg"></div>
         </div>
+
+        <div id="template-styles-db" key="styles" id="sd_styles" class="template"></div>
     </div>
 </div>
