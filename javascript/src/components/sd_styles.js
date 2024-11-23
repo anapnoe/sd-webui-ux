@@ -289,14 +289,6 @@ export async function setupSdStyle(netkey, table, base_path) {
         }, 100);
     }
 
-    function extractLoraInfo(word) {
-        if (word.includes('<lora:')) {
-            const name = word.split('<lora:')[1].split(':')[0];
-            return { original: `<lora:${name}:opts.extra_networks_default_multiplier>` };
-        }
-        return { original: word };
-    }
-
 
     function selectItemsFromDB(e) {
         const prompt_focused = window.UIUX.FOCUS_PROMPT;
@@ -320,7 +312,7 @@ export async function setupSdStyle(netkey, table, base_path) {
             const words = txt_value.trim().split('. ');
             const cleaned_words = words.map(cleanPhrases).filter(Boolean); // Filter empty strings
             const words_dot = cleaned_words.map(word => '. ' + word);
-            
+
             if(words_dot.length > 0){
                 //console.log(words_dot);
                 const url = '/sd_webui_ux/search_words_in_tables_columns';
@@ -343,20 +335,17 @@ export async function setupSdStyle(netkey, table, base_path) {
                     });
                 
                     selected_sd_styles[`${prompt_focused}_${table}`] = cleanedNetwork;
-
                     vScroll.selected = treeView.selected = new Set(cleanedNetwork.map(network => network.name));
                 
-                    vScroll.renderItems();
-                    treeView.updateSelectedItems();
                 });
             }
          
         }else{
-
             vScroll.selected = treeView.selected = new Set();
-            vScroll.renderItems();
-            treeView.updateSelectedItems();
         }
+
+        vScroll.renderItems();
+        treeView.updateSelectedItems();
     }
 
 
