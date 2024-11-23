@@ -319,3 +319,7 @@ button.active .icon-sort {
 .icon-civitai-models {
     -webkit-mask-image: url(../svg/planet-line.svg);
 }
+
+.icon-create-new {
+    -webkit-mask-image: url(../svg/add-circle-line.svg);
+}
