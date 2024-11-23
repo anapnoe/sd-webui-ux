@@ -52,7 +52,8 @@ async function createTabsForExtensions() {
         "tab_space",
         "tab_stylez",
         "tab_anapnoe_sd_uiux_civitai",
-        "tab_anapnoe_sd_uiux_db_extra_networks"
+        "tab_anapnoe_sd_uiux_db_extra_networks",
+        "tab_anapnoe_sd_uiux_db_styles"
     ];
 
     /*
