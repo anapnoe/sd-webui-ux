@@ -38,6 +38,12 @@ TreeView.prototype.fetchData = async function(path) {
     const response = await fetch(`${this.fetchUrl}?table_name=${this.tableName}&path=${encodeURIComponent(path)}`);
     const json = await response.json();
     this.data = json.data;
+    this.subpaths = json.unique_subpaths;
+    this.subpaths = this.subpaths.map(subpath => {
+        const splitPath = subpath.split(path);
+        return { path: subpath, relativePath: splitPath[1] , basePath: `${splitPath[0]}${path}`};
+    });
+    console.log(this.subpaths);
     console.log("tree data length:", this.data.length)
     return json.data;
 };
@@ -69,6 +75,8 @@ TreeView.prototype.buildTree = function(items) {
             currentLevel = currentLevel[part];
         }
     });
+    
+    
 
     return tree;
 };
@@ -102,7 +110,7 @@ TreeView.prototype.createTreeView = function(tree, path = '') {
             if (key.includes(".safetensors") || key.includes(".pt") || key.includes(".png") || key.includes(".jpg") || key.includes(".webp")) {
                 li = this.createFileItem(tree, key);
             } else {
-                li = this.createFolderItem(tree, key, path);
+                li = this.createFolderItem(tree, key, path);            
             }
         } else {
             li = this.createFileItem(tree, key);

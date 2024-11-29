@@ -140,4 +140,12 @@ const getDefaultTemplatesPath = () => {
 export {getDefaultTemplatesPath};
 
 
-
+export const SD_VERSIONS_OPTIONS = [
+    { value: 'SD1', textContent: 'SD1' },
+    { value: 'SD2', textContent: 'SD2' },
+    { value: 'SD3', textContent: 'SD3' },
+    { value: 'SDXL', textContent: 'SDXL' },
+    { value: 'PONY', textContent: 'PONY' },
+    { value: 'FLUX', textContent: 'FLUX' },
+    { value: 'Unknown', textContent: 'Unknown' }
+];

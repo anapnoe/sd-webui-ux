@@ -39,84 +39,109 @@ DynamicForm.prototype.formatFilename = function(path) {
     return path.replace(/\\/g, '/').split('/').pop();
 };
 
+
 DynamicForm.prototype.createElement = function(type, field, value, attributes = {}) {
+    
+    //value = attributes.value !== undefined ? attributes.value : this.itemData[field] || '';
+    //attributes.value = value;
+
     const elementConfig = {
-        textarea: {tag: 'textarea', attributes: {rows: 1, textContent: value || ''}},
+        textarea: {tag: 'textarea', attributes: {...attributes, rows: attributes.rows || 1, textContent: value || ''}},
         select: {
             tag: 'select',
-            attributes: {},
-            children: Array.isArray(attributes.options) ? attributes.options.map(option => ({
-                tag: 'option',
-                attributes: {value: option, textContent: option}
-            })) : []
+            attributes: {id:attributes.id, class:attributes.class, name:attributes.name},
+            children: Array.isArray(attributes.options) ? attributes.options.map(option => {
+                //console.log('option=', option, option.value === attributes.value);
+                return {
+                    option: { 
+                        type: 'option',
+                        //attributes: {
+                            value: option.value,
+                            textContent: option.textContent,
+                            selected: option.value === attributes.value
+                        //} 
+                    }
+                };
+            }) : []
         },
-        input: {tag: 'input', attributes: {type: 'text', value: value || ''}},
+        option: {tag: 'option', attributes: {...attributes}},
+        input: {tag: 'input', attributes: {...attributes, type: 'text', value: value || ''}},
         file: {tag: 'input', attributes: {type: 'file'}},
         number: {tag: 'input', attributes: {type: 'number', value: value}},
         checkbox: {tag: 'input', attributes: {type: 'checkbox', checked: value}},
         radio: {tag: 'input', attributes: {type: 'radio', checked: value}},
-        slider: {tag: 'input', attributes: {type: 'range', value: value}},
-        img: {tag: 'img', attributes: {src: 'file=' + value, alt: field, class: 'thumbnail-image'}},
-        button: {tag: 'button', textContent: value, attributes: {type: 'button', class: 'ae-button', name: field}},
+        slider: {tag: 'input', attributes: {type: 'range', value: value}},       
+        img: {tag: 'img', attributes: {src: attributes.req + value, alt: field, class: 'thumbnail-image'}},
+        button: {tag: 'button', textContent: value, attributes: {type: 'button', id:attributes.id, class: 'ae-button', name: field}},
         placeholder: {tag: 'div', attributes: attributes},
+        row: {tag: 'div', attributes: {id:attributes.id, class: `flexbox row ${attributes.class || ''}`}, children: attributes.children},
+        col: {tag: 'div', attributes: {id:attributes.id, class: `flexbox col ${attributes.class || ''}`}, children: attributes.children},
+        panel: {tag: 'div', attributes: {id:attributes.id, class: `panel padding ${attributes.class || ''}`}, children: attributes.children},
         default: {tag: 'input', attributes: {type: 'text', value: value || ''}}
     };
 
     const config = elementConfig[type] || elementConfig.default;
     const element = document.createElement(config.tag);
 
-    // Apply default attributes
-    Object.entries(config.attributes).forEach(([attr, val]) => {
-        if (attr === 'textContent') {
-            element.textContent = val;
-        } else if (attr === 'checked') {
-            element.checked = !!val;
-        } else {
-            element.setAttribute(attr, val);
-        }
-    });
+    // Function to set attributes
+    const setAttributes = (element, attrs) => {
+        Object.entries(attrs).forEach(([attr, val]) => {
+            if (typeof attr === 'string' && attr.trim() !== '') {
+                if (attr === 'textContent') {
+                    element.textContent = val;
+                } else if (attr === 'checked') {
+                    element.checked = !!val;
+                } else if (attr === 'selected') {
+                    element.selected = !!val;               
+                } else if (typeof val === 'string' || typeof val === 'number') {
+                    element.setAttribute(attr, val);
+                }
+            } else {
+                console.warn(`Invalid attribute name: ${attr}`);
+            }
+        });
+    };
 
-    // Apply additional attributes
-    Object.entries(attributes).forEach(([attr, val]) => {
-        if (attr === 'textContent') {
-            element.textContent = val;
-        } else if (attr === 'checked') {
-            element.checked = !!val;
-        } else {
-            element.setAttribute(attr, val);
-        }
-    });
+    // Apply attributes
+    setAttributes(element, config.attributes);
+/*
+    if (attributes.label) {
+        const { label, ...panelAttributes } = attributes;
+        setAttributes(element, panelAttributes);
 
+        const labelEl = document.createElement('label');
+        labelEl.textContent = attributes.label;
+
+        element.appendChild(labelEl);
+    }
+*/
     // Add child elements if they exist
     if (config.children) {
         config.children.forEach(childConfig => {
-            const child = document.createElement(childConfig.tag);
-            Object.entries(childConfig.attributes).forEach(([childAttr, childVal]) => {
-                if (childAttr === 'textContent') {
-                    child.textContent = childVal;
-                } else {
-                    child.setAttribute(childAttr, childVal);
-                }
-            });
-            if (childConfig.attributes.value === value) {
-                child.selected = true;
-            }
-            element.appendChild(child);
+            const childKey = Object.keys(childConfig)[0];
+            const childAttributes = childConfig[childKey];
+            const childValue = childAttributes.value !== undefined ? childAttributes.value : this.itemData[childKey] || ''; // Get the value for the child
+            const childElement = this.createElement(childAttributes.type, childKey, childValue, childAttributes);
+            element.appendChild(childElement);
         });
     }
 
-    element.setAttribute('id', field);
-    element.setAttribute('name', field);
+
+    //element.setAttribute('id', field);
+    //element.setAttribute('name', field);
     return element;
 };
+
 
 DynamicForm.prototype.addElementToForm = function(field, config) {
     const fieldContainer = document.createElement('div');
     fieldContainer.classList.add('panel', 'col', 'padding');
+    if(config.id) fieldContainer.id = config.id;
+
     const label = document.createElement('label');
     label.setAttribute('for', field);
     label.classList.add('flexbox');
-    label.textContent = field.replace('_', ' ').toUpperCase();
+    label.textContent = config.label || field.replace('_', ' ').toUpperCase();
 
     const input = this.createElement(config.type, field, this.itemData[field], config);
 
@@ -125,9 +150,10 @@ DynamicForm.prototype.addElementToForm = function(field, config) {
     this.form.appendChild(fieldContainer);
 };
 
+
 DynamicForm.prototype.createForm = function(fields) {
     Object.entries(fields).forEach(([field, config]) => {
-        if (this.itemData.hasOwnProperty(field) || config.type === 'placeholder') {
+        if (this.itemData.hasOwnProperty(field) || config.draw === 'true') {
             this.addElementToForm(field, config);
         }
     });
@@ -138,7 +164,16 @@ DynamicForm.prototype.createForm = function(fields) {
     submitButton.setAttribute('type', 'submit');
     submitButton.textContent = this.submit_label;
     submitButton.classList.add('ae-submit-button');
+
+    const cancelButton = document.createElement('button');
+    cancelButton.setAttribute('type', 'button');
+    cancelButton.textContent = "Cancel";
+    cancelButton.classList.add('ae-submit-button');
+
     savePanel.appendChild(submitButton);
+    savePanel.appendChild(cancelButton);
+
+
     this.form.appendChild(savePanel);
 
     this.form.addEventListener('submit', (event) => this.handleSubmit(event));
@@ -146,12 +181,16 @@ DynamicForm.prototype.createForm = function(fields) {
     return this.form;
 };
 
-DynamicForm.prototype.createValueElement = function(type, field, value, label) {
+
+
+
+
+DynamicForm.prototype.createValueElement = function(type, field, value, label, req) {
     const elementConfig = {
         "filename": {textContent: this.formatFilename(value)},
         "filesize": {textContent: this.formatFileSize(value)},
         'date-format': {textContent: this.formatDate(value)},
-        "img": {tag: 'img', attributes: {src: './file=' + value, alt: field, class: 'thumbnail-image'}},
+        "img": {tag: 'img', attributes: {src: req + value, alt: field, class: 'thumbnail-image'}},
         "button": {tag: 'button', textContent: label || 'button', attributes: {class: `ae-button ${field}`, name: field}},
         "default": {textContent: value || ''}
     };
@@ -212,7 +251,7 @@ DynamicForm.prototype.createHtmlElement = function(div_data) {
             row.appendChild(labelCell);
         }
        //console.log(field,config);
-        const valueContent = this.createValueElement(config.type, field, this.itemData[field], config.label || '');
+        const valueContent = this.createValueElement(config.type, field, this.itemData[field], config.label || '', config.req);
         row.appendChild(valueContent);
 
         div.appendChild(row);
@@ -306,10 +345,10 @@ DynamicForm.prototype.handleSubmit = async function(event) {
     for (const [key, value] of formData.entries()) {
         fdata[key] = value;
     }
-    const postdata = fdata;
+    let postdata = fdata;
     postdata.table_name = this.table_name;
     postdata.name = this.itemData.name;
-
+    postdata = this.beforeFormSubmit(fdata);
     try {
         const response = await fetch(this.url, {
             method: 'POST',
@@ -330,4 +369,7 @@ DynamicForm.prototype.handleSubmit = async function(event) {
 
 DynamicForm.prototype.afterFormSubmit = function(fdata, message) {
 
+};
+DynamicForm.prototype.beforeFormSubmit = function(fdata) {
+    return fdata;
 };

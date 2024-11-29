@@ -1,10 +1,11 @@
 import {VirtualScroll} from './uiux/virtual.js';
 import {TreeView} from './uiux/tree_view.js';
 import {DynamicForm} from './dynamic_forms.js';
-import {DEFAULT_PATH} from '../constants.js';
+import {DEFAULT_PATH, SD_VERSIONS_OPTIONS} from '../constants.js';
 import {Spotlight} from "../spotlight/js/spotlight3.js";
 import {updateInput, updateChange} from "../utils/helpers.js";
 import {setupInputObservers, setupCheckpointChangeObserver} from '../utils/observers.js';
+import {requestGetData, requestPostData} from '../utils/api.js';
 
 export async function refreshDirectory(directory) {
 
@@ -49,43 +50,6 @@ export async function setupExtraNetworkHypernetworks() {
     setupExtraNetwork('hypernetworks', "hypernetwork", "hypernetworks/");
 }
 
-function extraNetworksCopyPath(path) {
-    navigator.clipboard.writeText(path);
-    console.log(path);
-}
-
-async function requestGetData(url, callback) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data = await response.json();
-        callback(data);
-    } catch (error) {
-        console.error('Failed to fetch metadata:', error);
-    }
-}
-
-async function requestPostData(url, params, callback) {
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(params),
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data = await response.json();
-        callback(data);
-    } catch (error) {
-        console.error('Failed to fetch data:', error);
-    }
-}
-
 function detailView(container, elem) {
     const dcontainer = container.parentElement.querySelector('.ae-virtual-detail-content');
     dcontainer.innerHTML = '';
@@ -118,11 +82,6 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     //const treeViewContainer = document.querySelector(`#${netkey}_tree_view`);
 
     const gradio_refresh = document.querySelector("#refresh_database");
-
-    //const txt2img_local_preview = document.querySelector('#txt2img_gallery [test-id="detailed-image"]');
-    //const img2img_local_preview = document.querySelector('#txt2img_gallery [test-id="detailed-image"]');
-
-    
 
     selected_networks[`txt2img_${table}`] = [];
     selected_networks[`img2img_${table}`] = [];
@@ -181,9 +140,10 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         }
 
         const imageUrl = item.thumbnail;
-        if (imageUrl) {
-            //itemDiv.style.backgroundImage = `url('./sd_extra_networks/thumb?filename=${imageUrl}')`;
-            itemDiv.style.backgroundImage = `url('./file=${imageUrl}')`;
+        const timestamp = item.timestamp || '';
+        if (imageUrl) {       
+            //itemDiv.style.backgroundImage = `url('./sd_extra_networks/thumb?filename=${encodeURIComponent(imageUrl)}${timestamp}')`;
+            itemDiv.style.backgroundImage = `url('./sd_extra_networks/thumb?filename=${encodeURIComponent(imageUrl)}')`;
         }
 
         const itemTitle = document.createElement('span');
@@ -225,7 +185,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         //console.log(target);
 
         if (target.classList.contains("copy-path")) {
-            extraNetworksCopyPath(itemData.filename);
+            navigator.clipboard.writeText(itemData.filename);
         } else if (target.classList.contains("show-meta")) {
             requestGetMetaData(itemData.type, itemData.name, vScroll, container);
         } else if (target.classList.contains("edit-meta")) {
@@ -458,14 +418,16 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     function createUserMetaForm(itemData, id) {
 
         const fields = {
-            local_preview: {type: 'input'},
-            sd_version: {type: 'select', options: ['SD1', 'SD2', 'SD3', 'SDXL', 'PONY', 'FLUX', 'Unknown']},
-            preferred_weight: {type: 'slider'},
-            activation_text: {type: 'textarea', rows: 2},
-            negative_prompt: {type: 'textarea'},
-            description: {type: 'textarea', rows: 4},
-            notes: {type: 'textarea', rows: 2},
-            tags: {type: 'textarea'}
+            local_preview: {type: 'input', name:'local_preview'},
+            sd_version: {type: 'select', name:'sd_version', label:'SD Version', value: itemData.sd_version, 
+                options: SD_VERSIONS_OPTIONS
+            },
+            preferred_weight: {type: 'number', name:'preferred_weight', label:'Preferred Weight'},
+            activation_text: {type: 'textarea', name:'activation_text', label:"Activation Text", rows: 4},
+            negative_prompt: {type: 'textarea', name:'negative_prompt', label:"Negative Prompt", rows: 2},
+            description: {type: 'textarea', name:'description', label:"Description", rows: 2},
+            tags: {type: 'textarea', name:'tags', label:"Tags"},
+            notes: {type: 'textarea', name:'notes', label:'Notes', rows: 2}
         };
 
         const table_data = {
@@ -478,7 +440,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         };
 
         const img_data = {
-            thumbnail: {type: 'img', showLabel: false},
+            thumbnail: {type: 'img', req:'./sd_extra_networks/thumb?filename=', showLabel: false},
             replace_preview: {type: 'button',  label:'Replace Preview', showLabel: false},
         };
 
@@ -553,13 +515,27 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                 };
             }
 
+            let source_file;
+
+            dynamicForm.beforeFormSubmit = function(fdata) {
+                fdata.id = itemData.id;
+                fdata.type = itemData.type;
+                fdata.name = itemData.name;
+                fdata.filename = itemData.filename;
+                if(source_file) fdata.local_preview = source_file;
+                return fdata;
+            }; 
+            
+            let local_preview_path_value = itemData.local_preview;
 
             dynamicForm.afterFormSubmit = function(data) {
                 vScroll.hideDetail();
-                console.log(data);
-                const lp = getPathAndFilename(itemData.filename);
-                const timestamp = new Date().getTime(); // Get the current timestamp
-                data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp?t=${timestamp}`; // Append timestamp to the URL
+                //console.log(data);
+                const lp = getPathAndFilename(local_preview_path_value);
+                const timestamp = new Date().getTime();
+                //data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp?t=${timestamp}`; // Append timestamp to the URL
+                data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp`;
+                data.timestamp = `?t=${timestamp}`;
                 vScroll.updateDataById(data, id);
                 treeView.updateDataById(data, id);
             };
@@ -569,8 +545,10 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                 const prompt_focused = window.UIUX.FOCUS_PROMPT;
                 const gallery_img = document.querySelector(`#${prompt_focused}_gallery [data-testid="detailed-image"]`);
                 if(gallery_img){
-                    const local_preview = formEl.querySelector('#local_preview');
-                    local_preview.value = gallery_img.src.split('file=')[1].split('?')[0];
+                    const thumb_preview = imgEl.querySelector('.thumbnail-image');
+                    //const local_preview = formEl.querySelector('#local_preview_path input');
+                    source_file = gallery_img.src.split('file=')[1].split('?')[0];
+                    thumb_preview.style.filter = 'grayscale(1)';
                 }
             });
 

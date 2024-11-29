@@ -41,7 +41,6 @@ class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
             "filesize": (stats.st_size, "INTEGER"),
             "date_created": (int(mtime), "INTEGER"),
             "date_modified": (int(ctime), "INTEGER"),
-            "date_modified": (int(ctime), "INTEGER"),
             "allow_update": (False, "BOOLEAN")
         }
 

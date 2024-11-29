@@ -52,3 +52,35 @@ export function showContributors() {
         }
     });
 }
+
+export async function requestGetData(url, callback) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        callback(data);
+    } catch (error) {
+        console.error('Failed to fetch metadata:', error);
+    }
+}
+
+export async function requestPostData(url, params, callback) {
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(params),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        callback(data);
+    } catch (error) {
+        console.error('Failed to fetch data:', error);
+    }
+}

@@ -15,6 +15,8 @@ import shutil
 
 import gradio as gr
 from modules import script_callbacks
+import time
+import stat
 
 def validate_name(name, message):
     if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', name):
@@ -25,6 +27,7 @@ class DatabaseManager:
 
     def __init__(self, db_name):
         self.db_name = db_name
+        self.source_file = None
 
     @classmethod
     def set_instance(cls, instance):
@@ -36,9 +39,69 @@ class DatabaseManager:
             raise Exception("DatabaseManager instance is not set.")
         return cls._instance
 
+    def set_source_file(self, source_file):
+        self.source_file = source_file
+
+    def get_source_file(self):
+        return self.source_file
 
     def connect(self):
         return sqlite3.connect(self.db_name, check_same_thread=False)
+
+
+    def get_all_default_values(self):
+        return {
+            "type": (None, "TEXT"),
+            "name": (None, "TEXT"),
+            "filename": ("", "TEXT"),
+            "hash": ("", "TEXT"),
+            "thumbnail": ("", "TEXT"),
+            "description": ("", "TEXT"),
+            "tags": ("", "TEXT"),
+            "notes": ("", "TEXT"),
+            "sd_version": ("Unknown", "TEXT"),
+            "preview": ('', "TEXT"),
+            "local_preview": ("", "TEXT"),
+            "filesize": (0, "INTEGER"),
+            "date_created": (None, "INTEGER"),
+            "date_modified": (None, "INTEGER"),  
+            "allow_update": (False, "BOOLEAN"),
+            "metadata_exists": (False, "BOOLEAN"),
+
+            # checkpoint
+            "vae": ("None", "TEXT"),
+
+            # styles
+            "prompt": ("", "TEXT"),
+            "negative": ("", "TEXT"),
+            "extra": ("", "TEXT"),
+        }
+
+
+    def create_directory_with_permissions(self, dir_path):
+        try:
+            os.makedirs(dir_path, exist_ok=True)
+            logger.info(f"Directory created: {dir_path}")
+            # Set permissions to rw-r--r-- (644)
+            os.chmod(dir_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+            logger.info(f"Permissions set for {dir_path}: Read and Write for owner, Read for group and others")
+
+        except PermissionError:
+            logger.info(f"Permission denied when trying to create or modify: {dir_path}")
+        except Exception as e:
+            logger.info(f"Error: {e}")
+
+
+    def filter_and_normalize_paths(self, item):
+        item_filtered = {k: v for k, v in item.items() if k != 'thumbnail'}
+        
+        # Normalize paths for 'filename' and 'local_preview'
+        if 'filename' in item_filtered:
+            item_filtered['filename'] = Path(item_filtered['filename']).as_posix()
+        if 'local_preview' in item_filtered:
+            item_filtered['local_preview'] = Path(item_filtered['local_preview']).as_posix()
+        
+        return item_filtered
 
 
     def get_table_columns(self, table_name):
@@ -130,28 +193,6 @@ class DatabaseManager:
         return results
 
 
-    def default_value_for_key(self, key):
-        default_values = {
-            'description': '',
-            'notes': '',
-            'tags': '',
-            'negative_prompt': ''
-        }
-        return default_values.get(key, '')
-
-
-    def filter_and_normalize_paths(self, item):
-        item_filtered = {k: v for k, v in item.items() if k != 'thumbnail'}
-        
-        # Normalize paths for 'filename' and 'local_preview'
-        if 'filename' in item_filtered:
-            item_filtered['filename'] = Path(item_filtered['filename']).as_posix()
-        if 'local_preview' in item_filtered:
-            item_filtered['local_preview'] = Path(item_filtered['local_preview']).as_posix()
-        
-        return item_filtered
-
-
     def table_exists(self, table_name):
         validate_name(table_name, "table")  # Validate table
         conn = None
@@ -170,7 +211,7 @@ class DatabaseManager:
                 conn.close()
 
 
-    def item_exists(self, table_name, file_name):
+    def item_exists_by_name(self, table_name, file_name):
         validate_name(table_name, "table")  # Validate table
         conn = None
         try:
@@ -180,9 +221,27 @@ class DatabaseManager:
             exists = cursor.fetchone() is not None
             return exists
         except sqlite3.Error as e:
-            logger.error(f"Database error in item_exists: {e}")
+            logger.error(f"Database error in item_exists_by_name: {e}")
         except Exception as e:
-            logger.error(f"Unexpected error in item_exists: {e}")
+            logger.error(f"Unexpected error in item_exists_by_name: {e}")
+        finally:
+            if conn:
+                conn.close()
+
+
+    def item_exists(self, table_name, item_id):
+        validate_name(table_name, "table")  # Validate table
+        conn = None
+        try:
+            conn = self.connect()
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT 1 FROM {table_name} WHERE id = ?", (item_id,))
+            exists = cursor.fetchone() is not None
+            return exists
+        except sqlite3.Error as e:
+            logger.error(f"Database error in item_exists_by_name: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error in item_exists_by_name: {e}")
         finally:
             if conn:
                 conn.close()
@@ -193,11 +252,11 @@ class DatabaseManager:
         return os.path.exists(path)
     
 
-    def insert_item(self, table_name, item):
+    def import_item(self, table_name, item):
         try:
             cleaned_item = {k: v[0] if v is not None else None for k, v in item.items()}
             
-            item_exists_by_name = self.item_exists(table_name, cleaned_item['name'])
+            item_exists_by_name = self.item_exists_by_name(table_name, cleaned_item['name'])
             item_allow_update = cleaned_item.get('allow_update', False)
             item_exists_in_source = self.item_exists_in_source(cleaned_item["filename"])
 
@@ -255,8 +314,8 @@ class DatabaseManager:
             cursor.execute(f'''
                 UPDATE {table_name}
                 SET filename = ?, local_preview = ?, preview = ?
-                WHERE name = ?
-            ''', (item['filename'], item['local_preview'], item['local_preview'], item['name']))
+                WHERE id = ?
+            ''', (item['filename'], item['local_preview'], item['local_preview'], item['id']))
 
             conn.commit()
             logger.info(f"Paths for item {item['name']} updated successfully.")
@@ -278,19 +337,42 @@ class DatabaseManager:
             conn = self.connect()
             cursor = conn.cursor()
 
-            cursor.execute(f'SELECT local_preview FROM {table_name} WHERE name = ?', (item_filtered['name'],))
-            curr_local_preview = cursor.fetchone()
+            cursor.execute(f'SELECT local_preview, filename FROM {table_name} WHERE id = ?', (item_filtered.get('id'),))
+            result = cursor.fetchone()
+            curr_local_preview, curr_filename = result if result else (None, None)
 
-            if curr_local_preview and curr_local_preview[0] != item_filtered.get('local_preview'):
-                old_local_preview_path = curr_local_preview[0]
-                new_local_preview_path = item_filtered.get('local_preview')
+            new_local_preview_path = item_filtered.get('local_preview')
+            new_filename = item_filtered.get('filename')
+            
+            source_file = self.get_source_file()
+            self.set_source_file(None)
 
-                # Copy, overwrite if exists
-                if os.path.exists(new_local_preview_path):
-                    shutil.copy2(new_local_preview_path, old_local_preview_path)
-                    logger.info(f"Copied new local_preview from {new_local_preview_path} to {old_local_preview_path}")
-                    
-                return old_local_preview_path  # Path updated
+            if source_file:
+                if os.path.exists(source_file):
+                    new_preview_directory = os.path.dirname(new_local_preview_path)
+                    self.create_directory_with_permissions(new_preview_directory)
+                    #os.makedirs(new_local_preview_path, exist_ok=True)
+                    if os.path.exists(new_preview_directory):
+                        shutil.copy2(source_file, new_local_preview_path)
+                        logger.info(f"Copied new local_preview from {source_file} to {new_local_preview_path}")
+                return new_local_preview_path
+
+            if curr_local_preview:
+                if curr_filename != new_filename and new_filename is not None:
+                    if os.path.exists(curr_local_preview):
+                        shutil.move(curr_local_preview, new_local_preview_path)
+                        logger.info(f"Moved new local_preview from {curr_local_preview} to {new_local_preview_path}")
+                        
+                    return new_local_preview_path  # Return new path
+
+                elif curr_local_preview != new_local_preview_path and new_local_preview_path is not None:
+                    # Copy, overwrite if exists
+                    if os.path.exists(new_local_preview_path):
+                        shutil.copy2(new_local_preview_path, curr_local_preview)
+                        logger.info(f"Copied new local_preview from {new_local_preview_path} to {curr_local_preview}")
+                        
+                    return curr_local_preview  # Path updated
+
             return None  # No Path update
         except Exception as e:
             logger.error(f"Error checking and copying local_preview: {e}")
@@ -298,6 +380,16 @@ class DatabaseManager:
         finally:
             if conn:
                 conn.close()
+
+   
+    def handle_local_preview(self, table_name, item_filtered):
+        updated_local_preview_path = self.check_and_copy_local_preview(table_name, item_filtered)
+        if updated_local_preview_path:
+            item_filtered['local_preview'] = updated_local_preview_path
+            item_filtered['thumbnail'] = self.create_and_save_thumbnail(updated_local_preview_path)
+            item_filtered['filesize'] = os.stat(item_filtered.get('thumbnail'))
+            if item_filtered.get('filename') is not None:
+                item_filtered['hash'] = os.stat(item_filtered.get('filename'))
 
 
     def update_item(self, table_name, item, update_local_preview=False):
@@ -308,20 +400,21 @@ class DatabaseManager:
             cursor = conn.cursor()
 
             item_filtered = self.filter_and_normalize_paths(item)
+            is_updated = None
 
-            # Check and copy local_preview if the flag is set
+            has_id = 'id' in item and item['id']
+            if has_id:
+                is_updated = self.update_existing_item(cursor, table_name, item_filtered)
+                
+            # If update fails insert new item
+            if is_updated is None:  
+                self.insert_new_item(cursor, table_name, item_filtered)
+                logger.info(f"Item {item['name']} inserted as a new entry.")
+                
             if update_local_preview:
-                updated_local_preview_path = self.check_and_copy_local_preview(table_name, item_filtered)
-                if updated_local_preview_path:
-                    item_filtered['local_preview'] = updated_local_preview_path
-                    item_filtered['thumbnail'] = self.create_and_save_thumbnail(updated_local_preview_path)
-
-            keys = ', '.join([f"{k} = ?" for k in item_filtered.keys()])
-            values = tuple(json.dumps(val) if isinstance(val, (dict, list)) else val for val in item_filtered.values()) + (item['name'],)
-
-            cursor.execute(f'''
-            UPDATE {table_name} SET {keys} WHERE name = ?
-            ''', values)
+                local_preview_thumb = self.handle_local_preview(table_name, item_filtered)
+                if local_preview_thumb is not None:
+                    self.update_local_preview_thumb(cursor, table_name, item_filtered)
 
             conn.commit()
             logger.info(f"Item {item['name']} updated successfully.")
@@ -336,6 +429,57 @@ class DatabaseManager:
         finally:
             if conn:
                 conn.close()
+
+
+    def update_existing_item(self, cursor, table_name, item_filtered):
+        keys = ', '.join([f"{k} = ?" for k in item_filtered.keys() if k != 'id'])
+        values = tuple(json.dumps(val) if isinstance(val, (dict, list)) else val for k, val in item_filtered.items() if k != 'id') + (item_filtered['id'],)
+
+        cursor.execute(f'''
+        UPDATE {table_name} SET {keys} WHERE id = ?
+        ''', values)
+
+        return cursor.rowcount > 0
+
+
+    def insert_new_item(self, cursor, table_name, item_filtered):
+       
+        actual_columns = self.get_table_columns(table_name)
+        all_default_values = self.get_all_default_values()
+        all_fields = {}
+
+        for column in actual_columns:
+            if column in all_default_values:
+                default_value, _ = all_default_values[column]
+                if column == "date_created":
+                    all_fields[column] = int(time.time())
+                elif column == "date_modified":
+                    all_fields[column] = int(time.time())
+                else:
+                    all_fields[column] = item_filtered.get(column, default_value)
+
+        # Filter out any None values
+        all_fields = {k: v for k, v in all_fields.items() if v is not None}
+
+        columns = ', '.join(all_fields.keys())
+        placeholders = ', '.join(['?'] * len(all_fields))
+        insert_values = tuple(json.dumps(val) if isinstance(val, (dict, list)) else val for val in all_fields.values())
+
+        cursor.execute(f'''
+        INSERT INTO {table_name} ({columns}) VALUES ({placeholders})
+        ''', insert_values)
+
+        last_inserted_id = cursor.lastrowid
+        item_filtered['id'] = last_inserted_id
+
+
+    def update_local_preview_thumb(self, cursor, table_name, item_filtered):
+        cursor.execute(f'''
+        UPDATE {table_name} 
+        SET local_preview = ?, thumbnail = ?
+        WHERE id = ?
+        ''', (item_filtered.get('local_preview'), item_filtered.get('thumbnail'), item_filtered.get('id')))
+
 
 
     def delete_item(self, table_name, item):
@@ -461,8 +605,18 @@ class DatabaseManager:
 
             rows = cursor.fetchall()
             column_names = [description[0] for description in cursor.description]
-            
-            return [dict(zip(column_names, row)) for row in rows]
+
+            items = [dict(zip(column_names, row)) for row in rows]
+
+            # Extract paths
+            unique_paths = set()
+            for item in items:
+                path = item.get('filename', '')
+                directory_path = str(Path(path).parent) + '/'
+                unique_paths.add(Path(directory_path).as_posix())
+
+            return items, list(unique_paths)
+
         except sqlite3.Error as e:
             logger.error(f"Database error: {e}")
             return []
@@ -492,18 +646,24 @@ class DatabaseManager:
         image_path = self.get_image_path(image_path)
         if not image_path:
             return None
+
+        image_path = Path(image_path)
         try:
             with Image.open(image_path) as img:
                 img.thumbnail(size)  
                 thumb_dir = Path(save_path or image_path).parent / 'thumbnails'
                 thumb_dir.mkdir(parents=True, exist_ok=True)
 
-                if ".preview" in image_path:
-                    base_name = Path(image_path).name.replace(".preview", "")
-                else:
-                    base_name = Path(image_path).stem
+                #if ".preview" in image_path:
+                #    base_name = Path(image_path).name.replace(".preview", "")
+                #else:
+                #    base_name = Path(image_path).stem
+                
+                base_name = image_path.stem 
+                extension = image_path.suffix
+                clean_base_name = base_name.split('.')[0]
 
-                thumb_path = thumb_dir / f"{base_name}.thumb.webp"
+                thumb_path = thumb_dir / f"{clean_base_name}.thumb.webp"
 
                 exif_data = img.info.get('exif')
                 if exif_data:
@@ -527,9 +687,9 @@ class DatabaseManager:
             
             # if file_id execute one
             if file_id is not None:
-                cursor.execute(f'SELECT id, local_preview, filename FROM {table_name} WHERE id = ? AND local_preview IS NOT NULL', (file_id,))
+                cursor.execute(f'SELECT id, local_preview, filename, name FROM {table_name} WHERE id = ? AND local_preview IS NOT NULL', (file_id,))
             else:
-                cursor.execute(f'SELECT id, local_preview, filename FROM {table_name} WHERE local_preview IS NOT NULL')
+                cursor.execute(f'SELECT id, local_preview, filename, name FROM {table_name} WHERE local_preview IS NOT NULL')
             
             rows = cursor.fetchall()
 
@@ -537,7 +697,7 @@ class DatabaseManager:
                 return {"message": f"No images found for file_id {file_id}" if file_id else "No images found."}
 
             for row in rows:
-                file_id, image_path, save_path = row
+                file_id, image_path, save_path, name = row
                 thumb_path = self.create_and_save_thumbnail(image_path, save_path, size)
                 if thumb_path:
                     try:
@@ -620,15 +780,24 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
     @app.post("/sd_webui_ux/update_user_metadata")
     async def update_user_metadata_endpoint(payload: dict = Body(...)):
         table_name:str = payload.get('table_name')
+        item_id:str = payload.get('id')
+        data_type:str = payload.get('type')
+        name:str = payload.get('name')
+        filename:str = payload.get('filename')
+        local_preview:str = payload.get('local_preview')
+
         description:str = payload.get('description')
         notes:str = payload.get('notes')
         tags:str = payload.get('tags')
         sd_version:str = payload.get('sd_version')
-        local_preview:str = payload.get('local_preview')
-        name:str = payload.get('name')
+        
         activation_text:str = payload.get('activation_text')
-        preferred_weight: Optional[str] = payload.get('preferred_weight')
         negative_prompt:str = payload.get('negative_prompt')
+        preferred_weight: Optional[str] = payload.get('preferred_weight')
+
+        prompt:str = payload.get('prompt')
+        negative:str = payload.get('negative')
+        source_file:str = payload.get('source_file')
 
         if not table_name:
             raise HTTPException(status_code=422, detail="DB table_name is required")
@@ -636,13 +805,10 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         db_manager = DatabaseManager.get_instance()
         table_columns = db_manager.get_table_columns(table_name)
 
-        item = {
-            'description': description,
-            'notes': notes,
-            'tags': tags,
-            'sd_version': sd_version,
-            'local_preview': local_preview,
-            'name': name
+        item = {                     
+            'id': item_id,
+            'type': data_type,
+            'name': name,
         }
 
         if preferred_weight is not None:
@@ -652,12 +818,25 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
                 raise HTTPException(status_code=422, detail="preferred_weight must be a valid number")
 
         optional_fields = {
+            'filename': filename,
+            'local_preview': local_preview, 
+
+            'description': description,
+            'notes': notes,           
+            'tags': tags,
+            'sd_version': sd_version,
+
             'activation_text': activation_text,
+            'negative_prompt': negative_prompt,
             'preferred_weight': preferred_weight,
-            'negative_prompt': negative_prompt
+            
+            'prompt': prompt,
+            'negative': negative,
         }
 
         item.update({key: value for key, value in optional_fields.items() if key in table_columns})
+
+        db_manager.set_source_file(source_file)
 
         try:
             db_manager.update_item(table_name, item, update_local_preview=True)
@@ -699,18 +878,18 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         table_name: str,
         path: str = Query("")):       
         db_manager = DatabaseManager.get_instance()
-        items = db_manager.get_items_by_path(table_name, path)
-        return {"data": items}
+        items, unique_subpaths = db_manager.get_items_by_path(table_name, path)
+        return {"data": items, "unique_subpaths": unique_subpaths}
 
 
     @app.post("/sd_webui_ux/search_words_in_tables_columns")
     async def search_words_in_tables_columns_endpoint(payload: dict = Body(...)):       
         tables: str = payload.get("tables")
         columns: str = payload.get("columns")
-        delimiter: Optional[str] = payload.get("delimiter")  # Optional delimiter
         words: List[str] = payload.get("words", [])
-        textarea: Optional[str] = payload.get("textarea")
         threshold: Optional[str] = payload.get("threshold")
+        textarea: Optional[str] = payload.get("textarea")
+        delimiter: Optional[str] = payload.get("delimiter")  # Optional delimiter
 
         # Validate input
         if textarea:
@@ -746,7 +925,14 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app.get("/sd_webui_ux/images/{filename:path}")
+    async def get_image(filename: str):
+        file_path = filename
 
+        if not os.path.isfile(file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+
+        return FileResponse(file_path)
 
     
 # Modify the lambda to pass db_tables_pages in case we need to init db_tables_pages in another module
