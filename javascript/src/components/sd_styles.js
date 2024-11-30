@@ -318,17 +318,16 @@ export async function setupSdStyle(netkey, table, base_path) {
     // User Metadata Form
     function createUserMetaForm(itemData, id) {
         const styles_folders = treeView.subpaths;
-        const styles_options = new Set(styles_folders.map(folder => folder.relativePath));
-        const stylesOptionsArray = Array.from(styles_options);
-        let styles_options_select = [{value: 'None', textContent: 'None'}];
-        let styles_value;
+        const styles_folders_options = new Set(styles_folders.map(folder => folder.relativePath));
+        const styles_folders_options_array = Array.from(styles_folders_options);
+        let styles_folders_select_options = [{value: 'None', textContent: 'None'}];
+        let styles_folders_selected;
 
-        stylesOptionsArray.forEach(option => {
-
+        styles_folders_options_array.forEach(option => {
             if (itemData.filename.includes(`${option}/`)) {
-                styles_value = option;
+                styles_folders_selected = option;
             }
-            styles_options_select.push(
+            styles_folders_select_options.push(
                 {
                     value: option,
                     textContent: option,
@@ -349,8 +348,8 @@ export async function setupSdStyle(netkey, table, base_path) {
                             type: 'select',
                             id: 'parent_folder_select',
                             class: 'grow',
-                            value: styles_value,
-                            options: styles_options_select
+                            value: styles_folders_selected,
+                            options: styles_folders_select_options
                         }
                     },
                     {
@@ -369,12 +368,12 @@ export async function setupSdStyle(netkey, table, base_path) {
         };
 
         const table_data = {
-            filename: {type: 'filename'},
-            filesize: {type: 'filesize'},
-            type: {type: 'text'},
-            hash: {type: 'text'},
-            date_created: {type: 'date-format'},
-            date_modified: {type: 'date-format'},
+            filename: {type: 'filename', label: 'Filename'},
+            filesize: {type: 'filesize', label: 'Filesize'},
+            type: {type: 'text', label: 'Type'},
+            hash: {type: 'text', label: 'Hash'},
+            date_created: {type: 'date-format', label: 'Date Created'},
+            date_modified: {type: 'date-format', label: 'Date Modified'},
         };
 
         const img_data = {
@@ -406,6 +405,8 @@ export async function setupSdStyle(netkey, table, base_path) {
         const parent_folder_select_label = formEl.querySelector('#parent_folder_select_row label');
         const parent_folder_save = formEl.querySelector('#parent_folder_save');
         const local_preview_path = formEl.querySelector('#local_preview_path input');
+
+        const delete_button = formEl.querySelector('button.delete');
 
         let local_preview_path_value;
 
@@ -475,8 +476,24 @@ export async function setupSdStyle(netkey, table, base_path) {
             }
         });
 
+        delete_button.addEventListener('click', (e) => {
 
+            const url = '/sd_webui_ux/delete_item';
+            const params = {
+                table_name: table,
+                item_id: itemData.id,
+            };
 
+            requestPostData(url, params, function(result) {
+                console.log(result);
+                vScroll.hideDetail();
+                apiParams.skip = 0;
+                vScroll.updateParamsAndFetch(apiParams, 0);
+                treeView.update();
+
+            });
+
+        });
     }
 
 
