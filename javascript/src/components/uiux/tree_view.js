@@ -41,10 +41,10 @@ TreeView.prototype.fetchData = async function(path) {
     this.subpaths = json.unique_subpaths;
     this.subpaths = this.subpaths.map(subpath => {
         const splitPath = subpath.split(path);
-        return { path: subpath, relativePath: splitPath[1] , basePath: `${splitPath[0]}${path}`};
+        return {path: subpath, relativePath: splitPath[1], basePath: `${splitPath[0]}${path}`};
     });
     console.log(this.subpaths);
-    console.log("tree data length:", this.data.length)
+    console.log("tree data length:", this.data.length);
     return json.data;
 };
 
@@ -75,8 +75,6 @@ TreeView.prototype.buildTree = function(items) {
             currentLevel = currentLevel[part];
         }
     });
-    
-    
 
     return tree;
 };
@@ -92,9 +90,11 @@ TreeView.prototype.createFileItem = function(tree, key) {
 };
 
 TreeView.prototype.createFolderItem = function(tree, key, path) {
+    path += "/" + key;
+    path = path.replace(/\/{2,}/g, '/');
     const li = document.createElement('li');
-    li.innerHTML = `<summary class="tree-folder caret" data-path="${path}${key}">${key}</summary>`;
-    const nestedUl = this.createTreeView(tree[key], `${path}/${key}`);
+    li.innerHTML = `<summary class="tree-folder caret" data-path="${path}">${key}</summary>`;
+    const nestedUl = this.createTreeView(tree[key], path);
     nestedUl.classList.add('nested');
     li.appendChild(nestedUl);
     return li;
@@ -110,7 +110,7 @@ TreeView.prototype.createTreeView = function(tree, path = '') {
             if (key.includes(".safetensors") || key.includes(".pt") || key.includes(".png") || key.includes(".jpg") || key.includes(".webp")) {
                 li = this.createFileItem(tree, key);
             } else {
-                li = this.createFolderItem(tree, key, path);            
+                li = this.createFolderItem(tree, key, path);
             }
         } else {
             li = this.createFileItem(tree, key);
@@ -186,6 +186,30 @@ TreeView.prototype.getItemProperties = function(itemId) {
     return this.itemMap[itemId];
 };
 
+TreeView.prototype.update = async function() {
+    // Store open folders
+    const openFolders = [];
+    this.container.querySelectorAll('.tree-folder.caret-down').forEach(folder => {
+        openFolders.push(folder.dataset.path);
+
+    });
+
+    const scrollPosition = this.container.parentElement.scrollTop;
+    await this.initialize();
+
+    // Restore open folders
+    openFolders.forEach(path => {
+        const folder = this.container.querySelector(`.tree-folder[data-path="${path}"]`);
+        if (folder) {
+            folder.click();
+        }
+    });
+
+    this.container.parentElement.scrollTop = scrollPosition;
+    this.attachEventListeners();
+};
+
+
 TreeView.prototype.updateDataById = function(data, id) {
     const item = this.itemMap[id];
     if (item) {
@@ -196,8 +220,6 @@ TreeView.prototype.updateDataById = function(data, id) {
         console.error(`Item with ID ${id} not found.`);
     }
 };
-
-
 
 TreeView.prototype.onFolderClicked = function(target, path, active) {
 };

@@ -90,7 +90,6 @@ export function setupCheckpointChangeObserver(vScroll, treeView) {
     combinedObserver.observe(ch_preload, {childList: true, subtree: true});
 }
 
-
 export function setupExtraNetworksAddToPromptObserver() {
     //do some work here
     const ch_input = document.querySelector("#txt2img_prompt textarea");
@@ -154,7 +153,3 @@ export function setupInputObservers(paramsMapping, apiParams, vScroll, modifyPar
     });
     return apiParams;
 }
-
-
-
-

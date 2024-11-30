@@ -59,7 +59,7 @@ export async function initButtonComponents(contentDiv) {
         }
 
         //maybe move this alsewhere
-    /*
+        /*
         const adc = el.getAttribute("data-click");
         if (adc) {
             setTimeout(() => {
@@ -83,13 +83,13 @@ export async function initButtonComponents(contentDiv) {
 
                     elementsToAppend.forEach(element => {
                         if (element) {
-                            
+
                             //element.querySelectorAll("[data-apply]").forEach((ca) => {
                             //    const data_apply = ca.getAttribute("data-apply");
                             //    ca.setAttribute("onClick", data_apply);
                             //    ca.removeAttribute("data-apply");
                             });
-                            
+
                             cpane.append(element);
                         }
                     });

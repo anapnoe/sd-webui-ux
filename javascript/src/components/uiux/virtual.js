@@ -328,7 +328,7 @@ VirtualScroll.prototype.scrollToEnd = function() {
 
 /* Helper Functions*/
 VirtualScroll.prototype.debounce = function(func, defaultDelay = 1000) {
-    
+
     return function(...args) {
         const context = this;
         const delay = typeof args[args.length - 1] === 'number' ? args.pop() : defaultDelay;

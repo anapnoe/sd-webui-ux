@@ -41,7 +41,7 @@ DynamicForm.prototype.formatFilename = function(path) {
 
 
 DynamicForm.prototype.createElement = function(type, field, value, attributes = {}) {
-    
+
     //value = attributes.value !== undefined ? attributes.value : this.itemData[field] || '';
     //attributes.value = value;
 
@@ -49,17 +49,17 @@ DynamicForm.prototype.createElement = function(type, field, value, attributes = 
         textarea: {tag: 'textarea', attributes: {...attributes, rows: attributes.rows || 1, textContent: value || ''}},
         select: {
             tag: 'select',
-            attributes: {id:attributes.id, class:attributes.class, name:attributes.name},
+            attributes: {id: attributes.id, class: attributes.class, name: attributes.name},
             children: Array.isArray(attributes.options) ? attributes.options.map(option => {
                 //console.log('option=', option, option.value === attributes.value);
                 return {
-                    option: { 
+                    option: {
                         type: 'option',
                         //attributes: {
-                            value: option.value,
-                            textContent: option.textContent,
-                            selected: option.value === attributes.value
-                        //} 
+                        value: option.value,
+                        textContent: option.textContent,
+                        selected: option.value === attributes.value
+                        //}
                     }
                 };
             }) : []
@@ -70,13 +70,13 @@ DynamicForm.prototype.createElement = function(type, field, value, attributes = 
         number: {tag: 'input', attributes: {type: 'number', value: value}},
         checkbox: {tag: 'input', attributes: {type: 'checkbox', checked: value}},
         radio: {tag: 'input', attributes: {type: 'radio', checked: value}},
-        slider: {tag: 'input', attributes: {type: 'range', value: value}},       
+        slider: {tag: 'input', attributes: {type: 'range', value: value}},
         img: {tag: 'img', attributes: {src: attributes.req + value, alt: field, class: 'thumbnail-image'}},
-        button: {tag: 'button', textContent: value, attributes: {type: 'button', id:attributes.id, class: 'ae-button', name: field}},
+        button: {tag: 'button', textContent: value, attributes: {type: 'button', id: attributes.id, class: 'ae-button', name: field}},
         placeholder: {tag: 'div', attributes: attributes},
-        row: {tag: 'div', attributes: {id:attributes.id, class: `flexbox row ${attributes.class || ''}`}, children: attributes.children},
-        col: {tag: 'div', attributes: {id:attributes.id, class: `flexbox col ${attributes.class || ''}`}, children: attributes.children},
-        panel: {tag: 'div', attributes: {id:attributes.id, class: `panel padding ${attributes.class || ''}`}, children: attributes.children},
+        row: {tag: 'div', attributes: {id: attributes.id, class: `flexbox row ${attributes.class || ''}`}, children: attributes.children},
+        col: {tag: 'div', attributes: {id: attributes.id, class: `flexbox col ${attributes.class || ''}`}, children: attributes.children},
+        panel: {tag: 'div', attributes: {id: attributes.id, class: `panel padding ${attributes.class || ''}`}, children: attributes.children},
         default: {tag: 'input', attributes: {type: 'text', value: value || ''}}
     };
 
@@ -92,7 +92,7 @@ DynamicForm.prototype.createElement = function(type, field, value, attributes = 
                 } else if (attr === 'checked') {
                     element.checked = !!val;
                 } else if (attr === 'selected') {
-                    element.selected = !!val;               
+                    element.selected = !!val;
                 } else if (typeof val === 'string' || typeof val === 'number') {
                     element.setAttribute(attr, val);
                 }
@@ -104,7 +104,7 @@ DynamicForm.prototype.createElement = function(type, field, value, attributes = 
 
     // Apply attributes
     setAttributes(element, config.attributes);
-/*
+    /*
     if (attributes.label) {
         const { label, ...panelAttributes } = attributes;
         setAttributes(element, panelAttributes);
@@ -136,7 +136,7 @@ DynamicForm.prototype.createElement = function(type, field, value, attributes = 
 DynamicForm.prototype.addElementToForm = function(field, config) {
     const fieldContainer = document.createElement('div');
     fieldContainer.classList.add('panel', 'col', 'padding');
-    if(config.id) fieldContainer.id = config.id;
+    if (config.id) fieldContainer.id = config.id;
 
     const label = document.createElement('label');
     label.setAttribute('for', field);
@@ -185,12 +185,14 @@ DynamicForm.prototype.createForm = function(fields) {
 
 
 
-DynamicForm.prototype.createValueElement = function(type, field, value, label, req) {
+DynamicForm.prototype.createValueElement = function(type, field, value, label, api) {
+    const timestamp = `?t=${new Date().getTime()}`;
+
     const elementConfig = {
         "filename": {textContent: this.formatFilename(value)},
         "filesize": {textContent: this.formatFileSize(value)},
         'date-format': {textContent: this.formatDate(value)},
-        "img": {tag: 'img', attributes: {src: req + value, alt: field, class: 'thumbnail-image'}},
+        "img": {tag: 'img', attributes: {src: api + value + timestamp, alt: field, class: 'thumbnail-image'}},
         "button": {tag: 'button', textContent: label || 'button', attributes: {class: `ae-button ${field}`, name: field}},
         "default": {textContent: value || ''}
     };
@@ -250,8 +252,8 @@ DynamicForm.prototype.createHtmlElement = function(div_data) {
             labelCell.textContent = field.replace('_', ' ').toUpperCase();
             row.appendChild(labelCell);
         }
-       //console.log(field,config);
-        const valueContent = this.createValueElement(config.type, field, this.itemData[field], config.label || '', config.req);
+        //console.log(field,config);
+        const valueContent = this.createValueElement(config.type, field, this.itemData[field], config.label || '', config.api);
         row.appendChild(valueContent);
 
         div.appendChild(row);

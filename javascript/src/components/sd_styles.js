@@ -13,14 +13,6 @@ export async function setupSdStyles() {
 }
 
 
-function sdStylesCopyPath(path) {
-    navigator.clipboard.writeText(path);
-    console.log(path);
-}
-
-
-
-
 function detailView(container, elem) {
     const dcontainer = container.parentElement.querySelector('.ae-virtual-detail-content');
     dcontainer.innerHTML = '';
@@ -100,10 +92,10 @@ export async function setupSdStyle(netkey, table, base_path) {
 
         const imageUrl = item.thumbnail;
         const timestamp = item.timestamp || '';
-        if (imageUrl) {       
+        if (imageUrl) {
             itemDiv.style.backgroundImage = `url('/sd_styles/thumb/${encodeURIComponent(imageUrl)}${timestamp}')`;
         }
-        
+
         const itemTitle = document.createElement('span');
         itemTitle.textContent = item.name;
         itemTitle.className = 'title';
@@ -141,7 +133,7 @@ export async function setupSdStyle(netkey, table, base_path) {
         } else if (itemData.type === "Style") {
             window.cardClicked(prompt_focused, prompt, neg_prompt, true);
             selected_sd_styles[`${prompt_focused}_styles`].push({id: itemData.id, name: itemData.name, value: prompt});
-        } 
+        }
     }
 
     vScroll.clickHandler = function(e) {
@@ -155,15 +147,9 @@ export async function setupSdStyle(netkey, table, base_path) {
         e.stopPropagation();
     };
 
-
     rebuild_thumbs.addEventListener('click', (e) => {
-        /*
-        requestPostData('/sd_webui_ux/generate-thumbnail', {table_name: table, file_id: parseInt(fileId)}, (metadata) => {
-            document.getElementById('status').innerText = metadata.message;
-        });
-        */
         requestPostData('/sd_webui_ux/generate-thumbnails', {table_name: table}, function(data) {
-            console.log(data);
+            //console.log(data);
             //gradio_refresh.click();
             setTimeout(() => {
                 apiParams.skip = 0;
@@ -275,44 +261,44 @@ export async function setupSdStyle(netkey, table, base_path) {
             txt_value += `${textarea.value}`;
         });
 
-        if(txt_value.length > 2){
-            
+        if (txt_value.length > 2) {
+
             function cleanPhrases(input) {
                 return input.replace(/[()]+|:[0-9]+(.[0-9]+)?/g, '').trim();
             }
-            
+
             const words = txt_value.trim().split('. ');
             const cleaned_words = words.map(cleanPhrases).filter(Boolean); // Filter empty strings
             const words_dot = cleaned_words.map(word => '. ' + word);
 
-            if(words_dot.length > 0){
+            if (words_dot.length > 0) {
                 //console.log(words_dot);
                 const url = '/sd_webui_ux/search_words_in_tables_columns';
                 const params = {
                     words: words_dot,
-                    tables: table, 
+                    tables: table,
                     columns: 'prompt',
                     threshold: 1
-                }
+                };
 
                 requestPostData(url, params, function(result) {
-                    const data = result[table]
+                    const data = result[table];
                     console.log(data);
                     const cleanedNetwork = data.map(itemData => {
                         return {
                             id: itemData.id,
                             name: itemData.name,
-                            value: itemData.prompt         
-                        }
+                            value: itemData.prompt
+                        };
                     });
-                
+
                     selected_sd_styles[`${prompt_focused}_${table}`] = cleanedNetwork;
                     vScroll.selected = treeView.selected = new Set(cleanedNetwork.map(network => network.name));
-                
+
                 });
             }
-         
-        }else{
+
+        } else {
             vScroll.selected = treeView.selected = new Set();
         }
 
@@ -321,72 +307,65 @@ export async function setupSdStyle(netkey, table, base_path) {
     }
 
 
-    if (table === 'styles') {
-        document.querySelectorAll('#txt2img_prompt textarea, #img2img_prompt textarea, #txt2img_neg_prompt textarea, #img2img_neg_prompt textarea').forEach(textarea => {
-            textarea.addEventListener('input', selectItems);
-            //textarea.addEventListener('focus', selectItems);
-            textarea.addEventListener('focus', selectItemsFromDB);
-        });
-    } 
+    //if (table === 'styles') {
+    document.querySelectorAll('#txt2img_prompt textarea, #img2img_prompt textarea, #txt2img_neg_prompt textarea, #img2img_neg_prompt textarea').forEach(textarea => {
+        textarea.addEventListener('input', selectItems);
+        //textarea.addEventListener('focus', selectItems);
+        textarea.addEventListener('focus', selectItemsFromDB);
+    });
+    //}
 
     // User Metadata Form
     function createUserMetaForm(itemData, id) {
         const styles_folders = treeView.subpaths;
         const styles_options = new Set(styles_folders.map(folder => folder.relativePath));
         const stylesOptionsArray = Array.from(styles_options);
-        let styles_options_select = [{value:'None', textContent:'None'}];
+        let styles_options_select = [{value: 'None', textContent: 'None'}];
         let styles_value;
 
         stylesOptionsArray.forEach(option => {
-            
-            if(itemData.filename.includes(option)){
+
+            if (itemData.filename.includes(`${option}/`)) {
                 styles_value = option;
             }
-                
             styles_options_select.push(
                 {
                     value: option,
                     textContent: option,
                 }
-            )
-
+            );
         });
 
         const fields = {
-            local_preview: {type: 'input', id:'local_preview_path', name:'local_preview', label:"Local Preview" },
+            local_preview: {type: 'input', id: 'local_preview_path', name: 'local_preview', label: "Local Preview"},
             row: {
-                type: 'row', 
+                type: 'row',
                 draw: 'true',
-                id:'parent_folder_select_row', 
+                id: 'parent_folder_select_row',
                 label: 'Parent Category / Filename',
                 children: [
                     {
                         parent_folder: {
-                            type: 'select', 
+                            type: 'select',
                             id: 'parent_folder_select',
-                            value: styles_value, 
+                            class: 'grow',
+                            value: styles_value,
                             options: styles_options_select
                         }
-                    },                    
-                    {
-                        save_path: {type: 'input', id: 'parent_folder_save', value: itemData.name , label:"Style Name"},
                     },
-                    /*
                     {
-                        sd_version: {type: 'select', label:"SD Version", value: itemData.sd_version, 
-                            options: SD_VERSIONS_OPTIONS
-                        },
+                        save_path: {type: 'input', id: 'parent_folder_save', class: 'grow', value: itemData.name, label: "Style Name"},
                     }
-                    */
-
                 ]
-
             },
-
-            prompt: {type: 'textarea', name:'prompt', label:"Prompt", rows: 4},
-            negative: {type: 'textarea', name:'negative', label:"Negative Prompt", rows: 2},
-            description: {type: 'textarea',name:'description', label:"Description", rows: 2},
-            tags: {type: 'textarea', name:'tags', label:"Tags",}
+            sd_version: {
+                type: 'select', name: 'sd_version', label: "SD Version", value: itemData.sd_version,
+                options: SD_VERSIONS_OPTIONS
+            },
+            prompt: {type: 'textarea', name: 'prompt', label: "Prompt", rows: 4},
+            negative: {type: 'textarea', name: 'negative', label: "Negative Prompt", rows: 2},
+            description: {type: 'textarea', name: 'description', label: "Description", rows: 2},
+            tags: {type: 'textarea', name: 'tags', label: "Tags"}
         };
 
         const table_data = {
@@ -399,8 +378,8 @@ export async function setupSdStyle(netkey, table, base_path) {
         };
 
         const img_data = {
-            thumbnail: {type: 'img', req:'/sd_styles/thumb/', showLabel: false},
-            replace_preview: {type: 'button',  label:'Replace Preview', showLabel: false},          
+            thumbnail: {type: 'img', api: '/sd_styles/thumb/', showLabel: false},
+            replace_preview: {type: 'button', label: 'Replace Preview', showLabel: false},
         };
 
 
@@ -429,7 +408,7 @@ export async function setupSdStyle(netkey, table, base_path) {
         const local_preview_path = formEl.querySelector('#local_preview_path input');
 
         let local_preview_path_value;
-        
+
 
         const clearPath = (path) => path.replace(/\/{2,}/g, '/');
 
@@ -441,20 +420,10 @@ export async function setupSdStyle(netkey, table, base_path) {
             local_preview_path_value = clearPath(`${styles_folders[0].basePath}/${relativePath}.png`);
             local_preview_path.value = local_preview_path_value;
         };
-        
 
         parent_folder_select.addEventListener('change', updateParentFolder);
         parent_folder_save.addEventListener('input', updateParentFolder);
         updateParentFolder();
-
-        function removeExtension(filename) {
-            const lastDotIndex = filename.lastIndexOf('.');
-            if (lastDotIndex === -1) {
-                return filename;
-            }
-            return filename.substring(0, lastDotIndex);
-        }
-
 
         function getPathAndFilename(filePath) {
             const lastSlashIndex = filePath.lastIndexOf('/');
@@ -462,7 +431,7 @@ export async function setupSdStyle(netkey, table, base_path) {
             const filename = filePath.substring(lastSlashIndex + 1);
             const lastDotIndex = filename.lastIndexOf('.');
             const filename_no_ext = filename.substring(0, lastDotIndex);
-            
+
             return {
                 path: path,
                 filename: filename,
@@ -476,9 +445,8 @@ export async function setupSdStyle(netkey, table, base_path) {
             fdata.name = getPathAndFilename(local_preview_path_value).filename_no_ext;
             fdata.filename = local_preview_path_value;
             fdata.type = 'Style';
-            fdata.sd_version = 'Unknown';
             fdata.id = itemData.id;
-            if(source_file) fdata.source_file = source_file;
+            if (source_file) fdata.source_file = source_file;
             return fdata;
         };
 
@@ -487,18 +455,19 @@ export async function setupSdStyle(netkey, table, base_path) {
             //console.log(data);
             const lp = getPathAndFilename(local_preview_path_value);
             const timestamp = new Date().getTime();
-            //data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp?t=${timestamp}`; // Append timestamp to the URL
             data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp`;
             data.timestamp = `?t=${timestamp}`;
+            data.local_preview = local_preview_path_value;
             vScroll.updateDataById(data, id);
-            treeView.updateDataById(data, id);
+            //treeView.updateDataById(data, id);
+            treeView.update();
         };
-        
+
         const replace_local_preview = imgEl.querySelector('button.replace_preview');
         replace_local_preview.addEventListener('click', (e) => {
             const prompt_focused = window.UIUX.FOCUS_PROMPT;
             const gallery_img = document.querySelector(`#${prompt_focused}_gallery [data-testid="detailed-image"]`);
-            if(gallery_img){
+            if (gallery_img) {
                 const thumb_preview = imgEl.querySelector('.thumbnail-image');
                 //const local_preview = formEl.querySelector('#local_preview_path input');
                 source_file = gallery_img.src.split('file=')[1].split('?')[0];
@@ -506,7 +475,7 @@ export async function setupSdStyle(netkey, table, base_path) {
             }
         });
 
-      
+
 
     }
 

@@ -315,7 +315,7 @@ class DatabaseManager:
                 UPDATE {table_name}
                 SET filename = ?, local_preview = ?, preview = ?
                 WHERE id = ?
-            ''', (item['filename'], item['local_preview'], item['local_preview'], item['id']))
+            ''', (item.get('filename'), item.get('local_preview'), item.get('local_preview'), item.get('id')))
 
             conn.commit()
             logger.info(f"Paths for item {item['name']} updated successfully.")
@@ -615,7 +615,8 @@ class DatabaseManager:
                 directory_path = str(Path(path).parent) + '/'
                 unique_paths.add(Path(directory_path).as_posix())
 
-            return items, list(unique_paths)
+            sorted_unique_paths = sorted(unique_paths)
+            return items, sorted_unique_paths
 
         except sqlite3.Error as e:
             logger.error(f"Database error: {e}")
@@ -633,21 +634,19 @@ class DatabaseManager:
         for ext in image_extensions:
             image_path = base_path + ext
             if os.path.exists(image_path):
-                return image_path
+                return Path(image_path)
 
             preview_image_path = base_path + ".preview" + ext
             if os.path.exists(preview_image_path):
-                return preview_image_path
+                return Path(preview_image_path)
             
         return None
-
 
     def create_and_save_thumbnail(self, image_path, save_path=None, size=(512, 512)):
         image_path = self.get_image_path(image_path)
         if not image_path:
             return None
 
-        image_path = Path(image_path)
         try:
             with Image.open(image_path) as img:
                 img.thumbnail(size)  

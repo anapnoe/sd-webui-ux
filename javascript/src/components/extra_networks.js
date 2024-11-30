@@ -141,7 +141,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
         const imageUrl = item.thumbnail;
         const timestamp = item.timestamp || '';
-        if (imageUrl) {       
+        if (imageUrl) {
             //itemDiv.style.backgroundImage = `url('./sd_extra_networks/thumb?filename=${encodeURIComponent(imageUrl)}${timestamp}')`;
             itemDiv.style.backgroundImage = `url('./sd_extra_networks/thumb?filename=${encodeURIComponent(imageUrl)}')`;
         }
@@ -337,7 +337,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             txt_value += ` ${textarea.value}`;
         });
 
-        if(txt_value.length > 2){
+        if (txt_value.length > 2) {
 
             function cleanPhrases(input) {
                 return input.replace(/[()]+|:[0-9]+(.[0-9]+)?/g, '').trim();
@@ -346,7 +346,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             const words = txt_value.trim().split(/[\s,.]+/);
             let cleaned_words = words.map(cleanPhrases).filter(Boolean);
 
-            if(table === 'lora' || table === 'hypernetwork'){
+            if (table === 'lora' || table === 'hypernetwork') {
                 const tagnet = table === 'lora' ? 'lora' : 'hypernet';
                 function netTagReset(input) {
                     if (input.includes(`${tagnet}:`)) {
@@ -359,42 +359,42 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                 cleaned_words = tag_words.map(netTagReset).filter(Boolean); // Filter empty
             }
 
-            if(cleaned_words.length > 0){
+            if (cleaned_words.length > 0) {
                 //console.log(cleaned_words);
                 const url = '/sd_webui_ux/search_words_in_tables_columns';
                 const params = {
-                    tables: table, 
+                    tables: table,
                     columns: 'prompt',
                     words: cleaned_words
-                }
+                };
 
                 requestPostData(url, params, function(result) {
-                    const data = result[table]
+                    const data = result[table];
                     //console.log(data);
                     const cleanedNetwork = data.map(itemData => {
                         let data_prompt = itemData.prompt;
-                        if(table === 'lora' || table === 'hypernetwork'){
+                        if (table === 'lora' || table === 'hypernetwork') {
                             const tagnet = table === 'lora' ? 'lora' : 'hypernet';
                             data_prompt = `<${tagnet}:${itemData.prompt.split(':')[1]}`;
                         }
-                        
+
                         return {
                             id: itemData.id,
                             name: itemData.name,
-                            value: data_prompt         
-                        }
+                            value: data_prompt
+                        };
                     });
-                
+
                     selected_networks[`${prompt_focused}_${table}`] = cleanedNetwork;
 
                     vScroll.selected = treeView.selected = new Set(cleanedNetwork.map(network => network.name));
-                
+
                     vScroll.renderItems();
                     treeView.updateSelectedItems();
                 });
             }
-         
-        }else{
+
+        } else {
 
             vScroll.selected = treeView.selected = new Set();
             vScroll.renderItems();
@@ -418,16 +418,17 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     function createUserMetaForm(itemData, id) {
 
         const fields = {
-            local_preview: {type: 'input', name:'local_preview'},
-            sd_version: {type: 'select', name:'sd_version', label:'SD Version', value: itemData.sd_version, 
+            local_preview: {type: 'input', name: 'local_preview'},
+            sd_version: {
+                type: 'select', name: 'sd_version', label: 'SD Version', value: itemData.sd_version,
                 options: SD_VERSIONS_OPTIONS
             },
-            preferred_weight: {type: 'number', name:'preferred_weight', label:'Preferred Weight'},
-            activation_text: {type: 'textarea', name:'activation_text', label:"Activation Text", rows: 4},
-            negative_prompt: {type: 'textarea', name:'negative_prompt', label:"Negative Prompt", rows: 2},
-            description: {type: 'textarea', name:'description', label:"Description", rows: 2},
-            tags: {type: 'textarea', name:'tags', label:"Tags"},
-            notes: {type: 'textarea', name:'notes', label:'Notes', rows: 2}
+            preferred_weight: {type: 'number', name: 'preferred_weight', label: 'Preferred Weight'},
+            activation_text: {type: 'textarea', name: 'activation_text', label: "Activation Text", rows: 4},
+            negative_prompt: {type: 'textarea', name: 'negative_prompt', label: "Negative Prompt", rows: 2},
+            description: {type: 'textarea', name: 'description', label: "Description", rows: 2},
+            tags: {type: 'textarea', name: 'tags', label: "Tags"},
+            notes: {type: 'textarea', name: 'notes', label: 'Notes', rows: 2}
         };
 
         const table_data = {
@@ -440,8 +441,8 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         };
 
         const img_data = {
-            thumbnail: {type: 'img', req:'./sd_extra_networks/thumb?filename=', showLabel: false},
-            replace_preview: {type: 'button',  label:'Replace Preview', showLabel: false},
+            thumbnail: {type: 'img', api: './sd_extra_networks/thumb?filename=', showLabel: false},
+            replace_preview: {type: 'button', label: 'Replace Preview', showLabel: false},
         };
 
         const murl = `/sd_webui_ux/get_internal_metadata?type=${encodeURIComponent(itemData.type)}&name=${encodeURIComponent(itemData.name)}`;
@@ -507,7 +508,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                 const filename = filePath.substring(lastSlashIndex + 1);
                 const lastDotIndex = filename.lastIndexOf('.');
                 const filename_no_ext = filename.substring(0, lastDotIndex);
-                
+
                 return {
                     path: path,
                     filename: filename,
@@ -522,10 +523,10 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                 fdata.type = itemData.type;
                 fdata.name = itemData.name;
                 fdata.filename = itemData.filename;
-                if(source_file) fdata.local_preview = source_file;
+                if (source_file) fdata.local_preview = source_file;
                 return fdata;
-            }; 
-            
+            };
+
             let local_preview_path_value = itemData.local_preview;
 
             dynamicForm.afterFormSubmit = function(data) {
@@ -537,14 +538,15 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                 data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp`;
                 data.timestamp = `?t=${timestamp}`;
                 vScroll.updateDataById(data, id);
-                treeView.updateDataById(data, id);
+                //treeView.updateDataById(data, id);
+                treeView.update();
             };
-            
+
             const replace_local_preview = imgEl.querySelector('button.replace_preview');
             replace_local_preview.addEventListener('click', (e) => {
                 const prompt_focused = window.UIUX.FOCUS_PROMPT;
                 const gallery_img = document.querySelector(`#${prompt_focused}_gallery [data-testid="detailed-image"]`);
-                if(gallery_img){
+                if (gallery_img) {
                     const thumb_preview = imgEl.querySelector('.thumbnail-image');
                     //const local_preview = formEl.querySelector('#local_preview_path input');
                     source_file = gallery_img.src.split('file=')[1].split('?')[0];
