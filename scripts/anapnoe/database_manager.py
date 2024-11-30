@@ -436,6 +436,7 @@ class DatabaseManager:
 
 
     def update_existing_item(self, cursor, table_name, item_filtered):
+        item_filtered['date_modified'] = int(time.time())
         keys = ', '.join([f"{k} = ?" for k in item_filtered.keys() if k != 'id'])
         values = tuple(json.dumps(val) if isinstance(val, (dict, list)) else val for k, val in item_filtered.items() if k != 'id') + (item_filtered['id'],)
 
