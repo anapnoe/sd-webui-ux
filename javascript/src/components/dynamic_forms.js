@@ -168,10 +168,17 @@ DynamicForm.prototype.createForm = function(fields) {
     const cancelButton = document.createElement('button');
     cancelButton.setAttribute('type', 'button');
     cancelButton.textContent = "Cancel";
-    cancelButton.classList.add('ae-submit-button');
+    cancelButton.classList.add('ae-submit-button', 'cancel');
+
+    const deleteButton = document.createElement('button');
+    deleteButton.setAttribute('type', 'button');
+    deleteButton.textContent = "Delete";
+    deleteButton.classList.add('ae-submit-button', 'delete');
 
     savePanel.appendChild(submitButton);
     savePanel.appendChild(cancelButton);
+    savePanel.appendChild(deleteButton);
+
 
 
     this.form.appendChild(savePanel);
@@ -363,7 +370,7 @@ DynamicForm.prototype.handleSubmit = async function(event) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const message = await response.json();
-        this.afterFormSubmit(fdata, message);
+        await this.afterFormSubmit(fdata, message);
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }
