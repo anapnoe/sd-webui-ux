@@ -347,25 +347,26 @@ class DatabaseManager:
             source_file = self.get_source_file()
             self.set_source_file(None)
 
+            new_preview_directory = os.path.dirname(new_local_preview_path)
+            if not os.path.exists(new_preview_directory):
+                self.create_directory_with_permissions(new_preview_directory)
+                logger.info(f"Created directory: {new_preview_directory}")
+
             if source_file:
                 if os.path.exists(source_file):
-                    new_preview_directory = os.path.dirname(new_local_preview_path)
-                    self.create_directory_with_permissions(new_preview_directory)
-                    #os.makedirs(new_local_preview_path, exist_ok=True)
-                    if os.path.exists(new_preview_directory):
-                        shutil.copy2(source_file, new_local_preview_path)
-                        logger.info(f"Copied new local_preview from {source_file} to {new_local_preview_path}")
+                    shutil.copy2(source_file, new_local_preview_path)
+                    logger.info(f"Copied new local_preview from {source_file} to {new_local_preview_path}")
                 return new_local_preview_path
 
             if curr_local_preview:
-                if curr_filename != new_filename and new_filename is not None:
+                if curr_filename != new_filename and new_filename:
                     if os.path.exists(curr_local_preview):
                         shutil.move(curr_local_preview, new_local_preview_path)
                         logger.info(f"Moved new local_preview from {curr_local_preview} to {new_local_preview_path}")
                         
                     return new_local_preview_path  # Return new path
 
-                elif curr_local_preview != new_local_preview_path and new_local_preview_path is not None:
+                elif curr_local_preview != new_local_preview_path and new_local_preview_path:
                     # Copy, overwrite if exists
                     if os.path.exists(new_local_preview_path):
                         shutil.copy2(new_local_preview_path, curr_local_preview)
@@ -387,9 +388,12 @@ class DatabaseManager:
         if updated_local_preview_path:
             item_filtered['local_preview'] = updated_local_preview_path
             item_filtered['thumbnail'] = self.create_and_save_thumbnail(updated_local_preview_path)
-            item_filtered['filesize'] = os.stat(item_filtered.get('thumbnail'))
-            if item_filtered.get('filename') is not None:
+            if item_filtered.get('thumbnail'):
+                item_filtered['filesize'] = os.stat(item_filtered.get('thumbnail'))
+            if item_filtered.get('filename'):
                 item_filtered['hash'] = os.stat(item_filtered.get('filename'))
+
+        return updated_local_preview_path
 
 
     def update_item(self, table_name, item, update_local_preview=False):
@@ -413,7 +417,7 @@ class DatabaseManager:
                 
             if update_local_preview:
                 local_preview_thumb = self.handle_local_preview(table_name, item_filtered)
-                if local_preview_thumb is not None:
+                if local_preview_thumb:
                     self.update_local_preview_thumb(cursor, table_name, item_filtered)
 
             conn.commit()
@@ -481,22 +485,46 @@ class DatabaseManager:
         ''', (item_filtered.get('local_preview'), item_filtered.get('thumbnail'), item_filtered.get('id')))
 
 
+    def delete_images(self, image_paths):
+        for path_str in image_paths:
+            path = Path(path_str) 
+            if path.exists():
+                path.unlink()  # Delete the file
+                logger.info(f"Deleted image: {path}")
+            else:
+                logger.warning(f"Image not found: {path}")
 
-    def delete_item(self, table_name, item):
+
+    def delete_item(self, table_name, item_id):
         validate_name(table_name, "table")  # Validate table
         conn = None
         try:
             conn = self.connect()
             cursor = conn.cursor()
-            cursor.execute(f'DELETE FROM {table_name} WHERE name = ?', (item['name'],))
+
+            cursor.execute(f'SELECT local_preview, thumbnail FROM {table_name} WHERE id = ?', (item_id,))
+            paths = cursor.fetchone()
+
+            if paths:
+                local_preview, thumbnail = paths
+                self.delete_images([local_preview, thumbnail])
+            else:
+                logger.warning(f"No item found with id {item_id} in {table_name}.")
+                return {"message": f"No item found with id {item_id}."}
+
+            cursor.execute(f'DELETE FROM {table_name} WHERE id = ?', (item_id,))
             conn.commit()
-            logger.info(f"Item {item['name']} deleted from {table_name}.")
+            logger.info(f"Item with id {item_id} deleted from {table_name}.")
+            return {"message": f"Item with id {item_id} deleted successfully."}
+
         except sqlite3.Error as e:
             logger.error(f"Database error while deleting item: {e}")
             if conn:
                 conn.rollback()
+            return {"message": "Database error occurred."}
         except Exception as e:
             logger.error(f"Error deleting item: {e}")
+            return {"message": "An error occurred."}
         finally:
             if conn:
                 conn.close()
@@ -542,6 +570,27 @@ class DatabaseManager:
             # where_clauses += [f"LOWER({col}) LIKE ?" for col in search_columns]
             where_clause = " AND ".join(where_clauses) if where_clauses else "1=1"
 
+
+            # Count total
+            count_query = f"""
+            SELECT COUNT(*) FROM {table_name} 
+            WHERE {where_clause}
+            """
+
+            count_params = []
+            if sd_version:
+                count_params.append(f"%{sd_version.lower()}%")
+            
+            if search_columns and search_term:
+                for term in terms:
+                    like_search_term = f"%{term}%"
+                    count_params.extend([like_search_term] * len(search_columns))
+
+            cursor.execute(count_query, tuple(count_params))
+            total_rows = cursor.fetchone()[0]  # Get the total count
+
+
+            # Main query
             query = f"""
             SELECT * FROM {table_name} 
             WHERE {where_clause}
@@ -575,14 +624,16 @@ class DatabaseManager:
 
             return {
                 "items": items,
-                "nextCursor": next_cursor
+                "nextCursor": next_cursor,
+                "total": total_rows
             }
 
         except sqlite3.Error as e:
             logger.error(f"Database error: {e}")
             return {
                 "items": [],
-                "nextCursor": None
+                "nextCursor": None,
+                "total": 0
             }
 
 
@@ -641,6 +692,7 @@ class DatabaseManager:
                 return Path(preview_image_path)
             
         return None
+
 
     def create_and_save_thumbnail(self, image_path, save_path=None, size=(512, 512)):
         image_path = self.get_image_path(image_path)
@@ -739,7 +791,7 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
     '''
 
     @app.get("/sd_webui_ux/get_items_from_db")
-    def get_items_from_db_endpoint(
+    async def get_items_from_db_endpoint(
         table_name: str,
         skip: int = 0, 
         limit: int = 10, 
@@ -761,7 +813,7 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get("/sd_webui_ux/get_internal_metadata")
-    def get_internal_metadata_endpoint(type: str, name: str):
+    async def get_internal_metadata_endpoint(type: str, name: str):
         try:
             page = db_tables_pages.get(type)
             if not page:
@@ -873,7 +925,7 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
 
     
     @app.get("/sd_webui_ux/get_items_by_path")
-    def get_items_by_path_endpoint(
+    async def get_items_by_path_endpoint(
         table_name: str,
         path: str = Query("")):       
         db_manager = DatabaseManager.get_instance()
@@ -924,6 +976,24 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+
+    @app.post("/sd_webui_ux/delete_item")
+    async def delete_item_endpoint(payload: dict = Body(...)):
+        table_name:str = payload.get('table_name')
+        item_id:str = payload.get('item_id')
+
+        if not table_name:
+            raise HTTPException(status_code=422, detail="Table name is required")
+        if not item_id:
+            raise HTTPException(status_code=422, detail="Item ID is required")
+
+        db_manager = DatabaseManager.get_instance()
+        response = db_manager.delete_item(table_name, item_id)
+        if "Error" in response["message"]:
+            raise HTTPException(status_code=500, detail=response["message"])
+        return response
+    
+    '''
     @app.get("/sd_webui_ux/images/{filename:path}")
     async def get_image(filename: str):
         file_path = filename
@@ -932,6 +1002,7 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
             raise HTTPException(status_code=404, detail="File not found")
 
         return FileResponse(file_path)
+    '''
 
     
 # Modify the lambda to pass db_tables_pages in case we need to init db_tables_pages in another module
