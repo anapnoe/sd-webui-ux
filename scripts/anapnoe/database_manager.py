@@ -40,11 +40,14 @@ class DatabaseManager:
             raise Exception("DatabaseManager instance is not set.")
         return cls._instance
 
+
     def set_source_file(self, source_file):
         self.source_file = source_file
 
+
     def get_source_file(self):
         return self.source_file
+
 
     def connect(self):
         return sqlite3.connect(self.db_name, check_same_thread=False)
@@ -78,6 +81,7 @@ class DatabaseManager:
             "extra": ("", "TEXT"),
         }
 
+
     def calculate_sha256(self, filepath):
         sha256_hash = hashlib.sha256()
         with open(filepath, "rb") as f:
@@ -85,6 +89,7 @@ class DatabaseManager:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
     
+
     def create_directory_with_permissions(self, dir_path):
         try:
             os.makedirs(dir_path, exist_ok=True)
@@ -505,6 +510,7 @@ class DatabaseManager:
             SET {set_clause} 
             WHERE id = ?
             ''', values)
+
 
     def delete_images(self, image_paths):
         for path_str in image_paths:
