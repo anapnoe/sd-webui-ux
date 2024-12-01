@@ -430,6 +430,9 @@ class DatabaseManager:
 
             conn.commit()
             logger.info(f"Item {item['name']} updated successfully.")
+
+            return item_filtered
+        
         except sqlite3.Error as e:
             logger.error(f"Database error while updating item: {e}")
             if conn:
@@ -497,9 +500,11 @@ class DatabaseManager:
 
         if update_fields['thumbnail'] and os.path.exists(update_fields['thumbnail']):
             update_fields['filesize'] = os.stat(update_fields['thumbnail']).st_size
+            item_filtered['filesize'] = update_fields['filesize']
 
         if item_filtered.get('filename') and os.path.exists(item_filtered.get('filename')):
             update_fields['hash'] = self.calculate_sha256(item_filtered.get('filename'))
+            item_filtered['hash'] = update_fields['hash']
 
         set_clause = ', '.join(f"{key} = ?" for key in update_fields if update_fields[key] is not None)
         values = [value for value in update_fields.values() if value is not None] + [item_filtered.get('id')]
@@ -919,8 +924,8 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         db_manager.set_source_file(source_file)
 
         try:
-            db_manager.update_item(table_name, item, update_local_preview=True)
-            return {"message": "Item updated successfully"}
+            updated_item = db_manager.update_item(table_name, item, update_local_preview=True)
+            return {"message": "Item updated successfully", "data": updated_item}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 

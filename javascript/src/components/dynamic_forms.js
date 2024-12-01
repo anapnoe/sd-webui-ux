@@ -371,14 +371,14 @@ DynamicForm.prototype.handleSubmit = async function(event) {
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        const message = await response.json();
-        await this.afterFormSubmit(fdata, message);
+        const updated = await response.json();
+        await this.afterFormSubmit(fdata, updated.data, updated.message);
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }
 };
 
-DynamicForm.prototype.afterFormSubmit = function(fdata, message) {
+DynamicForm.prototype.afterFormSubmit = function(fdata, newdata, message) {
 
 };
 DynamicForm.prototype.beforeFormSubmit = function(fdata) {

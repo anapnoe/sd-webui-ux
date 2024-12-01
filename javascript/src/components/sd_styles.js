@@ -452,15 +452,15 @@ export async function setupSdStyle(netkey, table, base_path) {
             return fdata;
         };
 
-        dynamicForm.afterFormSubmit = function(data) {
+        dynamicForm.afterFormSubmit = function(data, newdata) {
             vScroll.hideDetail();
             //console.log(data);
-            const lp = getPathAndFilename(local_preview_path_value);
-            const timestamp = new Date().getTime();
-            data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp`;
-            data.timestamp = `?t=${timestamp}`;
-            data.local_preview = local_preview_path_value;
-            vScroll.updateDataById(data, item_id);
+            //const lp = getPathAndFilename(local_preview_path_value);
+            //const timestamp = new Date().getTime();
+            //data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp`;
+            //data.timestamp = `?t=${timestamp}`;
+            //data.local_preview = local_preview_path_value;
+            vScroll.updateDataById(newdata, newdata.id);
             //treeView.updateDataById(data, item_id);
             treeView.update();
         };

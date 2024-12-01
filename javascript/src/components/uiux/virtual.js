@@ -430,7 +430,7 @@ VirtualScroll.prototype.updateDataById = function(data, id) {
         this.data = this.originalData;
         this.renderItems();
     } else {
-        console.error(`Item with ID ${id} not found.`);
+        console.warn(`Item with ID ${id} not found in loaded data object.`);
     }
 };
 
