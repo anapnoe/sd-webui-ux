@@ -164,20 +164,22 @@ DynamicForm.prototype.createForm = function(fields) {
     submitButton.setAttribute('type', 'submit');
     submitButton.textContent = this.submit_label;
     submitButton.classList.add('ae-submit-button');
+    savePanel.appendChild(submitButton);
 
     const cancelButton = document.createElement('button');
     cancelButton.setAttribute('type', 'button');
     cancelButton.textContent = "Cancel";
     cancelButton.classList.add('ae-submit-button', 'cancel');
-
-    const deleteButton = document.createElement('button');
-    deleteButton.setAttribute('type', 'button');
-    deleteButton.textContent = "Delete";
-    deleteButton.classList.add('ae-submit-button', 'delete');
-
-    savePanel.appendChild(submitButton);
     savePanel.appendChild(cancelButton);
-    savePanel.appendChild(deleteButton);
+
+    if (this.itemData.id) {
+        const deleteButton = document.createElement('button');
+        deleteButton.setAttribute('type', 'button');
+        deleteButton.textContent = "Delete";
+        deleteButton.classList.add('ae-submit-button', 'delete');
+        savePanel.appendChild(deleteButton);
+    }
+
 
 
 

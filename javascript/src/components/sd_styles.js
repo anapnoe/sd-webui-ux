@@ -20,10 +20,13 @@ function detailView(container, elem) {
 }
 
 const selected_sd_styles = {};
+let vScroll;
+let treeView;
+let apiParams;
+let container;
 
 export async function setupSdStyle(netkey, table, base_path) {
-
-    const container = document.querySelector(`#${netkey}_cardholder`);
+    container = document.querySelector(`#${netkey}_cardholder`);
     const searchInput = document.querySelector(`#${netkey}_search`);
     const sortSelect = document.querySelector(`#${netkey}_sort`);
     const orderButton = document.querySelector(`#${netkey}_order`);
@@ -68,8 +71,8 @@ export async function setupSdStyle(netkey, table, base_path) {
         return params;
     };
 
-    const vScroll = new VirtualScroll(container, [], 18, itemKeys, apiUrl, initApiParams, method);
-    const apiParams = setupInputObservers(paramsMapping, initApiParams, vScroll, modifyParams);
+    vScroll = new VirtualScroll(container, [], 18, itemKeys, apiUrl, initApiParams, method);
+    apiParams = setupInputObservers(paramsMapping, initApiParams, vScroll, modifyParams);
 
     vScroll.setNextCursor = function(nextCursor) {
         if (nextCursor && this.data.length > 0) {
@@ -118,24 +121,6 @@ export async function setupSdStyle(netkey, table, base_path) {
         return itemDiv;
     };
 
-    // Styles
-    function applySdStylesPrompts(target, itemData, id) {
-        const prompt_focused = window.UIUX.FOCUS_PROMPT;
-        const prompt = itemData.prompt || "";
-        const neg_prompt = itemData.negative || "";
-
-        //console.log(target);
-
-        if (target.classList.contains("copy-path")) {
-            navigator.clipboard.writeText(itemData.filename);
-        } else if (target.classList.contains("edit-meta")) {
-            createUserMetaForm(itemData, itemData.id);
-        } else if (itemData.type === "Style") {
-            window.cardClicked(prompt_focused, prompt, neg_prompt, true);
-            selected_sd_styles[`${prompt_focused}_styles`].push({id: itemData.id, name: itemData.name, value: prompt});
-        }
-    }
-
     vScroll.clickHandler = function(e) {
         const {target, currentTarget: ctarget} = e;
         const itemId = target.closest('.item.card').dataset.id;
@@ -174,7 +159,7 @@ export async function setupSdStyle(netkey, table, base_path) {
 
 
     // TreeView
-    const treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_items_by_path', table, base_path);
+    treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_items_by_path', table, base_path);
     treeView.initialize();
 
     treeView.createFileItem = function(tree, key) {
@@ -306,17 +291,33 @@ export async function setupSdStyle(netkey, table, base_path) {
         treeView.updateSelectedItems();
     }
 
-
-    //if (table === 'styles') {
     document.querySelectorAll('#txt2img_prompt textarea, #img2img_prompt textarea, #txt2img_neg_prompt textarea, #img2img_neg_prompt textarea').forEach(textarea => {
         textarea.addEventListener('input', selectItems);
-        //textarea.addEventListener('focus', selectItems);
         textarea.addEventListener('focus', selectItemsFromDB);
     });
-    //}
+
+
+    // Styles
+    function applySdStylesPrompts(target, itemData, item_id) {
+        const prompt_focused = window.UIUX.FOCUS_PROMPT;
+        const prompt = itemData.prompt || "";
+        const neg_prompt = itemData.negative || "";
+
+        //console.log(target);
+
+        if (target.classList.contains("copy-path")) {
+            navigator.clipboard.writeText(itemData.filename);
+        } else if (target.classList.contains("edit-meta")) {
+            createUserMetaForm(itemData, itemData.id);
+        } else if (itemData.type === "Style") {
+            window.cardClicked(prompt_focused, prompt, neg_prompt, true);
+            selected_sd_styles[`${prompt_focused}_styles`].push({id: itemData.id, name: itemData.name, value: prompt});
+        }
+    }
 
     // User Metadata Form
-    function createUserMetaForm(itemData, id) {
+    function createUserMetaForm(itemData, item_id) {
+        const table = "styles";
         const styles_folders = treeView.subpaths;
         const styles_folders_options = new Set(styles_folders.map(folder => folder.relativePath));
         const styles_folders_options_array = Array.from(styles_folders_options);
@@ -324,7 +325,7 @@ export async function setupSdStyle(netkey, table, base_path) {
         let styles_folders_selected;
 
         styles_folders_options_array.forEach(option => {
-            if (itemData.filename.includes(`${option}/`)) {
+            if (itemData.filename?.includes(`${option}/`)) {
                 styles_folders_selected = option;
             }
             styles_folders_select_options.push(
@@ -363,8 +364,8 @@ export async function setupSdStyle(netkey, table, base_path) {
             },
             prompt: {type: 'textarea', name: 'prompt', label: "Prompt", rows: 4},
             negative: {type: 'textarea', name: 'negative', label: "Negative Prompt", rows: 2},
-            description: {type: 'textarea', name: 'description', label: "Description", rows: 2},
-            tags: {type: 'textarea', name: 'tags', label: "Tags"}
+            tags: {type: 'textarea', name: 'tags', label: "Tags"},
+            description: {type: 'textarea', name: 'description', label: "Description", rows: 2}
         };
 
         const table_data = {
@@ -446,7 +447,7 @@ export async function setupSdStyle(netkey, table, base_path) {
             fdata.name = getPathAndFilename(local_preview_path_value).filename_no_ext;
             fdata.filename = local_preview_path_value;
             fdata.type = 'Style';
-            fdata.id = itemData.id;
+            if (itemData.id) fdata.id = itemData.id;
             if (source_file) fdata.source_file = source_file;
             return fdata;
         };
@@ -459,13 +460,12 @@ export async function setupSdStyle(netkey, table, base_path) {
             data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp`;
             data.timestamp = `?t=${timestamp}`;
             data.local_preview = local_preview_path_value;
-            vScroll.updateDataById(data, id);
-            //treeView.updateDataById(data, id);
+            vScroll.updateDataById(data, item_id);
+            //treeView.updateDataById(data, item_id);
             treeView.update();
         };
 
-        const replace_local_preview = imgEl.querySelector('button.replace_preview');
-        replace_local_preview.addEventListener('click', (e) => {
+        function replacePreviewImage() {
             const prompt_focused = window.UIUX.FOCUS_PROMPT;
             const gallery_img = document.querySelector(`#${prompt_focused}_gallery [data-testid="detailed-image"]`);
             if (gallery_img) {
@@ -474,31 +474,58 @@ export async function setupSdStyle(netkey, table, base_path) {
                 source_file = gallery_img.src.split('file=')[1].split('?')[0];
                 thumb_preview.style.filter = 'grayscale(1)';
             }
+        }
+
+        const replace_local_preview = imgEl.querySelector('button.replace_preview');
+        replace_local_preview.addEventListener('click', (e) => {
+            replacePreviewImage();
         });
 
-        delete_button.addEventListener('click', (e) => {
+        if (!itemData.id) {
+            replacePreviewImage();
+        }
 
-            const url = '/sd_webui_ux/delete_item';
-            const params = {
-                table_name: table,
-                item_id: itemData.id,
-            };
+        if (itemData.id) {
+            delete_button.addEventListener('click', (e) => {
+                const url = '/sd_webui_ux/delete_item';
+                const params = {
+                    table_name: table,
+                    item_id: itemData.id,
+                };
+                requestPostData(url, params, function(result) {
+                    console.log(result);
+                    vScroll.hideDetail();
+                    apiParams.skip = 0;
+                    vScroll.updateParamsAndFetch(apiParams, 0);
+                    treeView.update();
 
-            requestPostData(url, params, function(result) {
-                console.log(result);
-                vScroll.hideDetail();
-                apiParams.skip = 0;
-                vScroll.updateParamsAndFetch(apiParams, 0);
-                treeView.update();
-
+                });
             });
-
-        });
+        }
     }
+
+    function createNewStyle() {
+        const prompt_focused = window.UIUX.FOCUS_PROMPT;
+        const prompt_textarea = document.querySelector(`#${prompt_focused}_prompt textarea`);
+        const neg_prompt_textarea = document.querySelector(`#${prompt_focused}_neg_prompt textarea`);
+        const clearDots = (txt) => txt.replace(/\s{2,}/g, ' ').replace(/(\. )\1+/g, '. ');
+        const newItemData = {};
+        newItemData.prompt = clearDots('. ' + prompt_textarea.value);
+        newItemData.negative = clearDots('. ' + neg_prompt_textarea.value);
+        newItemData.name = 'Untitled';
+        newItemData.description = '';
+        newItemData.tags = '';
+        newItemData.local_preview = '';
+
+        createUserMetaForm(newItemData, null);
+
+    }
+
+    const styles_create = document.querySelector("#layout_db_styles button.create-style");
+
+    styles_create.addEventListener('click', (e) => {
+        createNewStyle();
+    });
 
 
 }
-
-
-
-

@@ -17,6 +17,7 @@ import gradio as gr
 from modules import script_callbacks
 import time
 import stat
+import hashlib
 
 def validate_name(name, message):
     if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', name):
@@ -77,7 +78,13 @@ class DatabaseManager:
             "extra": ("", "TEXT"),
         }
 
-
+    def calculate_sha256(self, filepath):
+        sha256_hash = hashlib.sha256()
+        with open(filepath, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+    
     def create_directory_with_permissions(self, dir_path):
         try:
             os.makedirs(dir_path, exist_ok=True)
@@ -388,10 +395,6 @@ class DatabaseManager:
         if updated_local_preview_path:
             item_filtered['local_preview'] = updated_local_preview_path
             item_filtered['thumbnail'] = self.create_and_save_thumbnail(updated_local_preview_path)
-            if item_filtered.get('thumbnail'):
-                item_filtered['filesize'] = os.stat(item_filtered.get('thumbnail'))
-            if item_filtered.get('filename'):
-                item_filtered['hash'] = os.stat(item_filtered.get('filename'))
 
         return updated_local_preview_path
 
@@ -479,12 +482,29 @@ class DatabaseManager:
 
 
     def update_local_preview_thumb(self, cursor, table_name, item_filtered):
-        cursor.execute(f'''
-        UPDATE {table_name} 
-        SET local_preview = ?, thumbnail = ?
-        WHERE id = ?
-        ''', (item_filtered.get('local_preview'), item_filtered.get('thumbnail'), item_filtered.get('id')))
+        # fields to update
+        update_fields = {
+            'local_preview': item_filtered.get('local_preview'),
+            'thumbnail': item_filtered.get('thumbnail'),
+            'filesize': None,
+            'hash': None
+        }
 
+        if update_fields['thumbnail'] and os.path.exists(update_fields['thumbnail']):
+            update_fields['filesize'] = os.stat(update_fields['thumbnail']).st_size
+
+        if item_filtered.get('filename') and os.path.exists(item_filtered.get('filename')):
+            update_fields['hash'] = self.calculate_sha256(item_filtered.get('filename'))
+
+        set_clause = ', '.join(f"{key} = ?" for key in update_fields if update_fields[key] is not None)
+        values = [value for value in update_fields.values() if value is not None] + [item_filtered.get('id')]
+
+        if set_clause:
+            cursor.execute(f'''
+            UPDATE {table_name} 
+            SET {set_clause} 
+            WHERE id = ?
+            ''', values)
 
     def delete_images(self, image_paths):
         for path_str in image_paths:
@@ -738,10 +758,10 @@ class DatabaseManager:
             cursor = conn.cursor()
             
             # if file_id execute one
-            if file_id is not None:
-                cursor.execute(f'SELECT id, local_preview, filename, name FROM {table_name} WHERE id = ? AND local_preview IS NOT NULL', (file_id,))
+            if file_id:
+                cursor.execute(f'SELECT id, local_preview, filename FROM {table_name} WHERE id = ? AND local_preview IS NOT NULL', (file_id,))
             else:
-                cursor.execute(f'SELECT id, local_preview, filename, name FROM {table_name} WHERE local_preview IS NOT NULL')
+                cursor.execute(f'SELECT id, local_preview, filename FROM {table_name} WHERE local_preview IS NOT NULL')
             
             rows = cursor.fetchall()
 
@@ -749,13 +769,15 @@ class DatabaseManager:
                 return {"message": f"No images found for file_id {file_id}" if file_id else "No images found."}
 
             for row in rows:
-                file_id, image_path, save_path, name = row
+                file_id, image_path, save_path = row
                 thumb_path = self.create_and_save_thumbnail(image_path, save_path, size)
                 if thumb_path:
-                    try:
-                        cursor.execute(f'UPDATE {table_name} SET thumbnail = ? WHERE id = ?', (thumb_path, file_id))
-                    except Exception as e:
-                        logger.error(f"Error updating database for file_id {file_id}: {e}")
+                    item_filtered = {
+                        'local_preview': image_path, 
+                        'thumbnail': thumb_path,
+                        'id': file_id
+                    }
+                    self.update_local_preview_thumb(cursor, table_name, item_filtered)
 
             conn.commit()
             return {"message": "Thumbnails generated and updated successfully" if not file_id else f"Thumbnail generated and updated for file_id: {file_id}"}
