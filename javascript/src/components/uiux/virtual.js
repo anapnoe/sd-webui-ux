@@ -218,8 +218,10 @@ VirtualScroll.prototype.updateDimensions = function() {
 
     if (!this.data.length) return;
 
+    const totalItems = this.total || this.data.length;
+
     this.itemsPerRow = Math.floor(this.containerWidth / this.itemWidth);
-    this.totalRows = Math.ceil(this.data.length / this.itemsPerRow);
+    this.totalRows = Math.ceil(totalItems / this.itemsPerRow);
     this.rowsInView = Math.ceil(this.containerHeight / this.itemHeight);
     this.itemsPerPage = Math.max(this.itemsPerPage, this.rowsInView * this.itemsPerRow);
     this.totalHeight = this.totalRows * this.itemHeight;
@@ -244,6 +246,7 @@ VirtualScroll.prototype.scrollHandler = function() {
 
         const scrollDirection = scrollTop > this.lastScrollTop ? 'down' : 'up';
         this.lastScrollTop = scrollTop;
+
 
         if (scrollDirection === 'down' && this.useDataFetching && !this.isFetching && this.params.cursor) {
             if (this.startIndex >= this.maxStartIndex) {
@@ -403,8 +406,9 @@ VirtualScroll.prototype.appendData = function(data) {
     this.data = this.originalData;
     this.isFetching = false;
     const newScrollTop = this.startIndex * this.itemHeight;
-    this.container.scrollTop = newScrollTop;
+    //this.container.scrollTop = newScrollTop;
     this.updateDimensions();
+
 };
 
 VirtualScroll.prototype.updateDataByIndex = function(data, index) {
@@ -498,6 +502,7 @@ VirtualScroll.prototype.fetchUpdateData = async function(renew = false) {
     if (newData) {
         const idata = this.getValueByPath(newData, this.keys.dataPath) || newData;
         renew ? this.setData(idata) : this.appendData(idata);
+        this.total = newData.total;
         this.setNextCursor(newData.metadata?.nextCursor || newData.nextCursor);
     } else {
         console.error(`Error fetching data: ${error}`);
@@ -518,6 +523,15 @@ VirtualScroll.prototype.updateParamsAndFetch = async function(newParams, delay =
 
     // Pass the boolean argument to fetchUpdateData
     const debouncedFetchUpdateData = this.debounce(this.fetchUpdateData.bind(this, true), delay);
+    debouncedFetchUpdateData();
+};
+
+VirtualScroll.prototype.update = async function() {
+
+    this.originalData = [];
+    this.data = this.originalData;
+
+    const debouncedFetchUpdateData = this.debounce(this.fetchUpdateData.bind(this, true), 1000);
     debouncedFetchUpdateData();
 };
 
