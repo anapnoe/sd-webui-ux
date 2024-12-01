@@ -886,7 +886,6 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         table_columns = db_manager.get_table_columns(table_name)
 
         item = {                     
-            'id': item_id,
             'type': data_type,
             'name': name,
         }
@@ -898,6 +897,7 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
                 raise HTTPException(status_code=422, detail="preferred_weight must be a valid number")
 
         optional_fields = {
+            'id': item_id,
             'filename': filename,
             'local_preview': local_preview, 
 
