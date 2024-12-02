@@ -223,13 +223,13 @@ class DatabaseManager:
                 conn.close()
 
 
-    def item_exists_by_name(self, table_name, file_name):
+    def item_exists_by_filename(self, table_name, filename):
         validate_name(table_name, "table")  # Validate table
         conn = None
         try:
             conn = self.connect()
             cursor = conn.cursor()
-            cursor.execute(f"SELECT 1 FROM {table_name} WHERE name = ?", (file_name,))
+            cursor.execute(f"SELECT 1 FROM {table_name} WHERE filename = ?", (filename,))
             exists = cursor.fetchone() is not None
             return exists
         except sqlite3.Error as e:
@@ -268,21 +268,21 @@ class DatabaseManager:
         try:
             cleaned_item = {k: v[0] if v is not None else None for k, v in item.items()}
             
-            item_exists_by_name = self.item_exists_by_name(table_name, cleaned_item['name'])
             item_allow_update = cleaned_item.get('allow_update', False)
+            item_exists_by_filename = self.item_exists_by_filename(table_name, cleaned_item['filename'])
             item_exists_in_source = self.item_exists_in_source(cleaned_item["filename"])
 
-            if not item_exists_by_name and not item_exists_in_source:
+            if not item_exists_by_filename and not item_exists_in_source:
                 logger.info(f"Item {cleaned_item['name']} does not exist. Deleting from database.")
-                self.delete_item(table_name, cleaned_item['name'])
+                self.delete_item(table_name, cleaned_item['filename'])
                 return
             
-            elif item_exists_by_name and not item_exists_in_source:
+            elif item_exists_by_filename and not item_exists_in_source:
                 logger.info(f"Item {cleaned_item['name']} not found in source. Updating paths.")
                 self.update_item_paths(table_name, cleaned_item)
                 return
             
-            elif item_exists_by_name:
+            elif item_exists_by_filename:
                 if item_allow_update:
                     logger.info(f"Updating item: {cleaned_item['name']} {cleaned_item.get('hash', 'N/A')} (allow_update=True)")
                     self.update_item(table_name, cleaned_item)
@@ -306,6 +306,11 @@ class DatabaseManager:
                 ''', values)
 
                 conn.commit()
+
+                last_inserted_id = cursor.lastrowid
+                item_filtered['id'] = last_inserted_id
+                self.generate_thumbnails(table_name, file_id=item_filtered['id'])
+
         except sqlite3.Error as e:
             logger.error(f"Database error: {e}")
         except Exception as e:
@@ -517,14 +522,14 @@ class DatabaseManager:
             ''', values)
 
 
-    def delete_images(self, image_paths):
-        for path_str in image_paths:
+    def delete_files(self, file_paths):
+        for path_str in file_paths:
             path = Path(path_str) 
             if path.exists():
                 path.unlink()  # Delete the file
-                logger.info(f"Deleted image: {path}")
+                logger.info(f"Deleted file: {path}")
             else:
-                logger.warning(f"Image not found: {path}")
+                logger.warning(f"File not found: {path}")
 
 
     def delete_item(self, table_name, item_id):
@@ -534,12 +539,12 @@ class DatabaseManager:
             conn = self.connect()
             cursor = conn.cursor()
 
-            cursor.execute(f'SELECT local_preview, thumbnail FROM {table_name} WHERE id = ?', (item_id,))
+            cursor.execute(f'SELECT local_preview, thumbnail, filename FROM {table_name} WHERE id = ?', (item_id,))
             paths = cursor.fetchone()
 
             if paths:
-                local_preview, thumbnail = paths
-                self.delete_images([local_preview, thumbnail])
+                local_preview, thumbnail, filename = paths
+                self.delete_files([local_preview, thumbnail, filename])
             else:
                 logger.warning(f"No item found with id {item_id} in {table_name}.")
                 return {"message": f"No item found with id {item_id}."}
