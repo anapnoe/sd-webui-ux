@@ -23,29 +23,35 @@ db_tables_pages = {
 }
 
 
-def styles_import_update_db(db_tables_pages):
+def styles_import_update_db(db_tables_pages, refresh=False):
     db_manager = DatabaseManager.get_instance()
 
     for type_name, page_instance in db_tables_pages.items():
         table_name = type_name.lower()
-
         items = list(page_instance.get_images_and_data())
         if items:
+            
             columns = {k: v[1] for k, v in items[0].items()}  # column type
 
             if not db_manager.table_exists(table_name):
                 try:
                     db_manager.create_table(table_name, columns)
-                    for item in items:
-                        db_manager.import_item(table_name, item)
+                    refresh = True
                 except Exception as e:
                     logger.error(f"Error creating table {table_name}: {e}")
                     continue  # Skip to next
 
+            if refresh:
+                for item in items:
+                    try:
+                        db_manager.import_item(table_name, item)  # Import item
+                    except Exception as e:
+                        logger.error(f"Error importing item into {table_name}: {e}")
+
 
 def styles_import_refresh_db():
     logger.info("Initializing and refreshing styles database")
-    styles_import_update_db(db_tables_pages)
+    styles_import_update_db(db_tables_pages, True)
 
 def check_and_use_db_styles():
     if shared.opts.uiux_enable_sd_styles is False:
