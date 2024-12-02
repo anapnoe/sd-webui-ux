@@ -44,6 +44,8 @@ class StylesFolderProcessor:
     def get_images_and_data(self):
         items = []
         for root, dirs, files in os.walk(self.styles_folder):
+            if 'thumbnails' in dirs:
+                dirs.remove('thumbnails')
             for file in files:
                 if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
                     image_path = os.path.join(root, file)
