@@ -91,6 +91,12 @@ class StylesFolderProcessor:
                     json_data = json.load(json_file)
                     item["description"] = (json_data.get("description", ""), "TEXT")
                     item["prompt"] = (json_data.get("prompt", ""), "TEXT")
+
+                    prompt = json_data.get("prompt", "")
+                    if "{prompt}" in prompt:
+                        prompt = prompt.replace("{prompt}, ", "")
+                    item["prompt"] = (". " + prompt, "TEXT")
+
                     item["negative"] = (json_data.get("negative", ""), "TEXT")
                     item["extra"] = (json_data.get("extra", ""), "TEXT")
                 except json.JSONDecodeError:
