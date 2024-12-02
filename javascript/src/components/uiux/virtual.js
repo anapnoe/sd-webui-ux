@@ -395,7 +395,7 @@ VirtualScroll.prototype.getValueByPath = function(obj, path) {
 /* Populate Data */
 VirtualScroll.prototype.setData = function(data) {
     this.originalData = data;
-    this.data = data;
+    this.data = this.originalData;
     this.container.scrollTop = 0;
     this.lastScrollTop = 0;
     this.initialize();
@@ -405,7 +405,7 @@ VirtualScroll.prototype.appendData = function(data) {
     this.originalData.push(...data);
     this.data = this.originalData;
     this.isFetching = false;
-    const newScrollTop = this.startIndex * this.itemHeight;
+    //const newScrollTop = this.startIndex * this.itemHeight;
     //this.container.scrollTop = newScrollTop;
     this.updateDimensions();
 
