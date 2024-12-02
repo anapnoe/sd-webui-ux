@@ -45,7 +45,7 @@ db_tables_pages = {
     "LORA": ExtraNetworksPageLora()
 }
 
-def extra_networks_import_update_db(db_tables_pages):
+def extra_networks_import_update_db(db_tables_pages, refresh = False):
     db_manager = DatabaseManager.get_instance()
 
     for type_name, page_instance in db_tables_pages.items():
@@ -57,14 +57,20 @@ def extra_networks_import_update_db(db_tables_pages):
             columns = {k: v[1] for k, v in items[0].items()}  # column type
             try:
                 db_manager.create_table(table_name, columns)
-                for item in items:
-                    db_manager.import_item(table_name, item)
+                refresh = True
             except Exception as e:
                 logger.error(f"Error creating table or inserting items for {table_name}: {e}")
+            
+            if refresh:
+                for item in items:
+                    try:
+                        db_manager.import_item(table_name, item)  # Import item
+                    except Exception as e:
+                        logger.error(f"Error importing item into {table_name}: {e}")
 
 def extra_networks_import_refresh_db():
     logger.info("Importing updating the database")
-    extra_networks_import_update_db(db_tables_pages)
+    extra_networks_import_update_db(db_tables_pages, True)
 
 def check_and_use_db_extra_networks():
     #if shared.opts.uiux_enable_db_extra_networks is False:
@@ -73,7 +79,7 @@ def check_and_use_db_extra_networks():
 
 
 if not os.path.exists(DB_FILE): 
-    extra_networks_import_refresh_db()
+    extra_networks_import_update_db(db_tables_pages)
 
 def on_ui_tabs():
     with gr.Blocks(analytics_enabled=False) as anapnoe_sd_uiux_db_extra_networks:
