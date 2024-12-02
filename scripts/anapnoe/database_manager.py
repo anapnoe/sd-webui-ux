@@ -251,9 +251,9 @@ class DatabaseManager:
             exists = cursor.fetchone() is not None
             return exists
         except sqlite3.Error as e:
-            logger.error(f"Database error in item_exists_by_name: {e}")
+            logger.error(f"Database error in item_exists: {e}")
         except Exception as e:
-            logger.error(f"Unexpected error in item_exists_by_name: {e}")
+            logger.error(f"Unexpected error in item_exists: {e}")
         finally:
             if conn:
                 conn.close()
@@ -265,51 +265,58 @@ class DatabaseManager:
     
 
     def import_item(self, table_name, item):
+        conn = None
         try:
             cleaned_item = {k: v[0] if v is not None else None for k, v in item.items()}
             
+            item_filtered = self.filter_and_normalize_paths(cleaned_item)
             item_allow_update = cleaned_item.get('allow_update', False)
-            item_exists_by_filename = self.item_exists_by_filename(table_name, cleaned_item['filename'])
-            item_exists_in_source = self.item_exists_in_source(cleaned_item["filename"])
+            item_exists_by_filename = self.item_exists_by_filename(table_name, item_filtered['filename'])
+            item_exists_in_source = self.item_exists_in_source(item_filtered["filename"])
+
+            logger.info(f"Inserting item: {item_filtered['name']} {item_filtered.get('hash', 'N/A')}")
 
             if not item_exists_by_filename and not item_exists_in_source:
-                logger.info(f"Item {cleaned_item['name']} does not exist. Deleting from database.")
-                self.delete_item(table_name, cleaned_item['filename'])
+                logger.info(f"Item {item_filtered['name']} does not exist. Deleting from database.")
+                self.delete_item(table_name, item_filtered['filename'])
                 return
             
             elif item_exists_by_filename and not item_exists_in_source:
-                logger.info(f"Item {cleaned_item['name']} not found in source. Updating paths.")
-                self.update_item_paths(table_name, cleaned_item)
+                logger.info(f"Item {item_filtered['name']} not found in source. Updating paths.")
+                self.update_item_paths(table_name, item_filtered)
                 return
+            
             
             elif item_exists_by_filename:
                 if item_allow_update:
-                    logger.info(f"Updating item: {cleaned_item['name']} {cleaned_item.get('hash', 'N/A')} (allow_update=True)")
-                    self.update_item(table_name, cleaned_item)
-                return
+                    logger.info(f"Updating item: {item_filtered['name']} {item_filtered.get('hash', 'N/A')} (allow_update=True)")
+                    self.update_item(table_name, item_filtered)
+                    return
+                else:
+                    logger.info(f"Item {item_filtered['name']} already exists and allow_update is False. Skipping insert.")
+                    return
             
-            else:
-                validate_name(table_name, "table")  # Validate table 
-                logger.info(f"Inserting item: {cleaned_item['name']} {cleaned_item.get('hash', 'N/A')}")
-                conn = self.connect()
-                cursor = conn.cursor()
+            
+            validate_name(table_name, "table")  # Validate table 
+            logger.info(f"Inserting item: {item_filtered['name']} {item_filtered.get('hash', 'N/A')}")
 
-                item_filtered = self.filter_and_normalize_paths(cleaned_item)
+            conn = self.connect()
+            cursor = conn.cursor()
 
-                keys = ', '.join(item_filtered.keys())
-                placeholders = ', '.join(['?' for _ in item_filtered])
-                values = tuple(json.dumps(val) if isinstance(val, (dict, list)) else val for val in item_filtered.values())
+            keys = ', '.join(item_filtered.keys())
+            placeholders = ', '.join(['?' for _ in item_filtered])
+            values = tuple(json.dumps(val) if isinstance(val, (dict, list)) else val for val in item_filtered.values())
 
-                cursor.execute(f'''
-                INSERT INTO {table_name} ({keys})
-                VALUES ({placeholders})
-                ''', values)
+            cursor.execute(f'''
+            INSERT INTO {table_name} ({keys})
+            VALUES ({placeholders})
+            ''', values)
 
-                conn.commit()
+            conn.commit()
 
-                last_inserted_id = cursor.lastrowid
-                item_filtered['id'] = last_inserted_id
-                self.generate_thumbnails(table_name, file_id=item_filtered['id'])
+            last_inserted_id = cursor.lastrowid
+            item_filtered['id'] = last_inserted_id
+            self.generate_thumbnails(table_name, file_id=item_filtered['id'])
 
         except sqlite3.Error as e:
             logger.error(f"Database error: {e}")

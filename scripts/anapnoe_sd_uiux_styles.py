@@ -60,7 +60,7 @@ def check_and_use_db_styles():
 
 #fix this we don't need to update on every restart
 if os.path.exists(DB_FILE): 
-    styles_import_update_db(db_tables_pages)
+    styles_import_update_db(db_tables_pages, False)
 
 def on_ui_tabs():
     with gr.Blocks(analytics_enabled=False) as anapnoe_sd_uiux_db_styles:

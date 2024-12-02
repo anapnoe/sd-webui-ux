@@ -45,7 +45,7 @@ db_tables_pages = {
     "LORA": ExtraNetworksPageLora()
 }
 
-def extra_networks_import_update_db(db_tables_pages, refresh = False):
+def extra_networks_import_update_db(db_tables_pages, refresh=False):
     db_manager = DatabaseManager.get_instance()
 
     for type_name, page_instance in db_tables_pages.items():
@@ -79,7 +79,7 @@ def check_and_use_db_extra_networks():
 
 
 if not os.path.exists(DB_FILE): 
-    extra_networks_import_update_db(db_tables_pages)
+    extra_networks_import_update_db(db_tables_pages, False)
 
 def on_ui_tabs():
     with gr.Blocks(analytics_enabled=False) as anapnoe_sd_uiux_db_extra_networks:
