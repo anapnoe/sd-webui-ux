@@ -84,7 +84,7 @@ export async function setupCivitaiExplorerImages() {
     const apiParams = setupInputObservers(paramsMapping, initApiParams, vScroll);
     //const modelKeys = ['type', 'modelVersionName', 'modelVersionId', 'weight'];
     const paramKeys = ['prompt', 'negativePrompt', 'clipSkip', 'cfgScale', 'sampler', 'steps', 'seed', 'Size'];
-    function detailView(data) {
+    function detailView(data, groupData, data_index) {
         const dcontainer = container.parentElement.querySelector('.ae-virtual-detail-content');
         dcontainer.innerHTML = '';
         var gallery = [];
@@ -163,17 +163,30 @@ export async function setupCivitaiExplorerImages() {
         titleClickEl.removeEventListener('click', handleClick);
         titleClickEl.addEventListener('click', handleClick);
 
+        spl.onNext = function() {
+            const itemData = groupData[data_index + 1];
+            if (itemData) {
+                detailView([itemData], groupData, data_index + 1);
+            }
+        };
+
+        spl.onPrev = function() {
+            const itemData = groupData[data_index - 1];
+            if (itemData) {
+                detailView([itemData], groupData, data_index - 1);
+            }
+        };
 
 
     }
 
     vScroll.clickHandler = function(e) {
         const {target: target, currentTarget: ctarget} = e;
-        const index = target.closest('.item.card').dataset.index;
+        const index = parseInt(target.closest('.item.card').dataset.index);
         const itemData = this.data[index];
         if (itemData) {
             vScroll.showDetail();
-            detailView([itemData]);
+            detailView([itemData], this.data, index);
             console.log(itemData);
         }
 
