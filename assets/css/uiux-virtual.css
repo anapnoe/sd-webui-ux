@@ -1,10 +1,12 @@
-.ae-virtual-cardholder {
+.ae-virtual {
     position: relative;
     overflow: hidden;
+    width: 100%;
+    height: 100%;
 }
 
 .ae-virtual-detail .item,
-.ae-virtual-cardholder .item {
+.ae-virtual .item {
     position: relative;
     overflow: hidden;
     background-color: var(--ae-input-bg-color);
@@ -14,27 +16,62 @@
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
+    user-select:none;
+}
+
+.ae-virtual.vertical .item {
+    height: auto;
+    width: 100%;
+}
+
+.ae-virtual.horizontal .item {
+    height: 100%;
+    width: auto;
+    /*min-width: calc(var(--ae-uiux_exnet_fit_size) * var(--ae-uiux_exnet_aspect_ratio) * 1px);*/
 }
 
 .overflow-hidden {
     overflow: hidden;
 }
 
-.sentinel {
-    height: 1px;
+.ae-virtual .sentinel {
     position: absolute;
-    width: 100%;
     /*background-color: #ff4f4f;*/
     top: 0px;
+    left: 0px;
 }
 
-.ae-virtual-wrapper {
-    position: relative;
+.ae-virtual.vertical .sentinel {
+    height: 1px;
     width: 100%;
+}
+
+.ae-virtual.horizontal .sentinel {
+    width: 1px;
+    height: 100%;
+}
+
+.ae-virtual > .ae-virtual-wrapper{ 
+    position: relative;
     display: grid;
+    gap: var(--ae-gap-size);
+   
+}
+
+.ae-virtual.vertical > .ae-virtual-wrapper {
+    grid-auto-flow: row;
+    width: 100%; 
     grid-auto-rows: minmax(calc(var(--ae-uiux_exnet_fit_size) * 1px), auto);
     grid-template-columns: repeat(auto-fit, minmax(calc(var(--ae-uiux_exnet_fit_size) * 1px), 1fr));
-    gap: var(--ae-gap-size);
+}
+
+.ae-virtual.horizontal > .ae-virtual-wrapper {
+    grid-auto-flow: column;
+    height: 100%;
+    /* width: fit-content; */
+    /*grid-auto-columns: minmax(calc(var(--ae-uiux_exnet_fit_size) * 1px), auto);*/
+    grid-auto-columns: min-content;
+    grid-template-rows: repeat(auto-fill, minmax(calc(var(--ae-uiux_exnet_fit_size) * 1px), 1fr));
 }
 
 .ae-virtual-detail,

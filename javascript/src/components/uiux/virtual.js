@@ -11,12 +11,26 @@ export function VirtualScroll(container, data, itemsPerPage = 10, keys = {title:
     this.keys = keys;
     this.startIndex = 0;
     this.renderedItems = {};
-    this.lastScrollTop = 0;
+    this.lastScrollPos = 0;
     this.isFetching = false;
     this.useDataFetching = true;
     this.isInit = false;
     this.resolvedRenderMethod = this.renderItems;//ByIndex;
     this.selected;
+
+    this.smoothScrolling = true;
+
+    this.direction = 'vertical';
+    this.translateProp = 'translateY';
+    this.scrollProp = 'scrollTop';
+    this.client = 'clientY';
+
+    if (this.direction === 'horizontal') {
+        this.translateProp = 'translateX';
+        this.scrollProp = 'scrollLeft';
+        this.client = 'clientX';
+    }
+
     this.createContainer();
     this.createSentinels();
     this.createDetail();
@@ -51,8 +65,9 @@ VirtualScroll.prototype.initialize = function() {
 VirtualScroll.prototype.createContainer = function() {
     this.container.style.position = 'relative';
     this.container.style.overflow = 'auto';
+    this.container.classList.add('ae-virtual', this.direction || 'vertical');
     this.itemsWrapper = document.createElement('div');
-    this.itemsWrapper.className = 'ae-virtual-wrapper';
+    this.itemsWrapper.classList.add('ae-virtual-wrapper');
     this.container.appendChild(this.itemsWrapper);
 };
 
@@ -63,10 +78,10 @@ VirtualScroll.prototype.createSentinel = function() {
 };
 
 VirtualScroll.prototype.createSentinels = function() {
-    this.topSentinel = this.createSentinel();
-    this.bottomSentinel = this.createSentinel();
-    this.totalHeightSentinel = this.createSentinel();
-    this.container.append(this.topSentinel, this.bottomSentinel, this.totalHeightSentinel);
+    this.minSentinel = this.createSentinel();
+    this.maxSentinel = this.createSentinel();
+    this.totalSizeSentinel = this.createSentinel();
+    this.container.append(this.minSentinel, this.maxSentinel, this.totalSizeSentinel);
 };
 
 VirtualScroll.prototype.createDetail = function() {
@@ -150,7 +165,7 @@ VirtualScroll.prototype.forceRenderItems = function() {
     this.updateSentinels();
 };
 
-VirtualScroll.prototype.renderItemsByIndex = function(scrollDirection = 'down') {
+VirtualScroll.prototype.renderItemsByIndex = function(scrollDirection = 'increase') {
     const itemsToRender = this.getItemsToRender();
     const itemsFragment = document.createDocumentFragment();
 
@@ -166,7 +181,7 @@ VirtualScroll.prototype.renderItemsByIndex = function(scrollDirection = 'down') 
         }
     });
 
-    if (scrollDirection === 'down') {
+    if (scrollDirection === 'increase') {
         this.itemsWrapper.appendChild(itemsFragment);
     } else {
         this.itemsWrapper.insertBefore(itemsFragment, this.itemsWrapper.firstChild);
@@ -196,12 +211,14 @@ VirtualScroll.prototype.cleanupRenderedItems = function() {
 VirtualScroll.prototype.updateSentinels = function() {
     const start = Math.max(0, this.startIndex);
     const end = Math.min(this.data.length, this.startIndex + this.itemsPerPage);
-    const topPosition = (start / this.itemsPerRow) * this.itemHeight;
-    let bottomPosition = (end / this.itemsPerRow) * this.itemHeight;
-    bottomPosition = Math.min(bottomPosition, this.totalHeight);
-    this.topSentinel.style.transform = `translateY(${topPosition}px)`;
-    this.bottomSentinel.style.transform = `translateY(${bottomPosition}px)`;
-    this.itemsWrapper.style.transform = `translateY(${topPosition}px)`;
+
+    const minPosition = (start / this.itemsPerRow) * this.itemSize;
+    let maxPosition = (end / this.itemsPerRow) * this.itemSize;
+    maxPosition = Math.min(maxPosition, this.totalSize);
+
+    this.minSentinel.style.transform = `${this.translateProp}(${minPosition}px)`;
+    this.maxSentinel.style.transform = `${this.translateProp}(${maxPosition}px)`;
+    this.itemsWrapper.style.transform = `${this.translateProp}(${minPosition}px)`;
 };
 
 VirtualScroll.prototype.updateDimensions = function() {
@@ -210,26 +227,36 @@ VirtualScroll.prototype.updateDimensions = function() {
 
     this.itemHeight = sampleItem.offsetHeight;
     this.itemWidth = sampleItem.offsetWidth;
-    this.containerWidth = this.container.offsetWidth;
+    //this.containerWidth = this.container.offsetWidth;
+    this.containerWidth = this.container.parentElement.offsetWidth;
     this.containerHeight = this.container.parentElement.offsetHeight;
 
+    if (!this.containerWidth) return;
     if (!this.containerHeight) return;
-    this.container.style.height = `${this.containerHeight}px`;
-
     if (!this.data.length) return;
 
     const totalItems = this.total || this.data.length;
 
-    this.itemsPerRow = Math.floor(this.containerWidth / this.itemWidth);
+    if (this.direction === 'horizontal') {
+        //this.container.style.width = `${this.containerWidth}px`;
+        this.itemSize = this.itemWidth;
+        this.itemsPerRow = Math.floor(this.containerHeight / this.itemHeight);
+        this.rowsInView = Math.ceil(this.containerWidth / this.itemWidth);
+    } else {
+        //this.container.style.height = `${this.containerHeight}px`;
+        this.itemSize = this.itemHeight;
+        this.itemsPerRow = Math.floor(this.containerWidth / this.itemWidth);
+        this.rowsInView = Math.ceil(this.containerHeight / this.itemHeight);
+    }
+
     this.totalRows = Math.ceil(totalItems / this.itemsPerRow);
-    this.rowsInView = Math.ceil(this.containerHeight / this.itemHeight);
     this.itemsPerPage = Math.max(this.itemsPerPage, this.rowsInView * this.itemsPerRow);
-    this.totalHeight = this.totalRows * this.itemHeight;
-    this.totalHeightSentinel.style.transform = `translateY(${this.totalHeight}px)`;
+
+    this.totalSize = this.totalRows * this.itemSize;
+    this.totalSizeSentinel.style.transform = `${this.translateProp}(${this.totalSize}px)`;
     this.maxStartIndex = Math.max(this.data.length - this.itemsPerPage, 0);
     //this.startIndex = Math.min(this.startIndex, this.maxStartIndex);
 
-    //const debouncedScrollHandler = this.debounce(() => this.scrollHandler(), 1000); debouncedScrollHandler();
     this.scrollHandler();
 };
 
@@ -239,16 +266,14 @@ VirtualScroll.prototype.scrollHandler = function() {
     if (this.scrollTimeout) {
         cancelAnimationFrame(this.scrollTimeout);
     }
+
     this.scrollTimeout = requestAnimationFrame(() => {
-        const scrollTop = this.container.scrollTop;
-        const currentRow = Math.floor(scrollTop / this.itemHeight);
-        this.startIndex = currentRow * this.itemsPerRow;
+        const scrollPos = this.container[this.scrollProp];
+        this.startIndex = Math.floor(scrollPos / this.itemSize) * this.itemsPerRow;
+        const scrollDirection = scrollPos > this.lastScrollPos ? 'increase' : 'decrease';
+        this.lastScrollPos = scrollPos;
 
-        const scrollDirection = scrollTop > this.lastScrollTop ? 'down' : 'up';
-        this.lastScrollTop = scrollTop;
-
-
-        if (scrollDirection === 'down' && this.useDataFetching && !this.isFetching && this.params.cursor) {
+        if (scrollDirection === 'increase' && this.useDataFetching && !this.isFetching && this.params.cursor) {
             if (this.startIndex >= this.maxStartIndex) {
                 this.isFetching = true;
                 this.fetchUpdateData();
@@ -257,9 +282,9 @@ VirtualScroll.prototype.scrollHandler = function() {
 
         //if (this.startIndex > this.maxStartIndex) return;
         this.resolvedRenderMethod(scrollDirection);
-
     });
 };
+
 
 VirtualScroll.prototype.clickHandler = function(e) {
     const {target: target, currentTarget: ctarget} = e;
@@ -272,8 +297,103 @@ VirtualScroll.prototype.clickHandler = function(e) {
 /* Setup Event Listeners */
 VirtualScroll.prototype.setupScrollListener = function() {
     this.container.addEventListener('scroll', this.throttle(this.scrollHandler.bind(this), 100));
-    //this.container.addEventListener('scroll', this.scrollHandler.bind(this));
+    this.scrollDelta = 0;
+
+    // Add wheel event listener for horizontal scrolling
+    //if (this.direction === 'horizontal') {
+    this.container.addEventListener('wheel', (event) => {
+        event.preventDefault();
+        const delta = Math.sign(event.deltaY); // 1 for down, -1 for up
+        this.scrollDelta += delta; // Accumulate the delta
+        this.useSmoothScrolling(200);
+    });
+    //}
+
+    this.setupDragScrollListener();
 };
+
+
+VirtualScroll.prototype.setupDragScrollListener = function() {
+    let isDragging = false;
+    let start = 0;
+    let scrollStart = 0;
+
+    const onMouseDown = (event) => {
+        isDragging = true;
+        start = event[this.client];
+        scrollStart = this.container[this.scrollProp];
+        this.container.style.cursor = 'grabbing';
+    };
+
+    const onMouseMove = (event) => {
+        if (!isDragging) return;
+        const deltaY = start - event[this.client];
+        const direction = Math.sign(deltaY);
+        if (direction !== 0) {
+            this.scrollDelta = direction;
+        }
+        this.container[this.scrollProp] = scrollStart + deltaY;
+    };
+
+    const onMouseUp = () => {
+        isDragging = false;
+        this.container.style.cursor = 'grab';
+        this.useSmoothScrolling(200);
+    };
+
+    this.container.addEventListener('mousedown', onMouseDown);
+    this.container.addEventListener('mousemove', onMouseMove);
+    this.container.addEventListener('mouseup', onMouseUp);
+    this.container.addEventListener('mouseleave', onMouseUp);
+};
+
+
+VirtualScroll.prototype.useSmoothScrolling = function(duration = 200) {
+
+    const maxScrollDelta = this.data.length - this.itemsPerPage;
+    this.scrollDelta = Math.max(this.scrollDelta, -maxScrollDelta);
+    this.scrollDelta = Math.min(this.scrollDelta, maxScrollDelta);
+
+    if (this.smoothScrolling) {
+        const targetScrollPos = this.container[this.scrollProp] + (this.scrollDelta * this.itemSize);
+        const snappedScrollPos = Math.round(targetScrollPos / this.itemSize) * this.itemSize;
+        this.smoothScroll(snappedScrollPos, duration);
+    } else {
+        this.container[this.scrollProp] += this.scrollDelta * this.itemSize;
+        this.scrollDelta = 0;
+    }
+};
+
+// Smooth scroll function
+VirtualScroll.prototype.smoothScroll = function(targetScrollPos, duration) {
+    const startScrollPos = this.container[this.scrollProp];
+    const distance = targetScrollPos - startScrollPos;
+    let startTime = null;
+    let animationFrameId;
+
+    const animation = (currentTime) => {
+        if (startTime === null) startTime = currentTime;
+        const timeElapsed = currentTime - startTime;
+        const progress = Math.min(timeElapsed / duration, 1); // Normalize progress to [0, 1]
+
+        // Easing function (ease-out ^3)
+        const ease = 1 - Math.pow(1 - progress, 3);
+        this.container[this.scrollProp] = startScrollPos + distance * ease;
+        if (progress < 1) {
+            animationFrameId = requestAnimationFrame(animation);
+        } else {
+            this.scrollDelta = 0;
+        }
+    };
+
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
+
+    animationFrameId = requestAnimationFrame(animation);
+};
+
+
 
 VirtualScroll.prototype.setupResizeObserver = function() {
     let resizeTimer;
@@ -315,17 +435,19 @@ VirtualScroll.prototype.handleKeyPress = function(event) {
 };
 
 VirtualScroll.prototype.scrollBy = function(offset) {
-    this.container.scrollTop += offset * this.itemHeight;
+    this.scrollDelta += offset;
+    this.useSmoothScrolling(100);
+    //this.container[this.scrollProp] += offset * this.itemSize;
 };
 
 VirtualScroll.prototype.scrollToStart = function() {
     this.startIndex = 0;
-    this.container.scrollTop = 0;
+    this.container[this.scrollProp] = 0;
 };
 
 VirtualScroll.prototype.scrollToEnd = function() {
     this.startIndex = Math.max(0, this.data.length - this.itemsPerPage);
-    this.container.scrollTop = this.startIndex * this.itemHeight;
+    this.container[this.scrollProp] = this.startIndex * this.itemSize;
 };
 
 
@@ -396,8 +518,8 @@ VirtualScroll.prototype.getValueByPath = function(obj, path) {
 VirtualScroll.prototype.setData = function(data) {
     this.originalData = data;
     this.data = this.originalData;
-    this.container.scrollTop = 0;
-    this.lastScrollTop = 0;
+    this.container[this.scrollProp] = 0;
+    this.lastScrollPos = 0;
     this.initialize();
 };
 
@@ -405,8 +527,8 @@ VirtualScroll.prototype.appendData = function(data) {
     this.originalData.push(...data);
     this.data = this.originalData;
     this.isFetching = false;
-    //const newScrollTop = this.startIndex * this.itemHeight;
-    //this.container.scrollTop = newScrollTop;
+    //const newScrollPos = this.startIndex * this.itemSize;
+    //this.container[this.scrollProp] = newScrollPos;
     this.updateDimensions();
 
 };
