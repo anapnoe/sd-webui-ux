@@ -52,6 +52,7 @@
     --ae-uiux_exnet_header_size: 14;
     --ae-uiux_exnet_image_tint: 0;
     --ae-uiux_min_wrap_size: 140;
+    --ae-uiux_exnet_aspect_ratio: calc(var(--ae-uiux_exnet_aspect_ratio_x) /  var(--ae-uiux_exnet_aspect_ratio_y));
 }
 
 body {
