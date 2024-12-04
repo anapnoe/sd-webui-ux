@@ -128,18 +128,9 @@ Spotlight.prototype.init = function(parentEl, options) {
 
     this.addControl("close", this.close.bind(this));
 
-    this.doc[this.prefix_request = "requestFullscreen"] ||
-            this.doc[this.prefix_request = "msRequestFullscreen"] ||
-            this.doc[this.prefix_request = "webkitRequestFullscreen"] ||
-            this.doc[this.prefix_request = "mozRequestFullscreen"] ||
-            (this.prefix_request = "");
-
+    this.prefix_request = this.doc.requestFullscreen ? "requestFullscreen" : "";
     if (this.prefix_request) {
-        this.prefix_exit = (
-            this.prefix_request.replace("request", "exit")
-                .replace("mozRequest", "mozCancel")
-                .replace("Request", "Exit")
-        );
+        this.prefix_exit = this.prefix_request.replace("request", "exit");
         this.maximize = this.addControl("fullscreen", this.fullscreen.bind(this));
     } else {
         this.controls.pop();
@@ -431,12 +422,7 @@ Spotlight.prototype.toggle_spinner = function(options_spinner, is_on) {
 };
 
 Spotlight.prototype.has_fullscreen = function() {
-    return (
-        document["fullscreen"] ||
-            document["fullscreenElement"] ||
-            document["webkitFullscreenElement"] ||
-            document["mozFullScreenElement"]
-    );
+    return document.fullscreenElement !== null;
 };
 
 Spotlight.prototype.resize_listener = function() {
@@ -535,9 +521,11 @@ Spotlight.prototype.key_listener = function(event) {
             break;
         case this.keycodes.LEFT:
             this.prev();
+            this.onPrev();
             break;
         case this.keycodes.RIGHT:
             this.next();
+            this.onNext();
             break;
         case this.keycodes.UP:
         case this.keycodes.NUMBLOCK_PLUS:
@@ -783,20 +771,30 @@ Spotlight.prototype.move = function(e) {
 Spotlight.prototype.fullscreen = function(init) {
     console.log("fullscreen", init);
     const is_fullscreen = this.has_fullscreen();
-    if ((typeof init !== "boolean") || (init !== !!is_fullscreen)) {
+    if (typeof init !== "boolean" || init !== is_fullscreen) {
         if (is_fullscreen) {
-            document[this.prefix_exit]();
-            //removeClass(maximize, "on");
+            if (this.prefix_exit) {
+                document[this.prefix_exit]().catch(err => {
+                    console.error("Error exiting fullscreen:", err);
+                });
+            }
+            // removeClass(this.maximize, "on");
         } else {
-            this.widget[this.prefix_request]();
-            //addClass(maximize, "on");
+            if (this.prefix_request) {
+                this.widget[this.prefix_request]().catch(err => {
+                    console.error("Error entering fullscreen:", err);
+                });
+            }
+            // addClass(this.maximize, "on");
         }
     }
 
-    //this.update_widget_viewport();
-    //this.update_media_viewport();
-    //this.update_panel();
+    // Uncomment if needed
+    // this.update_widget_viewport();
+    // this.update_media_viewport();
+    // this.update_panel();
 };
+
 
 Spotlight.prototype.theme = function(theme) {
     //console.log("theme", theme);
@@ -999,6 +997,12 @@ Spotlight.prototype.next = function(e) {
     }
 };
 
+Spotlight.prototype.onNext = function() {
+};
+
+Spotlight.prototype.onPrev = function() {
+};
+
 Spotlight.prototype.goto = function(slide) {
     //console.log("goto", slide);
     if (slide !== this.current_slide) {
@@ -1123,6 +1127,7 @@ Spotlight.prototype.setup_page = function(direction) {
     setText(this.page, this.slide_count > 1 ? this.current_slide + " / " + this.slide_count : "");
 
     this.options_onchange && this.options_onchange(this.current_slide, this.options);
+
 };
 
 
