@@ -1,9 +1,9 @@
 import {VirtualScroll} from './uiux/virtual.js';
 import {DEFAULT_PATH} from '../constants.js';
 import {Spotlight} from "../spotlight/js/spotlight3.js";
-import {updateInput, updateChange} from "../utils/helpers.js";
+import {updateInput, sendImageParamsTo} from "../utils/helpers.js";
 import {setupInputObservers} from '../utils/observers.js';
-
+import {createVirtualItemCivitImages, createVirtualItemCivitModels, createVirtualItemCivitModelsDetail} from '../utils/renderers.js';
 
 export function setupCivitaiExplorerTestData() {
 
@@ -30,27 +30,6 @@ export async function setupCivitaiExplorer() {
     setupCivitaiExplorerModels();
 }
 
-function sendImageParamsTo(img, btnid) {
-    const btn = document.querySelector(`#pnginfo_send_buttons ${btnid}`);
-    const fileInput = document.querySelector('#pnginfo_image input[type="file"]');
-    const dataTransfer = new DataTransfer();
-    fileInput.files = dataTransfer.files;
-
-    fetch(img.src)
-        .then(response => response.blob())
-        .then(blob => {
-            const file = new File([blob], 'image.jpg', {type: blob.type});
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            fileInput.files = dataTransfer.files;
-            updateChange(fileInput);
-            setTimeout(() => {
-                btn.click();
-            }, 1000);
-
-        })
-        .catch(error => console.error('Error fetching image:', error));
-}
 
 export async function setupCivitaiExplorerImages() {
 
@@ -82,114 +61,53 @@ export async function setupCivitaiExplorerImages() {
 
     const vScroll = new VirtualScroll(container, [], 18, itemKeys, apiUrl, initApiParams);
     const apiParams = setupInputObservers(paramsMapping, initApiParams, vScroll);
-    //const modelKeys = ['type', 'modelVersionName', 'modelVersionId', 'weight'];
-    const paramKeys = ['prompt', 'negativePrompt', 'clipSkip', 'cfgScale', 'sampler', 'steps', 'seed', 'Size'];
-    function detailView(data, groupData, data_index) {
-        const dcontainer = container.parentElement.querySelector('.ae-virtual-detail-content');
-        dcontainer.innerHTML = '';
-        var gallery = [];
-        data.forEach((item) => {
-            const imageUrl = item.url;
 
-            const descriptionParts = [];
-            descriptionParts.push(`<p><strong>baseModel:</strong> ${item.baseModel}</p>`);
+    vScroll.createItemElement = function(item, actualIndex) {
+        return createVirtualItemCivitImages(item);
+    };
 
-            paramKeys.forEach((key) => {
-                if (item.meta && item.meta[key] !== undefined) {
-                    descriptionParts.push(`<p><strong>${key}:</strong> ${item.meta[key]}</p>`);
-                }
-            });
-
-            if (item.meta && item.meta.civitaiResources) {
-                item.meta?.civitaiResources?.forEach((resource) => {
-                    const resourceType = resource.type ? resource.type : 'Unknown Type';
-                    const resourceWeight = resource.weight ? resource.weight : '';
-                    const modelVersionId = resource.modelVersionId ? resource.modelVersionId : null;
-                    const modelVersionName = resource.modelVersionName ? resource.modelVersionName : 'Unnamed Model';
-
-                    if (modelVersionId) {
-                        descriptionParts.push(`
-                        <p>${resourceType} ${resourceWeight}
-                            <a href="https://civitai.com/api/v1/models/${modelVersionId}" target="_blank">
-                                ${modelVersionName}
-                            </a>
-                        </p>
-                    `);
-                    }
-                });
+    function handleCivitImages(target, itemData, item_id) {
+        const prompt_focused = window.UIUX.FOCUS_PROMPT;
+        if (target.classList.contains("copy-path")) {
+            navigator.clipboard.writeText(itemData.filename);
+        } else if (target.classList.contains("fullsize-button")) {
+            vScroll.scrollToId(itemData.id);
+            if (vScroll.isFullSize) {
+                vScroll.setFullSize(false);
+                vScroll.setLayout('vertical');
+                target.classList.remove('active');
+            } else {
+                vScroll.setFullSize(true);
+                vScroll.setLayout('vertical');
+                target.classList.add('active');
             }
-
-            const description = descriptionParts.join('');
-
-            if (imageUrl) {
-                const node = {
-                    title: `<button class="ae-button"><h2>${item.username}</h2></button>`,
-                    description: description,
-                    src: imageUrl
-                };
-                gallery.push(node);
-            }
-        });
-
-
-        const spl = new Spotlight(dcontainer);
-
-        spl.addControl("txt2img-send mask-icon icon-2txt2img", function(event) {
-            const img = dcontainer.querySelector('img');
-            sendImageParamsTo(img, "#pnginfo_send_txt2img button");
-        });
-
-        spl.addControl("img2img-send mask-icon icon-2img2img", function(event) {
-            const img = dcontainer.querySelector('img');
-            sendImageParamsTo(img, "#pnginfo_send_img2img button");
-        });
-
-        spl.show(gallery, {
-            index: 1,
-            theme: "dark",
-            autohide: false,
-            info: true,
-            control: ["next", "prev", "page", "spinner", "info", "autofit", "zoom", "fullscreen", "close"]
-        });
-
-        const titleClickEl = dcontainer.querySelector(".spl-title");
-
-        function handleClick(e) {
-            searchInput.value = e.target.textContent;
-            spl.close();
+        } else if (target.classList.contains("info-button")) {
+            vScroll.setInfo(!vScroll.isInfo);
+        } else if (target.classList.contains("fullScreen-button")) {
+            vScroll.scrollToId(itemData.id);
+            vScroll.setFullScreen(!vScroll.isFullScreen);
+        } else if (target.classList.contains("send-params-button")) {
+            const imgUrl = `${itemData.url}`;
+            sendImageParamsTo(imgUrl, `#pnginfo_send_${prompt_focused} button`);
+        } else if (target.classList.contains("item-info-title")) {
+            searchInput.value = target.textContent;
             updateInput(searchInput);
         }
-
-        titleClickEl.removeEventListener('click', handleClick);
-        titleClickEl.addEventListener('click', handleClick);
-
-        spl.onNext = function() {
-            const itemData = groupData[data_index + 1];
-            if (itemData) {
-                detailView([itemData], groupData, data_index + 1);
-            }
-        };
-
-        spl.onPrev = function() {
-            const itemData = groupData[data_index - 1];
-            if (itemData) {
-                detailView([itemData], groupData, data_index - 1);
-            }
-        };
-
-
     }
 
     vScroll.clickHandler = function(e) {
-        const {target: target, currentTarget: ctarget} = e;
-        const index = parseInt(target.closest('.item.card').dataset.index);
-        const itemData = this.data[index];
-        if (itemData) {
-            vScroll.showDetail();
-            detailView([itemData], this.data, index);
-            console.log(itemData);
+        if (vScroll.dragged || vScroll.scrollDelta) return;
+        const itemCard = e.target.closest('.item.card');
+        const itemId = itemCard?.dataset.id;
+        if (itemId) {
+            const itemData = this.data.find(item => item.id.toString() === itemId);
+            console.log(itemId, e.target, itemData);
+            if (itemData) {
+                handleCivitImages(e.target, itemData, itemId);
+            }
         }
-
+        e.preventDefault();
+        e.stopPropagation();
     };
 
     function handleSearchClear(e) {
@@ -229,139 +147,106 @@ export async function setupCivitaiExplorerModels() {
         dataPath: 'items'
     };
 
+    let parentItem;
+    let modelIndex = 0;
+
     const vScroll = new VirtualScroll(container, [], 18, itemKeys, apiUrl, initApiParams);
     const apiParams = setupInputObservers(paramsMapping, initApiParams, vScroll);
 
+    function handleCivitModels(target, itemData, item_id) {
+        const prompt_focused = window.UIUX.FOCUS_PROMPT;
+        if (target.classList.contains("civit-link-button")) {
+            window.open(`https://civitai.com/models/${itemData.id}`, '_blank');
+        } else if (target.classList.contains("fullsize-button")) {
 
-    //Render: Item Node Renderer Overwite
-    vScroll.createItemElement = function(item) {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'item card';
+            vScroll.showDetail();
+            parentItem = itemData;
+            modelIndex = 0;
+            dScroll.setData(itemData.modelVersions[modelIndex].images);
+            dScroll.setFullSize(true);
+            dScroll.setLayout('vertical');
 
-        const imageUrl = item.modelVersions[0]?.images[0]?.url;
-        if (imageUrl) {
-            itemDiv.style.backgroundImage = `url(${encodeURI(imageUrl)})`;
+        } else if (target.classList.contains("info-button")) {
+            vScroll.setInfo(!vScroll.isInfo);
+        } else if (target.classList.contains("fullScreen-button")) {
+            vScroll.scrollToId(itemData.id);
+            vScroll.setFullScreen(!vScroll.isFullScreen);
+        } else if (target.classList.contains("send-params-button")) {
+            const imgUrl = `${itemData.modelVersions[0].images[0].url}`;
+            sendImageParamsTo(imgUrl, `#pnginfo_send_${prompt_focused} button`);
+        } else if (target.classList.contains("item-info-title")) {
+            searchInput.value = target.textContent;
+            updateInput(searchInput);
         }
-
-        const itemTitle = document.createElement('span');
-        itemTitle.textContent = item.name;
-        itemTitle.className = 'title';
-
-        const itemType = document.createElement('span');
-        itemType.textContent = item.type;
-        itemType.className = `extra-type ${item.type}`;
-
-        itemDiv.appendChild(itemType);
-        itemDiv.appendChild(itemTitle);
-
-        return itemDiv;
-    };
-
-    function detailView(data, modelVersions, index) {
-        const dcontainer = container.parentElement.querySelector('.ae-virtual-detail-content');
-        dcontainer.innerHTML = '';
-        var gallery = [];
-
-        const selectVersionsParts = [];
-        selectVersionsParts.push(`<select class="baseModel">`);
-        modelVersions.forEach((model, mindex) => {
-            const selected = mindex === index ? "selected" : "";
-            selectVersionsParts.push(`<option value="${mindex}" ${selected}>${model.baseModel} | ${model.name} | ${model.baseModelType}</option>`);
-        });
-        selectVersionsParts.push(`</select>`);
-        const selectVersions = selectVersionsParts.join('');
-
-        const modelDescription = modelVersions[index].description ? modelVersions[index].description : "";
-        const description = data.description + modelDescription;
-        const images = modelVersions[index].images;
-
-        if (images) {
-            images.forEach((item) => {
-                const imageUrl = item.url;
-                if (imageUrl) {
-                    const node = {
-                        title: `${data.name}`,
-                        description: `${description} <br> ${data.tags}`,
-                        src: imageUrl
-                    };
-                    gallery.push(node);
-                }
-            });
-        }
-
-        const spl = new Spotlight(dcontainer);
-        spl.show(gallery, {
-            index: 1,
-            theme: "dark",
-            autohide: false,
-            control: ["next", "prev", "page", "spinner", "info", "autofit", "zoom", "download", "fullscreen", "close"]
-        });
-
-        spl.addControl("txt2img-send mask-icon icon-2txt2img", function(event) {
-            const img = dcontainer.querySelector('img');
-            sendImageParamsTo(img, "#pnginfo_send_txt2img button");
-        });
-
-        spl.addControl("img2img-send mask-icon icon-2img2img", function(event) {
-            const img = dcontainer.querySelector('img');
-            sendImageParamsTo(img, "#pnginfo_send_img2img button");
-        });
-
-        //const vHeader = dcontainer.querySelector('.spl-header');
-        const vMoreEl = dcontainer.querySelector('.spl-more');
-        const vSelEl = document.createElement("div");
-        vSelEl.innerHTML = selectVersions;
-
-        const vSelectEl = vSelEl.firstChild;
-        vSelectEl.addEventListener('change', function handleVSelect(e) {
-            spl.close();
-            setTimeout(() => {
-                detailView(data, modelVersions, parseInt(e.target.value));
-            }, 300);
-        });
-
-        const vDType = document.createElement("span");
-        vDType.innerHTML = data.type;
-        vDType.className = "model-type";
-
-        function formatSize(sizeKB) {
-            const sizeMB = sizeKB / 1024;
-            if (sizeMB >= 1024) {
-                const sizeGB = sizeMB / 1024;
-                return `${sizeGB.toFixed(2)} GB`;
-            } else {
-                return `${sizeMB.toFixed(2)} MB`;
-            }
-        }
-
-        const downloadUrl = modelVersions[index].files[0].downloadUrl;
-        const downloadName = modelVersions[index].files[0].name;
-        const downloadSize = modelVersions[index].files[0].sizeKB;
-
-        const vDownload = document.createElement("a");
-        vDownload.target = "_blank";
-        vDownload.href = downloadUrl;
-        vDownload.textContent = `${downloadName} - ${formatSize(downloadSize)}`;
-
-        vMoreEl.appendChild(vDType);
-        vMoreEl.appendChild(vSelectEl);
-        vMoreEl.appendChild(vDownload);
-
     }
 
+    //Render: Item Node Renderer Overwite
+    vScroll.createItemElement = function(item, actualIndex) {
+        return createVirtualItemCivitModels(item);
+    };
 
     vScroll.clickHandler = function(e) {
-        const {target: target, currentTarget: ctarget} = e;
-        const index = target.closest('.item.card').dataset.index;
-        const itemData = this.data[index];
-        //if (itemData.modelVersions[0]?.images) {
-        if (itemData.modelVersions) {
-            vScroll.showDetail();
-            detailView(itemData, itemData.modelVersions, 0);
-            console.log(itemData);
+        if (vScroll.dragged || vScroll.scrollDelta) return;
+        const itemCard = e.target.closest('.item.card');
+        const itemId = itemCard?.dataset.id;
+        if (itemId) {
+            const itemData = this.data.find(item => item.id.toString() === itemId);
+            console.log(itemId, e.target, itemData);
+            if (itemData) {
+                handleCivitModels(e.target, itemData, itemId);
+            }
         }
-
+        e.preventDefault();
+        e.stopPropagation();
     };
+
+
+    const dcontainer = container.parentElement.querySelector('.ae-virtual-detail-content');
+    const dScroll = new VirtualScroll(dcontainer, [], 8);
+
+    dScroll.createItemElement = function(item, actualIndex) {
+        return createVirtualItemCivitModelsDetail(item, parentItem, modelIndex);
+    };
+
+    dScroll.clickHandler = function(e) {
+        if (dScroll.dragged || dScroll.scrollDelta) return;
+        const itemCard = e.target.closest('.item.card');
+        const itemId = itemCard?.dataset.id;
+        if (itemId) {
+            const itemData = this.data.find(item => item.id.toString() === itemId);
+            //console.log(itemId, e.target, itemData);
+            if (itemData) {
+                handleCivitModelsDetail(e.target, itemData, itemId);
+            }
+        }
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    function handleCivitModelsDetail(target, itemData, item_id) {
+        const prompt_focused = window.UIUX.FOCUS_PROMPT;
+        if (target.classList.contains("civit-link-button")) {
+            window.open(`https://civitai.com/models/${parentItem.id}?modelVersionId=${parentItem.modelVersions[modelIndex].id}`, '_blank');
+        } else if (target.classList.contains("fullsize-button")) {
+            vScroll.hideDetail();
+        } else if (target.classList.contains("info-button")) {
+            dScroll.setInfo(!dScroll.isInfo);
+        } else if (target.classList.contains("fullScreen-button")) {
+            dScroll.scrollToId(itemData.id);
+            dScroll.setFullScreen(!dScroll.isFullScreen);
+        } else if (target.classList.contains("send-params-button")) {
+            const imgUrl = `${itemData.url}`;
+            sendImageParamsTo(imgUrl, `#pnginfo_send_${prompt_focused} button`);
+        } else if (target.classList.contains("item-info-title")) {
+            //searchInput.value = target.textContent;
+            //updateInput(searchInput);
+        } else if (target.classList.contains("baseModel-select")) {
+            target.addEventListener('change', function() {
+                modelIndex = parseInt(target.value);
+                dScroll.setData(parentItem.modelVersions[modelIndex].images);
+            });
+        }
+    }
 
     function handleSearchClear(e) {
         searchInput.value = "";
@@ -370,5 +255,6 @@ export async function setupCivitaiExplorerModels() {
     searchClear.addEventListener('click', handleSearchClear);
 
     vScroll.updateParamsAndFetch(apiParams, 0);
+
 
 }
