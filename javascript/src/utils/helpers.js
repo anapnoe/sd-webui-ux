@@ -115,3 +115,26 @@ export function countEventListeners(element) {
 
     window.countEventListeners = countEventListeners;
 }());
+
+
+export function sendImageParamsTo(src, btnid) {
+    const btn = document.querySelector(`#pnginfo_send_buttons ${btnid}`);
+    const fileInput = document.querySelector('#pnginfo_image input[type="file"]');
+    const dataTransfer = new DataTransfer();
+    fileInput.files = dataTransfer.files;
+
+    fetch(src)
+        .then(response => response.blob())
+        .then(blob => {
+            const file = new File([blob], 'image.jpg', {type: blob.type});
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+            updateChange(fileInput);
+            setTimeout(() => {
+                btn.click();
+            }, 1000);
+
+        })
+        .catch(error => console.error('Error fetching image:', error));
+}
