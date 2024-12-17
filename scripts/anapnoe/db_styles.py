@@ -133,7 +133,7 @@ def api_uiux_style(_: gr.Blocks, app: FastAPI):
     styles_processor = StylesFolderProcessor.get_instance()
 
     @app.get("/sd_styles/thumb/{filename:path}")
-    async def get_image(filename: str, timestamp: str = None):
+    async def get_image(filename: str, t: str = None):
         return styles_processor.fetch_file(filename)
 
 
