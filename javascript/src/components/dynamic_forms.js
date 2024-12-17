@@ -126,9 +126,6 @@ DynamicForm.prototype.createElement = function(type, field, value, attributes = 
         });
     }
 
-
-    //element.setAttribute('id', field);
-    //element.setAttribute('name', field);
     return element;
 };
 
@@ -180,9 +177,6 @@ DynamicForm.prototype.createForm = function(fields) {
         savePanel.appendChild(deleteButton);
     }
 
-
-
-
     this.form.appendChild(savePanel);
 
     this.form.addEventListener('submit', (event) => this.handleSubmit(event));
@@ -192,10 +186,11 @@ DynamicForm.prototype.createForm = function(fields) {
 
 
 
-
-
 DynamicForm.prototype.createValueElement = function(type, field, value, label, api) {
-    const timestamp = `?t=${new Date().getTime()}`;
+    let timestamp = `?t=${new Date().getTime()}`;
+    if (api && api.indexOf('filename=') !== -1) {
+        timestamp = `&t=${new Date().getTime()}`;
+    }
 
     const elementConfig = {
         "filename": {textContent: this.formatFilename(value)},
