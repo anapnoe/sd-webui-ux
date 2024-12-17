@@ -3,9 +3,10 @@ import {TreeView} from './uiux/tree_view.js';
 import {DynamicForm} from './dynamic_forms.js';
 import {DEFAULT_PATH, SD_VERSIONS_OPTIONS} from '../constants.js';
 import {Spotlight} from "../spotlight/js/spotlight3.js";
-import {updateInput, updateChange} from "../utils/helpers.js";
+import {updateInput, sendImageParamsTo} from "../utils/helpers.js";
 import {setupInputObservers, setupCheckpointChangeObserver} from '../utils/observers.js';
 import {requestGetData, requestPostData} from '../utils/api.js';
+import {createVirtualItemExtraNetworks} from '../utils/renderers.js';
 
 export async function refreshDirectory(directory) {
 
@@ -128,51 +129,10 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         }
     };
 
+    let imgRes = 'thumbnail';
     // Render: Item Node Renderer Overwrite
     vScroll.createItemElement = function(item, actualIndex) {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'item card';
-
-        if (this.selected?.has(item.name)) {
-            itemDiv.classList.add('active');
-        } else {
-            itemDiv.classList.remove('active');
-        }
-
-        const imageUrl = item.thumbnail;
-        const timestamp = item.timestamp || '';
-        if (imageUrl) {
-            //itemDiv.style.backgroundImage = `url('./sd_extra_networks/thumb?filename=${encodeURIComponent(imageUrl)}${timestamp}')`;
-            itemDiv.style.backgroundImage = `url('./sd_extra_networks/thumb?filename=${encodeURIComponent(imageUrl)}')`;
-        }
-
-        const itemTitle = document.createElement('span');
-        itemTitle.textContent = item.name;
-        itemTitle.className = 'title';
-
-        const itemEditMeta = document.createElement('button');
-        itemEditMeta.className = `edit-meta edit-button card-button`;
-
-        const copyPath = document.createElement('button');
-        copyPath.className = `copy-path copy-path-button card-button`;
-
-        const itemActions = document.createElement('div');
-        itemActions.className = `item-actions`;
-
-        itemActions.appendChild(copyPath);
-
-        if (item.metadata_exists) {
-            const itemShowMeta = document.createElement('button');
-            itemShowMeta.className = `show-meta metadata-button card-button`;
-            itemActions.appendChild(itemShowMeta);
-        }
-
-        itemActions.appendChild(itemEditMeta);
-
-        itemDiv.appendChild(itemActions);
-        itemDiv.appendChild(itemTitle);
-
-        return itemDiv;
+        return createVirtualItemExtraNetworks(item, imgRes, this.selected, '/sd_extra_networks/thumb?filename=');
     };
 
     // ExtraNetwork
@@ -186,31 +146,59 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
         if (target.classList.contains("copy-path")) {
             navigator.clipboard.writeText(itemData.filename);
+        } else if (target.classList.contains("fullsize-button")) {
+            vScroll.scrollToId(itemData.id);
+            if (vScroll.isFullSize) {
+                imgRes = 'thumbnail';
+                vScroll.setFullSize(false);
+                vScroll.setLayout('vertical');
+                target.classList.remove('active');
+            } else {
+                imgRes = 'preview';
+                vScroll.setFullSize(true);
+                vScroll.setLayout('vertical');
+                target.classList.add('active');
+            }
+        } else if (target.classList.contains("info-button")) {
+            vScroll.setInfo(!vScroll.isInfo);
+        } else if (target.classList.contains("fullScreen-button")) {
+            vScroll.scrollToId(itemData.id);
+            vScroll.setFullScreen(!vScroll.isFullScreen);
         } else if (target.classList.contains("show-meta")) {
             requestGetMetaData(itemData.type, itemData.name, vScroll, container);
         } else if (target.classList.contains("edit-meta")) {
             createUserMetaForm(itemData, itemData.id);
+        } else if (target.classList.contains("send-params-button")) {
+            const imgUrl = `/sd_extra_networks/thumb?filename=${encodeURIComponent(itemData.local_preview || itemData.preview)}`;
+            sendImageParamsTo(imgUrl, `#pnginfo_send_${prompt_focused} button`);
         } else if (itemData.type === "Checkpoint") {
+            if (vScroll.isFullSize) return;
             window.selectCheckpoint(itemData.name);
         } else if (itemData.type === "TextualInversion") {
+            if (vScroll.isFullSize) return;
             window.cardClicked(prompt_focused, prompt, neg_prompt, true);
             selected_networks[`${prompt_focused}_textualinversion`].push({id: itemData.id, name: itemData.name, value: prompt});
         } else if (itemData.type === "LORA") {
+            if (vScroll.isFullSize) return;
             window.cardClicked(prompt_focused, prompt, neg_prompt, false);
             selected_networks[`${prompt_focused}_lora`].push({id: itemData.id, name: itemData.name, value: `<lora:${prompt.split(':')[1]}`});
         } else if (itemData.type === "Hypernetwork") {
+            if (vScroll.isFullSize) return;
             window.cardClicked(prompt_focused, prompt, neg_prompt, false);
             selected_networks[`${prompt_focused}_hypernetwork`].push({id: itemData.id, name: itemData.name, value: prompt});
         }
     }
 
     vScroll.clickHandler = function(e) {
-        const {target, currentTarget: ctarget} = e;
-        const itemId = target.closest('.item.card').dataset.id;
-        const itemData = this.data.find(item => item.id.toString() === itemId);
-        //console.log(itemId, target, this.data);
-        if (itemData) {
-            applyExtraNetworkPrompts(target, itemData, itemId);
+        if (vScroll.dragged || vScroll.scrollDelta) return;
+        const itemCard = e.target.closest('.item.card');
+        const itemId = itemCard?.dataset.id;
+        if (itemId) {
+            const itemData = this.data.find(item => item.id.toString() === itemId);
+            //console.log(itemId, e.target, this.data);
+            if (itemData) {
+                applyExtraNetworkPrompts(e.target, itemData, itemId);
+            }
         }
         e.stopPropagation();
     };
@@ -441,7 +429,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         };
 
         const img_data = {
-            thumbnail: {type: 'img', api: './sd_extra_networks/thumb?filename=', showLabel: false},
+            thumbnail: {type: 'img', api: '/sd_extra_networks/thumb?filename=', showLabel: false},
             replace_preview: {type: 'button', label: 'Replace Preview', showLabel: false},
         };
 
@@ -523,9 +511,10 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                 fdata.type = itemData.type;
                 fdata.name = itemData.name;
                 fdata.filename = itemData.filename;
-                if (source_file) fdata.local_preview = source_file;
+                if (source_file) fdata.source_file = source_file;
                 return fdata;
             };
+
 
             let local_preview_path_value = itemData.local_preview;
 
@@ -536,7 +525,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                 const timestamp = new Date().getTime();
                 //data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp?t=${timestamp}`; // Append timestamp to the URL
                 data.thumbnail = `${lp.path}/thumbnails/${lp.filename_no_ext}.thumb.webp`;
-                data.timestamp = `?t=${timestamp}`;
+                data.timestamp = `&t=${timestamp}`;
                 vScroll.updateDataById(data, id);
                 //treeView.updateDataById(data, id);
                 treeView.update();
