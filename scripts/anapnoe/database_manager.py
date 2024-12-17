@@ -23,6 +23,26 @@ def validate_name(name, message):
     if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', name):
         raise ValueError(f"Invalid {message} name. Must start with a letter or underscore and contain only alphanumeric characters and underscores.")
 
+'''
+class DatabaseManager:
+    def __init__(self, db_name):
+        self.db_name = db_name
+        self.source_file = None
+        self.connection = None
+
+    def connect(self):
+        if self.connection is None:
+            self.connection = sqlite3.connect(self.db_name, check_same_thread=False)
+        return self.connection
+
+    def close_connection(self):
+        if self.connection:
+            self.connection.close()
+            self.connection = None
+
+'''
+
+# Singleton
 class DatabaseManager:
     _instance = None
 
@@ -40,6 +60,9 @@ class DatabaseManager:
             raise Exception("DatabaseManager instance is not set.")
         return cls._instance
 
+    def connect(self):
+        return sqlite3.connect(self.db_name, check_same_thread=False)
+
 
     def set_source_file(self, source_file):
         self.source_file = source_file
@@ -47,10 +70,6 @@ class DatabaseManager:
 
     def get_source_file(self):
         return self.source_file
-
-
-    def connect(self):
-        return sqlite3.connect(self.db_name, check_same_thread=False)
 
 
     def get_all_default_values(self):
