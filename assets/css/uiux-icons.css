@@ -305,7 +305,7 @@ button.active .icon-sort {
 }
 
 .icon-stylez {
-    -webkit-mask-image: url(../svg/markup-line.svg);
+    -webkit-mask-image: url(../svg/quill-pen-ai-line.svg);
 }
 
 .icon-rebuild-thumbs {
@@ -322,4 +322,91 @@ button.active .icon-sort {
 
 .icon-create-new {
     -webkit-mask-image: url(../svg/add-circle-line.svg);
+}
+
+.icon-full-screen{
+    -webkit-mask-image: url(../svg/fullscreen-line.svg);
+}
+.ae-virtual.fullscreen .icon-full-screen{
+    -webkit-mask-image: url(../svg/fullscreen-exit-line.svg);
+}
+
+.icon-grid-size{
+    -webkit-mask-image: url(../svg/focus-mode.svg);
+}
+
+.ae-virtual.full .icon-grid-size{
+    -webkit-mask-image: url(../svg/focus-mode.svg);
+    background-color: var(--ae-primary-color);
+}
+
+.icon-tile{
+    display: none;
+}
+.ae-virtual.full .icon-tile{
+    -webkit-mask-image: url(../svg/grid-line.svg);
+    display: block;
+}
+.ae-virtual.full.tileable .icon-tile{
+    -webkit-mask-image: url(../svg/grid-fill.svg);
+}
+
+.ae-virtual .icon-info{
+    display: none;
+}
+.ae-virtual.full .icon-info{
+    -webkit-mask-image: url(../svg/file-info-fill.svg);
+    display: block;
+}
+.ae-virtual.full.info .icon-info{
+    background-color: var(--ae-primary-color);
+}
+
+.ae-virtual .icon-delete{
+    -webkit-mask-image: url(../svg/delete-bin-2-fill.svg);
+    background-color: var(--ae-primary-color);
+}
+
+.ae-virtual .icon-send-params{
+    -webkit-mask-image: url(../svg/arrow-left-up-box-line.svg);
+}
+
+.ae-virtual .icon-link{
+    -webkit-mask-image: url(../svg/link.svg);
+}
+
+.send-button:has([class*="icon-2"])::before {
+    right: -1px;
+    top: -1px;
+    background-color: var(--ae-primary-color);
+    padding: 1px;
+    border-radius: 50%;
+    z-index: 1;
+}
+.send-button:has([class*="icon-2"])::before, .send-button:has([class*="icon-2"])::after {
+    content: "";
+    width: 11px;
+    height: 11px;
+    position: absolute;
+}
+.send-button:has([class*="icon-2"])::after {
+    right: 0px;
+    top: 0px;
+    background-color: var(--ae-input-hover-text-color);
+    -webkit-mask-image: url(../svg/arrow-up-line.svg);
+    z-index: 2;
+}
+.send-button{
+    position: relative;
+    padding: 0;
+    background-color: transparent;
+    border: 0;
+    line-height: 0;
+}
+
+button[class^="icon-"] {
+    mask-repeat: no-repeat;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
 }
