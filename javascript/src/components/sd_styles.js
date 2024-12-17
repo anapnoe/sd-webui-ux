@@ -3,9 +3,10 @@ import {TreeView} from './uiux/tree_view.js';
 import {DynamicForm} from './dynamic_forms.js';
 import {DEFAULT_PATH, SD_VERSIONS_OPTIONS} from '../constants.js';
 import {Spotlight} from "../spotlight/js/spotlight3.js";
-import {updateInput, updateChange} from "../utils/helpers.js";
+import {updateInput, sendImageParamsTo} from "../utils/helpers.js";
 import {setupInputObservers, setupCheckpointChangeObserver} from '../utils/observers.js';
 import {requestGetData, requestPostData} from '../utils/api.js';
+import {createVirtualItemElement} from '../utils/renderers.js';
 
 
 export async function setupSdStyles() {
@@ -82,53 +83,26 @@ export async function setupSdStyle(netkey, table, base_path) {
         }
     };
 
+    let imgRes = 'thumbnail';
+
+
     // Render: Item Node Renderer Overwrite
     vScroll.createItemElement = function(item, actualIndex) {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'item card';
-
-        if (this.selected?.has(item.name)) {
-            itemDiv.classList.add('active');
-        } else {
-            itemDiv.classList.remove('active');
-        }
-
-        const imageUrl = item.thumbnail;
-        const timestamp = item.timestamp || '';
-        if (imageUrl) {
-            itemDiv.style.backgroundImage = `url('/sd_styles/thumb/${encodeURIComponent(imageUrl)}${timestamp}')`;
-        }
-
-        const itemTitle = document.createElement('span');
-        itemTitle.textContent = item.name;
-        itemTitle.className = 'title';
-
-        const itemEditMeta = document.createElement('button');
-        itemEditMeta.className = `edit-meta edit-button card-button`;
-
-        const copyPath = document.createElement('button');
-        copyPath.className = `copy-path copy-path-button card-button`;
-
-        const itemActions = document.createElement('div');
-        itemActions.className = `item-actions`;
-
-        itemActions.appendChild(copyPath);
-        itemActions.appendChild(itemEditMeta);
-
-        itemDiv.appendChild(itemActions);
-        itemDiv.appendChild(itemTitle);
-
-        return itemDiv;
+        return createVirtualItemElement(item, imgRes, this.selected, '/sd_styles/thumb/');
     };
 
     vScroll.clickHandler = function(e) {
-        const {target, currentTarget: ctarget} = e;
-        const itemId = target.closest('.item.card').dataset.id;
-        const itemData = this.data.find(item => item.id.toString() === itemId);
-        //console.log(itemId, target, this.data);
-        if (itemData) {
-            applySdStylesPrompts(target, itemData, itemId);
+        if (vScroll.dragged || vScroll.scrollDelta) return;
+        const itemCard = e.target.closest('.item.card');
+        const itemId = itemCard?.dataset.id;
+        if (itemId) {
+            const itemData = this.data.find(item => item.id.toString() === itemId);
+            //console.log(itemId, e.target, this.data);
+            if (itemData) {
+                applySdStylesPrompts(e.target, itemData, itemId);
+            }
         }
+        e.preventDefault();
         e.stopPropagation();
     };
 
@@ -307,12 +281,51 @@ export async function setupSdStyle(netkey, table, base_path) {
 
         if (target.classList.contains("copy-path")) {
             navigator.clipboard.writeText(itemData.filename);
+        } else if (target.classList.contains("fullsize-button")) {
+            vScroll.scrollToId(itemData.id);
+            if (vScroll.isFullSize) {
+                imgRes = 'thumbnail';
+                vScroll.setFullSize(false);
+                vScroll.setLayout('vertical');
+                target.classList.remove('active');
+            } else {
+                imgRes = 'local_preview';
+                vScroll.setFullSize(true);
+                vScroll.setLayout('vertical');
+                target.classList.add('active');
+            }
+        } else if (target.classList.contains("tile-button")) {
+            vScroll.setTileable(!vScroll.isTileable);
+        } else if (target.classList.contains("info-button")) {
+            vScroll.setInfo(!vScroll.isInfo);
+        } else if (target.classList.contains("fullScreen-button")) {
+            vScroll.scrollToId(itemData.id);
+            vScroll.setFullScreen(!vScroll.isFullScreen);
         } else if (target.classList.contains("edit-meta")) {
             createUserMetaForm(itemData, itemData.id);
+        } else if (target.classList.contains("delete-button")) {
+            deleteItem(itemData, itemData.id);
+        } else if (target.classList.contains("send-params-button")) {
+            const imgUrl = `/sd_styles/thumb/${encodeURIComponent(itemData.local_preview)}`;
+            sendImageParamsTo(imgUrl, `#pnginfo_send_${prompt_focused} button`);
         } else if (itemData.type === "Style") {
+            if (vScroll.isFullSize) return;
             window.cardClicked(prompt_focused, prompt, neg_prompt, true);
             selected_sd_styles[`${prompt_focused}_styles`].push({id: itemData.id, name: itemData.name, value: prompt});
         }
+    }
+
+    function deleteItem(itemData, item_id) {
+        const url = '/sd_webui_ux/delete_item';
+        const params = {
+            table_name: table,
+            item_id: itemData.id,
+        };
+        requestPostData(url, params, function(result) {
+            //console.log(result);
+            vScroll.removeDataById(itemData.id);
+            treeView.update();
+        });
     }
 
     // User Metadata Form
