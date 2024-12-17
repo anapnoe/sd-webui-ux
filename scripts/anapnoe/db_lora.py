@@ -1,6 +1,7 @@
 import os
 import sys
 import importlib
+from pathlib import Path
 
 from modules import shared, ui_extra_networks
 
@@ -29,7 +30,16 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
 
     def refresh(self):
         networks.list_available_networks()
+    
+    def find_preview_image(self, path):
+        potential_files = sum([[f"{path}.{ext}", f"{path}.preview.{ext}"] for ext in ui_extra_networks.allowed_preview_extensions()], [])
 
+        for file in potential_files:
+            if self.lister.exists(file):
+                return file
+
+        return None
+    
     @staticmethod
     def add_types_to_item(item):
         return {
@@ -67,12 +77,14 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
         hash = lora_on_disk.hash if lora_on_disk.hash else None
         stats = os.stat(lora_on_disk.filename)
         default_multiplier = "opts.extra_networks_default_multiplier"
+        preview_image = self.find_preview_image(path)
+        preview_path = Path(preview_image).as_posix() if preview_image else None
         
         item = { 
             "name": name, 
             "filename": lora_on_disk.filename, 
             "hash": hash, 
-            "preview": self.find_preview(path) or self.find_embedded_preview(path, name, lora_on_disk.metadata), 
+            "preview": preview_path or self.find_embedded_preview(path, name, lora_on_disk.metadata), 
             "description": self.find_description(path), 
             "notes": "", 
             "tags": "", 
