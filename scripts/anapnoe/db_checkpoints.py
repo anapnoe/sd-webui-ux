@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from modules import shared, ui_extra_networks, sd_models, sd_vae, sysinfo
 from modules.ui_extra_networks_checkpoints_user_metadata import CheckpointUserMetadataEditor
@@ -13,6 +14,14 @@ class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
     def refresh(self):
         shared.refresh_checkpoints()
 
+    def find_preview_image(self, path):
+        potential_files = sum([[f"{path}.{ext}", f"{path}.preview.{ext}"] for ext in ui_extra_networks.allowed_preview_extensions()], [])
+
+        for file in potential_files:
+            if self.lister.exists(file):
+                return file
+
+        return None
 
     def create_item(self, name, index=None, enable_filter=True):
         checkpoint: sd_models.CheckpointInfo = sd_models.checkpoint_aliases.get(name)
@@ -23,12 +32,16 @@ class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
         mtime, ctime = self.lister.mctime(checkpoint.filename)
         hash = checkpoint.sha256 if checkpoint.sha256 else None
         stats = os.stat(checkpoint.filename)
+        preview_image = self.find_preview_image(path)
+        preview_path = Path(preview_image).as_posix() if preview_image else ""
+
+        print(preview_path)
 
         return {
             "name": (checkpoint.name_for_extra, "TEXT"),
             "filename": (checkpoint.filename, "TEXT"),
             "hash": (hash, "TEXT"),
-            "preview": (self.find_preview(path), "TEXT"),
+            "preview": (preview_path, "TEXT"),
             "thumbnail": ("", "TEXT"),
             "description": (self.find_description(path), "TEXT"),
             "notes": ("", "TEXT"),
