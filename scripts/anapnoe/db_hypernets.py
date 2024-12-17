@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from modules import shared, ui_extra_networks
 from modules.ui_extra_networks import quote_js
@@ -11,7 +12,16 @@ class ExtraNetworksPageHypernetworks(ui_extra_networks.ExtraNetworksPage):
 
     def refresh(self):
         shared.reload_hypernetworks()
+    
+    def find_preview_image(self, path):
+        potential_files = sum([[f"{path}.{ext}", f"{path}.preview.{ext}"] for ext in ui_extra_networks.allowed_preview_extensions()], [])
 
+        for file in potential_files:
+            if self.lister.exists(file):
+                return file
+
+        return None
+    
     def create_item(self, name, index=None, enable_filter=True):
         full_path = shared.hypernetworks.get(name)
         if full_path is None:
@@ -23,12 +33,14 @@ class ExtraNetworksPageHypernetworks(ui_extra_networks.ExtraNetworksPage):
         #shorthash = sha256[0:10] if sha256 else None
         hash = sha256 if sha256 else None
         stats = os.stat(full_path)
+        preview_image = self.find_preview_image(path)
+        preview_path = Path(preview_image).as_posix() if preview_image else ""
 
         return {
             "name": (name, "TEXT"),
             "filename": (full_path, "TEXT"),
             "hash": (hash, "TEXT"),
-            "preview": (self.find_preview(path), "TEXT"),
+            "preview": (preview_path, "TEXT"),
             "thumbnail": ("", "TEXT"),
             "description": (self.find_description(path), "TEXT"),
             "notes": ("", "TEXT"),
