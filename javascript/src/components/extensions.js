@@ -50,10 +50,10 @@ async function createTabsForExtensions() {
         "tab_anapnoe_dock",
         "tab_anapnoe_sd_uiux_core",
         "tab_space",
-        "tab_stylez",
         "tab_anapnoe_sd_uiux_civitai",
         "tab_anapnoe_sd_uiux_db_extra_networks",
-        "tab_anapnoe_sd_uiux_db_styles"
+        "tab_anapnoe_sd_uiux_db_styles",
+        "tab_anapnoe_sd_uiux_db_output_images"
     ];
 
     /*
