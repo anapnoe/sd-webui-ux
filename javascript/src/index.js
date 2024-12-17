@@ -15,6 +15,7 @@ import {UIUX} from './utils/module.js';
 import {setupCivitaiExplorerImages, setupCivitaiExplorerModels} from './components/civitai_explorer.js';
 import {setupExtraNetworkCheckpoints, setupExtraNetworkTextualinversion, setupExtraNetworkLora, setupExtraNetworkHypernetworks} from './components/extra_networks.js';
 import {setupSdStyles} from './components/sd_styles.js';
+import {setupSdOutputImages} from './components/sd_output_images.js';
 function onUiUxReady(content_div) {
 
     const logger_screen = document.querySelector("#logger_screen");
@@ -122,10 +123,18 @@ function onUiUxReady(content_div) {
 
 
     if (window.opts.uiux_enable_sd_styles) {
-        const styles_nav = document.querySelector("#sd_styles_nav");
+        const sd_styles_nav = document.querySelector("#sd_styles_nav");
         sd_styles_nav.classList.remove("hidden");
-        styles_nav.addEventListener('click', () => {
+        sd_styles_nav.addEventListener('click', () => {
             setupSdStyles();
+        }, {once: true});
+    }
+
+    if (window.opts.uiux_enable_sd_output_images) {
+        const sd_output_images_nav = document.querySelector("#sd_output_images_nav");
+        sd_output_images_nav.classList.remove("hidden");
+        sd_output_images_nav.addEventListener('click', () => {
+            setupSdOutputImages();
         }, {once: true});
     }
 
