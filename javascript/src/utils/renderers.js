@@ -236,11 +236,11 @@ export function createVirtualItemCivitImages(item) {
     const info = document.createElement('button');
     info.className = `icon-info info-button card-button`;
 
-    const itemEditMeta = document.createElement('button');
-    itemEditMeta.className = `edit-meta edit-button card-button`;
+    const itemAddToStyles = document.createElement('button');
+    itemAddToStyles.className = `icon-stylez civit-add2styles-button card-button`;
 
-    const copyPath = document.createElement('button');
-    copyPath.className = `copy-path copy-path-button card-button`;
+    const civitLink = document.createElement('button');
+    civitLink.className = `icon-link civit-link-button card-button`;
 
     const sendParams = document.createElement('button');
     sendParams.className = `icon-send-params send-params-button card-button`;
@@ -331,8 +331,8 @@ export function createVirtualItemCivitImages(item) {
     itemActionsTop.appendChild(fullScreen);
 
     itemActions.appendChild(info);
-    itemActions.appendChild(copyPath);
-    itemActions.appendChild(itemEditMeta);
+    itemActions.appendChild(civitLink);
+    itemActions.appendChild(itemAddToStyles);
 
 
     itemActionsRow.appendChild(itemActionsTop);
@@ -498,7 +498,8 @@ export function createVirtualItemCivitModelsDetail(item, parentItem, modelIndex)
 
     const vDownload = document.createElement("a");
     vDownload.target = "_blank";
-    vDownload.href = downloadUrl;
+    //vDownload.href = downloadUrl;
+    vDownload.setAttribute('data-url', downloadUrl);
     vDownload.className = 'model-sdownload';
     vDownload.textContent = `${downloadName} - ${formatSize(downloadSize)}`;
 
@@ -514,6 +515,19 @@ export function createVirtualItemCivitModelsDetail(item, parentItem, modelIndex)
     itemInfo.appendChild(itemTitle);
     itemInfo.appendChild(selectModel);
     itemInfo.appendChild(vDownload);
+
+    const imageUrl = item.url;
+    if (imageUrl) {
+        const imageDownload = document.createElement("a");
+        imageDownload.className = 'download-image-button';
+        const fileExtension = imageUrl.split('.').pop().split('?')[0];
+        const filename = `${downloadName.split('.')[0]}.${fileExtension}`;
+        imageDownload.textContent = `${filename}`;
+        imageDownload.setAttribute('data-url', imageUrl);
+        imageDownload.setAttribute('data-filename', filename);
+        itemInfo.appendChild(imageDownload);
+    }
+
     itemInfo.appendChild(itemDescription);
 
     const itemActionsRow = document.createElement('div');
@@ -542,7 +556,6 @@ export function createVirtualItemCivitModelsDetail(item, parentItem, modelIndex)
     itemDiv.appendChild(itemType);
     itemDiv.appendChild(itemActionsRow);
 
-    const imageUrl = item.url;
     if (imageUrl) {
         const imgDiv = document.createElement('div');
         imgDiv.style.backgroundImage = `url(${imageUrl})`;
