@@ -20,7 +20,6 @@ paths = ["extensions-builtin/sd_forge_lora"]
 try:
     network = import_module_from_path("network", paths)
     networks = import_module_from_path("networks", paths)
-    ui_edit_user_metadata = import_module_from_path("ui_edit_user_metadata", paths)
 except FileNotFoundError as e:
     print(e)
 
@@ -130,9 +129,6 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
 
     def allowed_directories_for_previews(self):
         return [shared.cmd_opts.lora_dir]
-
-    def create_user_metadata_editor(self, ui, tabname):
-        return ui_edit_user_metadata.LoraUserMetadataEditor(ui, tabname, self)
     
     def get_internal_metadata(self, name):
         lora_on_disk = networks.available_networks.get(name)
