@@ -154,7 +154,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                 vScroll.setLayout('vertical');
                 target.classList.remove('active');
             } else {
-                imgRes = 'preview';
+                imgRes = 'local_preview' || 'preview';
                 vScroll.setFullSize(true);
                 vScroll.setLayout('vertical');
                 target.classList.add('active');
@@ -169,7 +169,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         } else if (target.classList.contains("edit-meta")) {
             createUserMetaForm(itemData, itemData.id);
         } else if (target.classList.contains("send-params-button")) {
-            const imgUrl = `/sd_extra_networks/thumb?filename=${encodeURIComponent(itemData.local_preview || itemData.preview)}`;
+            const imgUrl = `/sd_extra_networks/thumb?filename=${encodeURIComponent(itemData.preview || itemData.local_preview)}`;
             sendImageParamsTo(imgUrl, `#pnginfo_send_${prompt_focused} button`);
         } else if (itemData.type === "Checkpoint") {
             if (vScroll.isFullSize) return;
@@ -431,6 +431,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         const img_data = {
             thumbnail: {type: 'img', api: '/sd_extra_networks/thumb?filename=', showLabel: false},
             replace_preview: {type: 'button', label: 'Replace Preview', showLabel: false},
+            browse_preview: {type: 'button', label: 'Browse Preview', showLabel: false},
         };
 
         const murl = `/sd_webui_ux/get_internal_metadata?type=${encodeURIComponent(itemData.type)}&name=${encodeURIComponent(itemData.name)}`;
@@ -505,13 +506,17 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             }
 
             let source_file;
+            let upload_file;
 
             dynamicForm.beforeFormSubmit = function(fdata) {
                 fdata.id = itemData.id;
                 fdata.type = itemData.type;
                 fdata.name = itemData.name;
+                fdata.prompt = itemData.prompt;
                 fdata.filename = itemData.filename;
                 if (source_file) fdata.source_file = source_file;
+                if (upload_file) fdata.file = upload_file;
+                console.log(fdata);
                 return fdata;
             };
 
@@ -532,15 +537,31 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             };
 
             const replace_local_preview = imgEl.querySelector('button.replace_preview');
+            const thumb_preview = imgEl.querySelector('.thumbnail-image');
             replace_local_preview.addEventListener('click', (e) => {
                 const prompt_focused = window.UIUX.FOCUS_PROMPT;
                 const gallery_img = document.querySelector(`#${prompt_focused}_gallery [data-testid="detailed-image"]`);
                 if (gallery_img) {
-                    const thumb_preview = imgEl.querySelector('.thumbnail-image');
                     //const local_preview = formEl.querySelector('#local_preview_path input');
                     source_file = gallery_img.src.split('file=')[1].split('?')[0];
                     thumb_preview.style.filter = 'grayscale(1)';
                 }
+            });
+
+            const browse_fileInput = document.createElement('input');
+            browse_fileInput.type = 'file';
+            browse_fileInput.accept = 'image/jpeg, image/png, image/webp, image/gif';
+            browse_fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    upload_file = file;
+                    thumb_preview.style.filter = 'grayscale(1)';
+                }
+            });
+
+            const browse_preview = imgEl.querySelector('button.browse_preview');
+            browse_preview.addEventListener('click', (e) => {
+                browse_fileInput.click();
             });
 
         });
