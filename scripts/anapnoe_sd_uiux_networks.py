@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 import gradio as gr
 import modules.scripts as scripts
-from modules import script_callbacks, shared
+from modules import script_callbacks, shared, ui_extra_networks
 from fastapi import FastAPI, HTTPException, Query, Body
 from typing import Optional, List, Dict, Any
 
@@ -48,6 +48,8 @@ db_tables_pages = {
 def extra_networks_import_update_db(db_tables_pages, refresh=False):
     db_manager = DatabaseManager.get_instance()
 
+    #ui_extra_networks.allowed_dirs = {Path(dir).resolve() for dir in ui_extra_networks.allowed_dirs}
+
     for type_name, page_instance in db_tables_pages.items():
         table_name = type_name.lower()
         page_instance.refresh()
@@ -62,11 +64,15 @@ def extra_networks_import_update_db(db_tables_pages, refresh=False):
                 logger.error(f"Error creating table or inserting items for {table_name}: {e}")
             
             if refresh:
+                db_manager.delete_invalid_items(table_name)
+                
                 for item in items:
                     try:
                         db_manager.import_item(table_name, item)  # Import item
                     except Exception as e:
                         logger.error(f"Error importing item into {table_name}: {e}")
+
+                
 
 def extra_networks_import_refresh_db():
     logger.info("Importing updating the database")
@@ -90,4 +96,3 @@ def on_ui_tabs():
 
 script_callbacks.on_app_started(lambda _, app: api_uiux_db(_, app, db_tables_pages))
 script_callbacks.on_ui_tabs(check_and_use_db_extra_networks)
-
