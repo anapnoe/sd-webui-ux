@@ -2,13 +2,10 @@ import os
 from pathlib import Path
 
 from modules import shared, ui_extra_networks, sd_models, sd_vae, sysinfo
-from modules.ui_extra_networks_checkpoints_user_metadata import CheckpointUserMetadataEditor
-
 
 class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
     def __init__(self):
         super().__init__('Checkpoints')
-
         self.allow_prompt = False
 
     def refresh(self):
@@ -34,8 +31,6 @@ class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
         stats = os.stat(checkpoint.filename)
         preview_image = self.find_preview_image(path)
         preview_path = Path(preview_image).as_posix() if preview_image else ""
-
-        print(preview_path)
 
         return {
             "name": (checkpoint.name_for_extra, "TEXT"),
@@ -67,9 +62,6 @@ class ExtraNetworksPageCheckpoints(ui_extra_networks.ExtraNetworksPage):
 
     def allowed_directories_for_previews(self):
         return [v for v in [shared.cmd_opts.ckpt_dir, sd_models.model_path] if v is not None]
-
-    def create_user_metadata_editor(self, ui, tabname):
-        return CheckpointUserMetadataEditor(ui, tabname, self)
     
     def get_internal_metadata(self, name):
         checkpoint: sd_models.CheckpointInfo = sd_models.checkpoint_aliases.get(name)
