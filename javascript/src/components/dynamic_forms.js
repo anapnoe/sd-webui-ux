@@ -343,39 +343,50 @@ DynamicForm.prototype.createTagsElement = function(metadata, label) {
     return false;
 };
 
+DynamicForm.prototype.afterFormSubmit = function(fdata, newdata, message) {
+};
+
+DynamicForm.prototype.beforeFormSubmit = function(fdata) {
+    return fdata;
+};
+
 DynamicForm.prototype.handleSubmit = async function(event) {
 
     event.preventDefault();
     const formData = new FormData(this.form);
-    const fdata = {};
-    for (const [key, value] of formData.entries()) {
-        fdata[key] = value;
+    const fdata = Object.fromEntries(formData.entries());
+
+    let payload = fdata;
+    payload.table_name = this.table_name;
+    payload.name = this.itemData.name;
+    payload = this.beforeFormSubmit(fdata);
+
+    let upload_file;
+    if (payload.file) {
+        upload_file = payload.file;
+        delete payload.file;
     }
-    let postdata = fdata;
-    postdata.table_name = this.table_name;
-    postdata.name = this.itemData.name;
-    postdata = this.beforeFormSubmit(fdata);
+
+    const postData = new FormData();
+    postData.append('payload', JSON.stringify(payload));
+    if (upload_file) {
+        postData.append('file', upload_file);
+    }
+
     try {
         const response = await fetch(this.url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(postdata),
+            body: postData
         });
+
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
+
         const updated = await response.json();
         await this.afterFormSubmit(fdata, updated.data, updated.message);
+
     } catch (error) {
         console.error('Failed to fetch data:', error);
     }
-};
-
-DynamicForm.prototype.afterFormSubmit = function(fdata, newdata, message) {
-
-};
-DynamicForm.prototype.beforeFormSubmit = function(fdata) {
-    return fdata;
 };
