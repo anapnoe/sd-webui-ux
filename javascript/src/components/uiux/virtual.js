@@ -407,6 +407,9 @@ VirtualScroll.prototype.clickHandler = function(e) {
     console.log(itemData);
 };
 
+VirtualScroll.prototype.changeHandler = function(e) {
+};
+
 VirtualScroll.prototype.wheelHandler = function(e) {
     if (e.target.closest('.full .item-info')) return;
     if (!this.isFullSize || !this.isZoomMode) {
@@ -436,6 +439,7 @@ VirtualScroll.prototype.setupEventListeners = function() {
 
     this.container.addEventListener('scroll', this.throttle(this.scrollHandler.bind(this), 100));
     this.container.addEventListener('click', this.clickHandler.bind(this));
+    this.container.addEventListener('change', this.changeHandler.bind(this));
     this.container.addEventListener("wheel", this.wheelHandler.bind(this), {passive: false});
 
     document.addEventListener('keydown', this.keyPressHandler.bind(this));
