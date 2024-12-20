@@ -1,7 +1,7 @@
 import logging
 logger = logging.getLogger(__name__)
 
-from fastapi import FastAPI, HTTPException, Query, Body
+from fastapi import FastAPI, HTTPException, Query, Body, UploadFile, File
 #from fastapi import Request, Response
 
 from typing import Optional, List, Dict, Any
@@ -248,13 +248,18 @@ class DatabaseManager:
         try:
             conn = self.connect()
             cursor = conn.cursor()
-            cursor.execute(f"SELECT 1 FROM {table_name} WHERE filename = ?", (filename,))
-            exists = cursor.fetchone() is not None
-            return exists
+            cursor.execute(f"SELECT id FROM {table_name} WHERE filename = ?", (filename,))
+            result = cursor.fetchone()
+            if result:
+                return result[0] 
+            else:
+                return None
         except sqlite3.Error as e:
-            logger.error(f"Database error in item_exists_by_name: {e}")
+            logger.error(f"Database error in item_exists_by_filename: {e}")
+            return None
         except Exception as e:
-            logger.error(f"Unexpected error in item_exists_by_name: {e}")
+            logger.error(f"Unexpected error in item_exists_by_filename: {e}")
+            return None
         finally:
             if conn:
                 conn.close()
@@ -293,14 +298,14 @@ class DatabaseManager:
             item_exists_by_filename = self.item_exists_by_filename(table_name, item_filtered['filename'])
             item_exists_in_source = self.item_exists_in_source(item_filtered["filename"])
 
-            logger.info(f"Inserting item: {item_filtered['name']} {item_filtered.get('hash', 'N/A')}")
+            logger.info(f"Inserting item: {item_filtered['name']} {item_filtered.get('hash', 'N/A')} Exists: {item_exists_in_source}")
 
-            if not item_exists_by_filename and not item_exists_in_source:
+            if item_exists_by_filename and not item_exists_in_source:
                 logger.info(f"Item {item_filtered['name']} does not exist. Deleting from database.")
-                self.delete_item(table_name, item_filtered['filename'])
+                self.delete_item(table_name, item_exists_by_filename)
                 return
             
-            elif item_exists_by_filename and not item_exists_in_source:
+            elif item_exists_by_filename and item_exists_in_source:
                 logger.info(f"Item {item_filtered['name']} not found in source. Updating paths.")
                 self.update_item_paths(table_name, item_filtered)
                 return
@@ -358,7 +363,7 @@ class DatabaseManager:
                 UPDATE {table_name}
                 SET filename = ?, local_preview = ?, preview = ?
                 WHERE id = ?
-            ''', (item.get('filename'), item.get('local_preview'), item.get('local_preview'), item.get('id')))
+            ''', (item.get('filename'), item.get('local_preview'), item.get('preview'), item.get('id')))
 
             conn.commit()
             logger.info(f"Paths for item {item['name']} updated successfully.")
@@ -397,8 +402,9 @@ class DatabaseManager:
 
             if source_file:
                 if os.path.exists(source_file):
-                    shutil.copy2(source_file, new_local_preview_path)
-                    logger.info(f"Copied new local_preview from {source_file} to {new_local_preview_path}")
+                    if os.path.abspath(source_file) != os.path.abspath(new_local_preview_path):
+                        shutil.copy2(source_file, new_local_preview_path)
+                        logger.info(f"Copied new local_preview from {source_file} to {new_local_preview_path}")
                 return new_local_preview_path
 
             if curr_local_preview:
@@ -529,13 +535,15 @@ class DatabaseManager:
             'hash': None
         }
 
-        if update_fields['thumbnail'] and os.path.exists(update_fields['thumbnail']):
-            update_fields['filesize'] = os.stat(update_fields['thumbnail']).st_size
-            item_filtered['filesize'] = update_fields['filesize']
+        filename = item_filtered.get('filename')
+        if filename and filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.gif')):
+            if update_fields['thumbnail'] and os.path.exists(update_fields['thumbnail']):
+                update_fields['filesize'] = os.stat(update_fields['thumbnail']).st_size
+                item_filtered['filesize'] = update_fields['filesize']
 
-        if item_filtered.get('filename') and os.path.exists(item_filtered.get('filename')):
-            update_fields['hash'] = self.calculate_sha256(item_filtered.get('filename'))
-            item_filtered['hash'] = update_fields['hash']
+            if filename and os.path.exists(item_filtered.get('filename')):
+                update_fields['hash'] = self.calculate_sha256(item_filtered.get('filename'))
+                item_filtered['hash'] = update_fields['hash']
 
         set_clause = ', '.join(f"{key} = ?" for key in update_fields if update_fields[key] is not None)
         values = [value for value in update_fields.values() if value is not None] + [item_filtered.get('id')]
@@ -588,6 +596,40 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error deleting item: {e}")
             return {"message": "An error occurred."}
+        finally:
+            if conn:
+                conn.close()
+
+    def delete_invalid_items(self, table_name):
+        validate_name(table_name, "table")  # Validate table
+        conn = None
+        try:
+            conn = self.connect()
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT id, filename FROM {table_name}")
+            rows = cursor.fetchall()
+            ids_to_delete = []
+
+            for row in rows:
+                entry_id, filename = row
+                if not self.item_exists_in_source(filename):
+                    ids_to_delete.append(entry_id)
+
+            if ids_to_delete:
+                cursor.execute(f"DELETE FROM {table_name} WHERE id IN ({','.join('?' for _ in ids_to_delete)})", tuple(ids_to_delete))
+                conn.commit()
+                logger.info(f"Removed {len(ids_to_delete)} invalid entries from {table_name}.")
+                return {"message": f"Removed {len(ids_to_delete)} invalid entries from {table_name}.", "deleted_count": len(ids_to_delete)}
+            else:
+                logger.info("No invalid entries to remove.")
+                return {"message": "No invalid entries to remove.", "deleted_count": 0}
+
+        except sqlite3.Error as e:
+            logger.error(f"Database error in delete_invalid_items: {e}")
+            return {"Error": str(e)}
+        except Exception as e:
+            logger.error(f"Unexpected error in delete_invalid_items: {e}")
+            return {"Error": str(e)}
         finally:
             if conn:
                 conn.close()
@@ -752,6 +794,7 @@ class DatabaseManager:
 
             preview_image_path = base_path + ".preview" + ext
             if os.path.exists(preview_image_path):
+                shutil.copy(preview_image_path, image_path)
                 return Path(preview_image_path)
             
         return None
@@ -894,7 +937,14 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.post("/sd_webui_ux/update_user_metadata")
-    async def update_user_metadata_endpoint(payload: dict = Body(...)):
+    async def update_user_metadata_endpoint(
+        payload: str = Body(...),
+        file: Optional[UploadFile] = File(None)
+    ):    
+
+        payload = json.loads(payload) # not working as a Dict workaround
+        #print("Received payload:", payload)
+
         table_name:str = payload.get('table_name')
         item_id:str = payload.get('id')
         data_type:str = payload.get('type')
@@ -952,13 +1002,28 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
 
         item.update({key: value for key, value in optional_fields.items() if key in table_columns})
 
+        
+        if file and filename:
+            base_path = os.path.splitext(filename)[0]
+            file_extension = os.path.splitext(file.filename)[1]
+            source_file = f"{base_path}{file_extension}"
+            item['local_preview'] = source_file
+            
+            try:
+                with open(source_file, "wb") as f:
+                    f.write(await file.read())
+                db_manager.create_and_save_thumbnail(source_file)
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
+        
         db_manager.set_source_file(source_file)
-
+        
         try:
             updated_item = db_manager.update_item(table_name, item, update_local_preview=True)
             return {"message": "Item updated successfully", "data": updated_item}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+            
 
     @app.post("/sd_webui_ux/generate-thumbnails")
     async def generate_thumbnails(payload: dict = Body(...)):
@@ -1057,6 +1122,25 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         if "Error" in response["message"]:
             raise HTTPException(status_code=500, detail=response["message"])
         return response
+
+
+    @app.post("/sd_webui_ux/delete_invalid_items")
+    async def delete_invalid_items_endpoint(payload: dict = Body(...)):
+        table_name: str = payload.get('table_name')
+
+        if not table_name:
+            raise HTTPException(status_code=422, detail="Table name is required")
+
+        db_manager = DatabaseManager.get_instance()
+        response = db_manager.delete_invalid_items(table_name)
+
+        if "Error" in response:
+            raise HTTPException(status_code=500, detail=response["Error"])
+
+        return response
+
+
+        
     
     '''
     @app.get("/sd_webui_ux/images/{filename:path}")
