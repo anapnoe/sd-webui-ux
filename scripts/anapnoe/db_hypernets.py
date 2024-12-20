@@ -5,7 +5,6 @@ from modules import shared, ui_extra_networks
 from modules.ui_extra_networks import quote_js
 from modules.hashes import sha256_from_cache
 
-
 class ExtraNetworksPageHypernetworks(ui_extra_networks.ExtraNetworksPage):
     def __init__(self):
         super().__init__('Hypernetworks')
@@ -15,7 +14,6 @@ class ExtraNetworksPageHypernetworks(ui_extra_networks.ExtraNetworksPage):
     
     def find_preview_image(self, path):
         potential_files = sum([[f"{path}.{ext}", f"{path}.preview.{ext}"] for ext in ui_extra_networks.allowed_preview_extensions()], [])
-
         for file in potential_files:
             if self.lister.exists(file):
                 return file
@@ -46,7 +44,7 @@ class ExtraNetworksPageHypernetworks(ui_extra_networks.ExtraNetworksPage):
             "notes": ("", "TEXT"),
             "tags": ("", "TEXT"),
             "prompt": (f'<hypernet:{name}:opts.extra_networks_default_multiplier>', "TEXT"),
-            "local_preview": (f"{path}.preview.{shared.opts.samples_format}", "TEXT"),
+            "local_preview": (f"{path}.{shared.opts.samples_format}", "TEXT"),
             "type": ("Hypernetwork", "TEXT"),
             "metadata_exists": (False, "BOOLEAN"), 
             "sd_version": ("Unknown", "TEXT"),
@@ -58,6 +56,7 @@ class ExtraNetworksPageHypernetworks(ui_extra_networks.ExtraNetworksPage):
 
     def list_items(self):
         # instantiate a list to protect against concurrent modification
+
         names = list(shared.hypernetworks)
         for index, name in enumerate(names):
             item = self.create_item(name, index)
