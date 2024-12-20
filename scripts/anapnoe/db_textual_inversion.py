@@ -43,7 +43,7 @@ class ExtraNetworksPageTextualInversion(ui_extra_networks.ExtraNetworksPage):
             "notes": ("", "TEXT"),
             "tags": ("", "TEXT"),
             "prompt": (embedding.name, "TEXT"),
-            "local_preview": (f"{path}.preview.{shared.opts.samples_format}", "TEXT"),
+            "local_preview": (f"{path}.{shared.opts.samples_format}", "TEXT"),
             "type": ("TextualInversion", "TEXT"),
             "metadata_exists": (False, "BOOLEAN"), 
             "sd_version": ("Unknown", "TEXT"),
