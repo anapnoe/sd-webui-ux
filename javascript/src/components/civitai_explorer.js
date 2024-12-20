@@ -92,6 +92,10 @@ export async function setupCivitaiExplorerImages() {
         } else if (target.classList.contains("item-info-title")) {
             searchInput.value = target.textContent;
             updateInput(searchInput);
+        } else if (target.classList.contains("civit-link-button")) {
+            window.open(`https://civitai.com/images/${itemData.id}`, '_blank');
+        } else if (target.classList.contains("civit-add2styles-button")) {
+
         }
     }
 
@@ -223,6 +227,14 @@ export async function setupCivitaiExplorerModels() {
         e.stopPropagation();
     };
 
+    dScroll.changeHandler = function(e) {
+        const target = e.target;
+        if (target.classList.contains("baseModel-select")) {
+            modelIndex = parseInt(target.value);
+            this.setData(parentItem.modelVersions[modelIndex].images);
+        }
+    };
+
     function handleCivitModelsDetail(target, itemData, item_id) {
         const prompt_focused = window.UIUX.FOCUS_PROMPT;
         if (target.classList.contains("civit-link-button")) {
@@ -240,13 +252,23 @@ export async function setupCivitaiExplorerModels() {
         } else if (target.classList.contains("item-info-title")) {
             //searchInput.value = target.textContent;
             //updateInput(searchInput);
-        } else if (target.classList.contains("baseModel-select")) {
-            target.addEventListener('change', function() {
-                modelIndex = parseInt(target.value);
-                dScroll.setData(parentItem.modelVersions[modelIndex].images);
-            });
+        } else if (target.classList.contains("download-image-button")) {
+            downloadFile(target.dataset.url, target.dataset.filename);
+        } else if (target.classList.contains("model-sdownload")) {
+            downloadFile(target.dataset.url);
         }
     }
+
+    function downloadFile(url, filename) {
+        const link = document.createElement('a');
+        link.target = "_blank";
+        link.href = url;
+        if (filename) link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
 
     function handleSearchClear(e) {
         searchInput.value = "";
