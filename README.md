@@ -15,7 +15,7 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - **Event Delegation Pattern**: Applying an event delegation pattern to further streamline the code by consolidating event handling for "Extra Networks" cards and action buttons.
 - **Optimized Stylesheets**: Enhanced visual coherence by substituting all default Gradio stylesheets in the DOM with an optimized version.
 - **Inline Styles & Svelte Classes**: Improved efficiency by eliminating unnecessary inline styles and Svelte classes.
-- **Database-Powered**: SQLite implementation enables rapid indexing/searching across: Extra Networks, Image Browser and Styles Manager
+- **Database-Powered**: SQLite implementation enables rapid indexing/searching across: Extra Networks, Image Browser and Styles Manager.
 - **Virtualized Grid**: Dynamic virtualized grid with memory/DOM efficiency for: Checkpoints, Textual Inversions, LoRA, Hypernetworks, Image Browser, Styles Manager, Civitai Images & Models.
 
 ## Features Overview
@@ -49,8 +49,6 @@ Please note that while this extension focuses solely on frontend optimizations, 
 ## Todo
 - Separate and organize CSS into individual files (in progress).
 - Create documentation for developers on how to incorporate their components into various areas of the UI/UX.
-- Implement fullscreen gallery functionality.
-- Fork the Gradio project and contribute to enhancing their components.
 
 
 ## Advanced Theme Style Configurator (in progress)(upcoming feature)
