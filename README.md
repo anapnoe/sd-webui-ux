@@ -10,12 +10,13 @@ Please note that while this extension focuses solely on frontend optimizations, 
 ![](screenshot.png)
 
 ## Optimizations
-- **Redundant Checkpoints & Extra Networks**: Removing redundant Checkpoints and "Extra Networks" (Textual Inversion, Lora, and Hypernetworks) from img2img to reduce duplicated images and event listeners.
+- **Redundant Checkpoints & Extra Networks**: Removing redundant Checkpoints and "Extra Networks" (Textual Inversion, LoRA, and Hypernetworks) from img2img to reduce duplicated images and event listeners.
 - **Inline Event Listeners**: Eradicating inline event listeners from "Extra Networks" cards and action buttons.
 - **Event Delegation Pattern**: Applying an event delegation pattern to further streamline the code by consolidating event handling for "Extra Networks" cards and action buttons.
 - **Optimized Stylesheets**: Enhanced visual coherence by substituting all default Gradio stylesheets in the DOM with an optimized version.
 - **Inline Styles & Svelte Classes**: Improved efficiency by eliminating unnecessary inline styles and Svelte classes.
-- **Virtualized Grid**: Memory and DOM efficient dynamic virtualized scrolling grid for (Checkpoints, Textual Inversion, Lora Hypernetworks, Image Browser, Styles Manager, Civitai Images and Civitai Models).
+- **Database-Powered**: SQLite implementation enables rapid indexing/searching across: Extra Networks, Image Browser and Styles Manager
+- **Virtualized Grid**: Dynamic virtualized grid with memory/DOM efficiency for: Checkpoints, Textual Inversions, LoRA, Hypernetworks, Image Browser, Styles Manager, Civitai Images & Models.
 
 ## Features Overview
 - **Mobile Responsive Design**: Optimal display and usability across various devices.
