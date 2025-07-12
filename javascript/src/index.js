@@ -110,32 +110,32 @@ function onUiUxReady(content_div) {
         setupExtraNetworkCheckpoints();
     }, 500);
 
-    textual_inversion_nav.addEventListener('click', () => {
+    //textual_inversion_nav.addEventListener('click', () => {
         setupExtraNetworkTextualinversion();
-    }, {once: true});
-    lora_nav.addEventListener('click', () => {
+    //}, {once: true});
+    //lora_nav.addEventListener('click', () => {
         setupExtraNetworkLora();
-    }, {once: true});
+    //}, {once: true});
 
-    hypernetwork_nav.addEventListener('click', () => {
+    //hypernetwork_nav.addEventListener('click', () => {
         setupExtraNetworkHypernetworks();
-    }, {once: true});
+    //}, {once: true});
 
 
     if (window.opts.uiux_enable_sd_styles) {
         const sd_styles_nav = document.querySelector("#sd_styles_nav");
         sd_styles_nav.classList.remove("hidden");
-        sd_styles_nav.addEventListener('click', () => {
+        //sd_styles_nav.addEventListener('click', () => {
             setupSdStyles();
-        }, {once: true});
+        //}, {once: true});
     }
 
     if (window.opts.uiux_enable_sd_output_images) {
         const sd_output_images_nav = document.querySelector("#sd_output_images_nav");
         sd_output_images_nav.classList.remove("hidden");
-        sd_output_images_nav.addEventListener('click', () => {
+        //sd_output_images_nav.addEventListener('click', () => {
             setupSdOutputImages();
-        }, {once: true});
+        //}, {once: true});
     }
 
 

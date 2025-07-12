@@ -5,7 +5,7 @@ export const REPO_NAME = "anapnoe/stable-diffusion-webui-ux";
 export const REPO_NAME_UPSTREAM = "AUTOMATIC1111/stable-diffusion-webui";
 
 export const ANAPNOE_APP_ID = "#anapnoe_app";
-export const ANAPNOE_APP_VER = "0.1.0";
+export const ANAPNOE_APP_VER = "1.0.0";
 export const DEFAULT_PATH = window.basePath;
 export const DEFAULT_ASSETS_PATH = `${DEFAULT_PATH}assets/`;
 export const DEFAULT_CSS_PATH = `${DEFAULT_ASSETS_PATH}css/`;
@@ -16,8 +16,7 @@ export const DEFAULT_TEMPLATES_FORGE_GRADIO_4 = `${DEFAULT_TEMPLATES_PATH}forge-
 
 export const EXTENSION_TEMPLATE_MAP = {
     'template-deforum-params.html': 'deforum',
-    'template-deforum-results.html': 'deforum',
-    'template-stylez.html': 'Stylez'
+    'template-deforum-results.html': 'deforum'
 };
 
 export const CSS_INCLUDES = [
@@ -38,7 +37,6 @@ export const CSS_INCLUDES = [
     'uiux-physton.css',
     'uiux-virtual.css',
     'uiux-tree.css',
-    'spotlight.css',
 
 ];
 

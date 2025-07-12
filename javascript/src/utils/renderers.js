@@ -220,7 +220,7 @@ export function createVirtualItemExtraNetworks(item, imgRes, selected, endpoint)
 }
 
 const paramKeys = ['clipSkip', 'cfgScale', 'sampler', 'steps', 'seed', 'Size'];
-export function createVirtualItemCivitImages(item) {
+export function createVirtualItemCivitImages(item, imgRes) {
     const itemDiv = document.createElement('div');
     itemDiv.className = 'item card';
 
@@ -289,16 +289,17 @@ export function createVirtualItemCivitImages(item) {
             item_meta.civitaiResources.forEach((resource) => {
                 const resourceType = resource.type ? resource.type : 'Unknown Type';
                 const resourceWeight = resource.weight ? resource.weight : '';
+                const resourceName = resource.name ? resource.name : '';
                 const modelVersionId = resource.modelVersionId ? resource.modelVersionId : null;
-                const modelVersionName = resource.modelVersionName ? resource.modelVersionName : null;
-
+                const modelVersionName = resource.modelVersionName;
+                
                 if (modelVersionId) {
 
                     const resourcesDescription = document.createElement('p');
-                    resourcesDescription.textContent = `${resourceType}: ${resourceWeight} `;
+                    resourcesDescription.textContent = `${resourceType}: ${resourceWeight} ${resourceName}`;
 
                     const resourceslink = document.createElement('a');
-                    resourceslink.textContent = `${modelVersionName || 'Unnamed Model Id: ' + modelVersionId}`;
+                    resourceslink.textContent = `${modelVersionName || 'Model Id: ' + modelVersionId}`;
                     resourceslink.href = `https://civitai.com/api/v1/models/${modelVersionId}`;
                     resourceslink.target = "_blank";
 
@@ -342,8 +343,13 @@ export function createVirtualItemCivitImages(item) {
     itemDiv.appendChild(itemActionsRow);
     //itemDiv.appendChild(itemTitle);
 
-    const imageUrl = item.url;
+    let imageUrl = item.url;
     if (imageUrl) {
+        if(imgRes == 'thumbnail'){
+            const img_parts = imageUrl.split('width=');
+            const img_file = img_parts[1].split('/')[1];
+            imageUrl = img_parts[0]+'width=320/'+img_file;
+        }
         const imgDiv = document.createElement('div');
         imgDiv.style.backgroundImage = `url('${imageUrl}')`;
         imgDiv.className = 'item-img';
@@ -355,7 +361,7 @@ export function createVirtualItemCivitImages(item) {
     return itemDiv;
 }
 
-export function createVirtualItemCivitModels(item) {
+export function createVirtualItemCivitModels(item, imgRes) {
     const itemDiv = document.createElement('div');
     itemDiv.className = 'item card';
 
@@ -422,9 +428,15 @@ export function createVirtualItemCivitModels(item) {
     itemDiv.appendChild(itemType);
     itemDiv.appendChild(itemActionsRow);
 
-    const imageUrl = item.modelVersions[0]?.images[0]?.url;
+    let imageUrl = item.modelVersions[0]?.images[0]?.url;
     if (imageUrl) {
+        if(imgRes == 'thumbnail'){
+            const img_parts = imageUrl.split('width=');
+            const img_file = img_parts[1].split('/')[1];
+            imageUrl = img_parts[0]+'width=320/'+img_file;
+        }
         const imgDiv = document.createElement('div');
+        //imgDiv.style.backgroundImage = `url('${imageUrl}')`;
         imgDiv.style.backgroundImage = `url(${encodeURI(imageUrl)})`;
         imgDiv.className = 'item-img';
         itemDiv.appendChild(imgDiv);

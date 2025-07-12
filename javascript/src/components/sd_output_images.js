@@ -2,7 +2,6 @@ import {VirtualScroll} from './uiux/virtual.js';
 import {TreeView} from './uiux/tree_view.js';
 import {DynamicForm} from './dynamic_forms.js';
 import {DEFAULT_PATH, SD_VERSIONS_OPTIONS} from '../constants.js';
-import {Spotlight} from "../spotlight/js/spotlight3.js";
 import {updateInput, sendImageParamsTo} from "../utils/helpers.js";
 import {setupInputObservers, setupCheckpointChangeObserver} from '../utils/observers.js';
 import {requestGetData, requestPostData} from '../utils/api.js';
@@ -76,6 +75,8 @@ export async function setupSdOutputImage(netkey, table, base_path) {
     vScroll = new VirtualScroll(container, [], 18, itemKeys, apiUrl, initApiParams, method);
     apiParams = setupInputObservers(paramsMapping, initApiParams, vScroll, modifyParams);
 
+    //vScroll.setLayout('horizontal');
+
     vScroll.setNextCursor = function(nextCursor) {
         if (nextCursor && this.data.length > 0) {
             this.params.skip = this.params.cursor = nextCursor;
@@ -86,12 +87,8 @@ export async function setupSdOutputImage(netkey, table, base_path) {
 
     let imgRes = 'thumbnail';
 
-
     // Render: Item Node Renderer Overwrite
-    vScroll.createItemElement = function(item, actualIndex) {
-        return createVirtualItemElement(item, imgRes, this.selected, '/sd_image/thumb/');
-    };
-
+    vScroll.createItemElement = item => createVirtualItemElement(item, imgRes, vScroll.selected, '/sd_image/thumb/');
 
     vScroll.clickHandler = function(e) {
         if (vScroll.dragged || vScroll.scrollDelta) return;
@@ -176,13 +173,48 @@ export async function setupSdOutputImage(netkey, table, base_path) {
         applySdOutputImagesPrompts(target, itemData, itemData.id);
     };
 
-    refresh.addEventListener('click', (e) => {
-        gradio_refresh.click();
-        setTimeout(() => {
+
+    refresh.addEventListener('click', async (e) => {
+        try {
+            const response = await fetch('/sd_webui_ux/import_update_table', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({table_name: 'images'})
+            });
+            
+            if (!response.ok) throw new Error("Network error");
+    
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            vScroll.showLoadingIndicator();
+            
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n').filter(line => line.trim());
+                
+                for (const line of lines) {
+                    try {
+                        const data = JSON.parse(line);
+                        vScroll.updateLoadingIndicator(Math.round(data.progress));
+                        console.log(`Status: ${data.status}, Processed ${data.processed}/${data.total} (${data.progress}%)`);
+                    } catch (e) {
+                        console.error('Error parsing JSON:', e);
+                    }
+                }
+            }
+    
+            vScroll.hideLoadingIndicator();
             apiParams.skip = 0;
-            vScroll.updateParamsAndFetch(apiParams, 0);
-            treeView.initialize();
-        }, 1000);
+            await vScroll.updateParamsAndFetch(apiParams, 0);
+            await treeView.initialize();
+            
+        } catch (e) {
+            console.error("Refresh error:", e);
+            vScroll.hideLoadingIndicator();
+        }
     });
 
     // Highlight Selected Items
@@ -295,7 +327,7 @@ export async function setupSdOutputImage(netkey, table, base_path) {
             } else {
                 imgRes = 'local_preview';
                 vScroll.setFullSize(true);
-                vScroll.setLayout('vertical');
+                vScroll.setLayout('horizontal');
                 target.classList.add('active');
             }
         } else if (target.classList.contains("tile-button")) {
@@ -319,15 +351,16 @@ export async function setupSdOutputImage(netkey, table, base_path) {
         }
     }
 
-    function deleteItem(itemData, item_id) {
+    function deleteItem(itemData, itemId) {
         const url = '/sd_webui_ux/delete_item';
         const params = {
             table_name: table,
-            item_id: itemData.id,
+            item_id: itemId,
         };
+        
         requestPostData(url, params, function(result) {
             //console.log(result);
-            vScroll.removeDataById(itemData.id);
+            vScroll.removeDataById(itemId);
             treeView.update();
         });
     }

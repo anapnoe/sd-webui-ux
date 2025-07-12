@@ -63,7 +63,6 @@ class DatabaseManager:
     def connect(self):
         return sqlite3.connect(self.db_name, check_same_thread=False)
 
-
     def set_source_file(self, source_file):
         self.source_file = source_file
 
@@ -352,29 +351,37 @@ class DatabaseManager:
 
 
     def update_item_paths(self, table_name, item):
-        validate_name(table_name, "table")  # Validate table
+        validate_name(table_name, "table")
         conn = None
         try:
             conn = self.connect()
             cursor = conn.cursor()
 
             cursor.execute('BEGIN')
-            cursor.execute(f'''
-                UPDATE {table_name}
-                SET filename = ?, local_preview = ?, preview = ?
-                WHERE id = ?
-            ''', (item.get('filename'), item.get('local_preview'), item.get('preview'), item.get('id')))
+            update_fields = ['filename = ?', 'local_preview = ?']
+            params = [item.get('filename'), item.get('local_preview')]
+            
+            if 'preview' in item:
+                update_fields.append('preview = ?')
+                params.append(item['preview'])
+            
+            cursor.execute(
+                f'UPDATE {table_name} SET {", ".join(update_fields)} WHERE id = ?',
+                params + [item.get('id')]
+            )
 
             conn.commit()
             logger.info(f"Paths for item {item['name']} updated successfully.")
         except sqlite3.Error as e:
             logger.error(f"Database error while updating paths: {e}")
-            conn.rollback()
+            if conn:
+                conn.rollback()
         except Exception as e:
             logger.error(f"Error updating paths: {e}")
-            conn.rollback()
-        finally:
             if conn:
+                conn.rollback()
+        finally:
+            if conn: 
                 conn.close()
 
 
@@ -558,6 +565,8 @@ class DatabaseManager:
 
     def delete_files(self, file_paths):
         for path_str in file_paths:
+            if path_str is None:
+                continue
             path = Path(path_str) 
             if path.exists():
                 path.unlink()  # Delete the file
@@ -599,6 +608,7 @@ class DatabaseManager:
         finally:
             if conn:
                 conn.close()
+
 
     def delete_invalid_items(self, table_name):
         validate_name(table_name, "table")  # Validate table
@@ -877,7 +887,6 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
 
     # Store the db_tables_pages in the app state
     app.state.db_tables_pages = db_tables_pages
-    #print("api_uiux_db initilized")
 
     # Middleware to log requests debug
     '''
@@ -1140,8 +1149,6 @@ def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
         return response
 
 
-        
-    
     '''
     @app.get("/sd_webui_ux/images/{filename:path}")
     async def get_image(filename: str):

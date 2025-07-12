@@ -52,8 +52,6 @@ def extra_networks_import_update_db(db_tables_pages, refresh=False):
 
     for type_name, page_instance in db_tables_pages.items():
         table_name = type_name.lower()
-        page_instance.refresh()
-
         items = list(page_instance.list_items())
         if items:
             columns = {k: v[1] for k, v in items[0].items()}  # column type
@@ -64,8 +62,8 @@ def extra_networks_import_update_db(db_tables_pages, refresh=False):
                 logger.error(f"Error creating table or inserting items for {table_name}: {e}")
             
             if refresh:
+                page_instance.refresh()
                 db_manager.delete_invalid_items(table_name)
-                
                 for item in items:
                     try:
                         db_manager.import_item(table_name, item)  # Import item

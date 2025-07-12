@@ -43,8 +43,7 @@ export const switchMobile = () => {
 
     if (optslayout === 'Auto') {
         window.addEventListener('resize', (event) => {
-            const isMobile = detectMobile();
-            applyDefaultLayout(isMobile);
+            applyDefaultLayout(detectMobile());
         });
         applyDefaultLayout(detectMobile());
     } else if (optslayout === 'Mobile') {

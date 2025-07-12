@@ -2,7 +2,6 @@ import {VirtualScroll} from './uiux/virtual.js';
 import {TreeView} from './uiux/tree_view.js';
 import {DynamicForm} from './dynamic_forms.js';
 import {DEFAULT_PATH, SD_VERSIONS_OPTIONS} from '../constants.js';
-import {Spotlight} from "../spotlight/js/spotlight3.js";
 import {updateInput, sendImageParamsTo} from "../utils/helpers.js";
 import {setupInputObservers, setupCheckpointChangeObserver} from '../utils/observers.js';
 import {requestGetData, requestPostData} from '../utils/api.js';
@@ -12,7 +11,6 @@ import {createVirtualItemElement} from '../utils/renderers.js';
 export async function setupSdStyles() {
     setupSdStyle('styles', "styles", "styles_data/");
 }
-
 
 function detailView(container, elem) {
     const dcontainer = container.parentElement.querySelector('.ae-virtual-detail-content');
@@ -85,11 +83,8 @@ export async function setupSdStyle(netkey, table, base_path) {
 
     let imgRes = 'thumbnail';
 
-
     // Render: Item Node Renderer Overwrite
-    vScroll.createItemElement = function(item, actualIndex) {
-        return createVirtualItemElement(item, imgRes, this.selected, '/sd_styles/thumb/');
-    };
+    vScroll.createItemElement = item => createVirtualItemElement(item, imgRes, vScroll.selected, '/sd_styles/thumb/');
 
     vScroll.clickHandler = function(e) {
         if (vScroll.dragged || vScroll.scrollDelta) return;

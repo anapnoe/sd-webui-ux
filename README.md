@@ -15,11 +15,16 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - **Event Delegation Pattern**: Applying an event delegation pattern to further streamline the code by consolidating event handling for "Extra Networks" cards and action buttons.
 - **Optimized Stylesheets**: Enhanced visual coherence by substituting all default Gradio stylesheets in the DOM with an optimized version.
 - **Inline Styles & Svelte Classes**: Improved efficiency by eliminating unnecessary inline styles and Svelte classes.
+- **Virtualized Grid**: Memory and DOM efficient dynamic virtualized scrolling grid for (Checkpoints, Textual Inversion, Lora Hypernetworks, Image Browser, Styles Manager, Civitai Images and Civitai Models).
 
 ## Features Overview
 - **Mobile Responsive Design**: Optimal display and usability across various devices.
 - **Versatile Micro-Template Engine**: Leverage for enhanced functionality through other extensions.
 - **Customizable Theme Styles**: User-friendly interface for theme customization.
+- **Styles Manager**: Versatile database-driven styles management.
+- **Image Browser**: High-performance database-powered image navigation.
+- **Civitai Images**: Ultra-fast virtualized browser for Civitai images.
+- **Civitai Models**: Ultra-fast virtualized browser for Civitai models.
 - **Built-in Console Log**: Debugging capabilities for developers.
 - **Production and Development Modes**: Dynamically compile the web UI UX using Vite directly from the interface.
 - **Ignore Overrides Option**: Flexibility to maintain original settings when necessary.

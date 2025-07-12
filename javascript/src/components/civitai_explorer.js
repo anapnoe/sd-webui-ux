@@ -1,29 +1,9 @@
 import {VirtualScroll} from './uiux/virtual.js';
 import {DEFAULT_PATH} from '../constants.js';
-import {Spotlight} from "../spotlight/js/spotlight3.js";
 import {updateInput, sendImageParamsTo} from "../utils/helpers.js";
 import {setupInputObservers} from '../utils/observers.js';
 import {createVirtualItemCivitImages, createVirtualItemCivitModels, createVirtualItemCivitModelsDetail} from '../utils/renderers.js';
 
-export function setupCivitaiExplorerTestData() {
-
-    const container = document.querySelector('#civitai_cardholder');
-    const searchInput = document.querySelector('#civit_search textarea');
-
-    // Sample data
-    //const data = Array.from({length: 1000}, (_, i) => ({
-    //    username: `item ${i + 1}`,
-    //    url: `https://via.placeholder.com/150?text=Item+${i + 1}`,
-    //}));
-
-    //const data = Array.from({length: 1000}, (_, i) => ({
-    //    name: `item ${i + 1}`,
-    //    preview: `https://via.placeholder.com/150?text=Item+${i + 1}`,
-    //}));
-
-    const virtualScroll = new VirtualScroll(container, data, 12);
-
-}
 
 export async function setupCivitaiExplorer() {
     setupCivitaiExplorerImages();
@@ -59,12 +39,12 @@ export async function setupCivitaiExplorerImages() {
         dataPath: 'items'
     };
 
+    let imgRes = 'thumbnail';
+
     const vScroll = new VirtualScroll(container, [], 18, itemKeys, apiUrl, initApiParams);
     const apiParams = setupInputObservers(paramsMapping, initApiParams, vScroll);
 
-    vScroll.createItemElement = function(item, actualIndex) {
-        return createVirtualItemCivitImages(item);
-    };
+    vScroll.createItemElement = item => createVirtualItemCivitImages(item, imgRes);
 
     function handleCivitImages(target, itemData, item_id) {
         const prompt_focused = window.UIUX.FOCUS_PROMPT;
@@ -73,10 +53,12 @@ export async function setupCivitaiExplorerImages() {
         } else if (target.classList.contains("fullsize-button")) {
             vScroll.scrollToId(itemData.id);
             if (vScroll.isFullSize) {
+                imgRes = 'thumbnail';
                 vScroll.setFullSize(false);
                 vScroll.setLayout('vertical');
                 target.classList.remove('active');
             } else {
+                imgRes = 'original';
                 vScroll.setFullSize(true);
                 vScroll.setLayout('vertical');
                 target.classList.add('active');
@@ -154,6 +136,8 @@ export async function setupCivitaiExplorerModels() {
     let parentItem;
     let modelIndex = 0;
 
+    let imgRes = 'thumbnail';
+
     const vScroll = new VirtualScroll(container, [], 18, itemKeys, apiUrl, initApiParams);
     const apiParams = setupInputObservers(paramsMapping, initApiParams, vScroll);
 
@@ -162,13 +146,13 @@ export async function setupCivitaiExplorerModels() {
         if (target.classList.contains("civit-link-button")) {
             window.open(`https://civitai.com/models/${itemData.id}`, '_blank');
         } else if (target.classList.contains("fullsize-button")) {
-
             vScroll.showDetail();
             parentItem = itemData;
             modelIndex = 0;
             dScroll.setData(itemData.modelVersions[modelIndex].images);
             dScroll.setFullSize(true);
             dScroll.setLayout('vertical');
+            dScroll.scrollToStart();
 
         } else if (target.classList.contains("info-button")) {
             vScroll.setInfo(!vScroll.isInfo);
@@ -185,9 +169,7 @@ export async function setupCivitaiExplorerModels() {
     }
 
     //Render: Item Node Renderer Overwite
-    vScroll.createItemElement = function(item, actualIndex) {
-        return createVirtualItemCivitModels(item);
-    };
+    vScroll.createItemElement = item => createVirtualItemCivitModels(item, imgRes);
 
     vScroll.clickHandler = function(e) {
         if (vScroll.dragged || vScroll.scrollDelta) return;
@@ -208,9 +190,7 @@ export async function setupCivitaiExplorerModels() {
     const dcontainer = container.parentElement.querySelector('.ae-virtual-detail-content');
     const dScroll = new VirtualScroll(dcontainer, [], 8);
 
-    dScroll.createItemElement = function(item, actualIndex) {
-        return createVirtualItemCivitModelsDetail(item, parentItem, modelIndex);
-    };
+    dScroll.createItemElement = item => createVirtualItemCivitModelsDetail(item, parentItem, modelIndex);
 
     dScroll.clickHandler = function(e) {
         if (dScroll.dragged || dScroll.scrollDelta) return;

@@ -2,7 +2,6 @@ import {VirtualScroll} from './uiux/virtual.js';
 import {TreeView} from './uiux/tree_view.js';
 import {DynamicForm} from './dynamic_forms.js';
 import {DEFAULT_PATH, SD_VERSIONS_OPTIONS} from '../constants.js';
-import {Spotlight} from "../spotlight/js/spotlight3.js";
 import {updateInput, sendImageParamsTo} from "../utils/helpers.js";
 import {setupInputObservers, setupCheckpointChangeObserver} from '../utils/observers.js';
 import {requestGetData, requestPostData} from '../utils/api.js';
@@ -131,9 +130,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
     let imgRes = 'thumbnail';
     // Render: Item Node Renderer Overwrite
-    vScroll.createItemElement = function(item, actualIndex) {
-        return createVirtualItemExtraNetworks(item, imgRes, this.selected, '/sd_extra_networks/thumb?filename=');
-    };
+    vScroll.createItemElement = item => createVirtualItemExtraNetworks(item, imgRes, vScroll.selected, '/sd_extra_networks/thumb?filename=');
 
     // ExtraNetwork
     function applyExtraNetworkPrompts(target, itemData, id) {
