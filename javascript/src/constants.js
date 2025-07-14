@@ -29,7 +29,7 @@ export const CSS_INCLUDES = [
     'uiux-range.css',
     'uiux-gradio.css' 'uiux-stylez.css'
     */
-    /*'style-v2.css',*/
+    //'style-v2.css',
     'uiux-icons.css',
     'uiux-theme-editor.css',
     'uiux-deforum.css',
