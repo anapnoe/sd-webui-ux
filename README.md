@@ -47,8 +47,10 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - **Wait for the installation to complete and click on Apply and restart UI.**
   
 ## Todo
-- Separate and organize CSS into individual files (in progress).
-- Create documentation for developers on how to incorporate their components into various areas of the UI/UX.
+- [ ] Separate and organize CSS into individual files (in progress).
+- [ ] Create documentation for component integration into UI/UX.
+- [ ] Auto-update Image Browser upon inference completion.
+- [ ] Improve Civitai Models download manager.
 
 
 ## Advanced Theme Style Configurator (in progress)(upcoming)
