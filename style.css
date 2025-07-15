@@ -3772,29 +3772,7 @@ span.description {
     line-height: calc(var(--ae-uiux_exnet_header_size) * 0.7 * 1px + 2px);
 }
 
-*.extra-network-cards .card img {
-    filter: grayscale(var(--ae-uiux_exnet_image_tint));
-    opacity: 0.9;
-}
 
-*.extra-network-cards .card:hover img {
-    filter: grayscale(0);
-    /*opacity: 1.0;*/
-}
-
-*.extra-network-cards .card:hover:before {
-    opacity: 0.0;
-}
-
-*.extra-network-cards .card:before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: var(--ae-secondary-color);
-    opacity: var(--ae-uiux_exnet_image_tint);
-    z-index: 1;
-    mix-blend-mode: multiply;
-}
 
 div#txt2img_checkpoints_main_footer {
     line-break: anywhere;
