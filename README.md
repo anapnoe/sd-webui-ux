@@ -1,5 +1,5 @@
 # SD Web UI UX 
-A bespoke, highly adaptable, blazing fast user interface for Stable Diffusion, utilizing the powerful [Gradio](https://www.gradio.app/) library. This cutting-edge browser interface offers an unparalleled level of customization and optimization for users, setting it apart from other web interfaces. 
+A bespoke, highly adaptable, blazing fast user interface for Stable Diffusion, engineered for unmatched user experience and performance.
 
 This extension is compatible with both backends: [Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) and [Stable Diffusion web UI Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge).
 
@@ -10,7 +10,7 @@ Please note that while this extension focuses solely on frontend optimizations, 
 ![](screenshot.png)
 
 ## Optimizations
-- **Redundant Checkpoints & Extra Networks**: Removing redundant Checkpoints and "Extra Networks" (Textual Inversion, LoRA, and Hypernetworks) from img2img to reduce duplicated images and event listeners.
+- **Redundant Checkpoints & Extra Networks**: Removed redundant Checkpoints and Extra Networks (Textual Inversion, LoRA, Hypernetworks) from txt2img/img2img tabs. → Implemented single-instance infinite scroll to progressively load optimized assets + metadata from SQLite DB.
 - **Inline Event Listeners**: Eradicating inline event listeners from "Extra Networks" cards and action buttons.
 - **Event Delegation Pattern**: Applying an event delegation pattern to further streamline the code by consolidating event handling for "Extra Networks" cards and action buttons.
 - **Optimized Stylesheets**: Enhanced visual coherence by substituting all default Gradio stylesheets in the DOM with an optimized version.
