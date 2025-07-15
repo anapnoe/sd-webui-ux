@@ -4,7 +4,7 @@ import {loadTemplates} from './components/templates.js';
 import {setupAnimations, countEventListeners} from './utils/helpers.js';
 import {initUiUxComponents} from './components/components.js';
 import {removeRedundantExtraNetworks, removeStyleAssets, optimizeExtraNetworksCards, optimizeExtraNetworksSearchSort} from './components/optimizations.js';
-import {showContributors} from './utils/api.js';
+import {showContributors, showMembers} from './utils/api.js';
 import {switchMobile} from './utils/mobile.js';
 import {uiuxOptionSettings} from './components/settings.js';
 import {localStorageWrapper, onLocalStorageChange} from './utils/storage.js';
@@ -38,6 +38,7 @@ function onUiUxReady(content_div) {
     setupGenerateObservers();
     uiuxOptionSettings();
     showContributors();
+    showMembers();
     switchMobile();
     //setupCheckpointChangeObserver();
 

@@ -340,6 +340,13 @@ button.active .icon-sort {
     background-color: var(--ae-primary-color);
 }
 
+.icon-shut-down {
+    -webkit-mask-image: url(../svg/shut-down-line.svg);
+}
+.icon-refresh {
+    -webkit-mask-image: url(../svg/refresh-line.svg);
+}
+
 .icon-tile{
     display: none;
 }

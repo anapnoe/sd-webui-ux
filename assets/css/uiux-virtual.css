@@ -510,3 +510,27 @@ span.extra-type {
     display: inline-block !important;
     line-height: var(--ae-input-height) !important;
 }
+
+/*
+.ae-virtual:not(.full) .item-img {
+    filter: grayscale(var(--ae-uiux_exnet_image_tint));
+    mix-blend-mode: multiply;
+}
+
+.ae-virtual:not(.full) .card:hover .item-img {
+    filter: grayscale(0);
+    opacity: 1.0;
+}
+
+.ae-virtual:not(.full) .card:hover:before {
+    opacity: 0.0;
+}
+
+.ae-virtual:not(.full) .card:before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--ae-secondary-color);
+    opacity: var(--ae-uiux_exnet_image_tint);
+}
+*/
