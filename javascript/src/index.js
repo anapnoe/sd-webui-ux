@@ -3,7 +3,7 @@ import {setupLogger} from './components/logger.js';
 import {loadTemplates} from './components/templates.js';
 import {setupAnimations, countEventListeners} from './utils/helpers.js';
 import {initUiUxComponents} from './components/components.js';
-import {removeRedundantExtraNetworks, removeStyleAssets, optimizeExtraNetworksCards, optimizeExtraNetworksSearchSort} from './components/optimizations.js';
+import {removeRedundantExtraNetworks, removeStyleAssets} from './components/optimizations.js';
 import {showContributors, showMembers} from './utils/api.js';
 import {switchMobile} from './utils/mobile.js';
 import {uiuxOptionSettings} from './components/settings.js';
@@ -25,15 +25,7 @@ function onUiUxReady(content_div) {
         logger_screen.remove();
     }
 
-    /*
-    content_div.querySelectorAll(".extra-network-cards, .extra-network-tree").forEach((el) => {
-        optimizeExtraNetworksCards(el);
-    });
-    */
-
     console.log("Finishing optimizations for Extra Networks");
-
-    //optimizeExtraNetworksSearchSort();
 
     setupGenerateObservers();
     uiuxOptionSettings();
@@ -44,7 +36,6 @@ function onUiUxReady(content_div) {
 
     document.querySelectorAll("#txt2img_styles_edit_button, #img2img_styles_edit_button").forEach((elm) => {
         elm.addEventListener("click", function(e) {
-
             window.popup_trigger.click();
             //appendPopupContent();
         });
@@ -99,7 +90,6 @@ function onUiUxReady(content_div) {
         }, {once: true});
     }
 
-    //const checkpoints_nav = document.querySelector("#checkpoints_nav");
     const textual_inversion_nav = document.querySelector("#textual_inversion_nav");
     const lora_nav = document.querySelector("#lora_nav");
     const hypernetwork_nav = document.querySelector("#hypernetwork_nav");
@@ -134,7 +124,7 @@ function onUiUxReady(content_div) {
         }, {once: true});
     }
 
-    //const totalListeners = countEventListeners(document.body);
+    const totalListeners = countEventListeners(document.body);
     //console.warn(`Total event listeners: ${totalListeners}`);
 
 }
@@ -225,7 +215,4 @@ function observeGradioInit() {
     }
 }
 
-
 observeGradioInit();
-
-

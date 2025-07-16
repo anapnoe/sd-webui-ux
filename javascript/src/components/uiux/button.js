@@ -1,10 +1,8 @@
 import {getGradioApp, getAnapnoeApp} from '../../constants.js';
 import {appendPortalContent} from './portal.js';
-import {optimizeExtraNetworksCards} from '../optimizations.js';
 
 export async function initButtonComponents(contentDiv) {
     //const anapnoeApp = getAnapnoeApp();
-
     function callToAction(el, tids, pid) {
         const acc_bar = el.closest(".accordion-bar");
         if (acc_bar) {
@@ -57,65 +55,6 @@ export async function initButtonComponents(contentDiv) {
                 }
             });
         }
-
-        //maybe move this alsewhere
-        /*
-        const adc = el.getAttribute("data-click");
-        if (adc) {
-            setTimeout(() => {
-                document.querySelectorAll(adc).forEach((el) => {
-                    el.click();
-                });
-            }, 500);
-        }*/
-        /*
-        if (adc) {
-            el.addEventListener('click', (e) => {
-                if (el.classList.contains("refresh-extra-networks")) {
-                    const id = el.closest(".layout")?.id;
-                    const ckey = id.split("layout_")[1];
-                    const cpane = document.querySelector(`#${ckey}_pane > div`);
-                    const elementsToAppend = [
-                        document.querySelector(`#${ckey}_dirs`),
-                        document.querySelector(`#${ckey}_tree`),
-                        document.querySelector(`#${ckey}_cards`)
-                    ];
-
-                    elementsToAppend.forEach(element => {
-                        if (element) {
-
-                            //element.querySelectorAll("[data-apply]").forEach((ca) => {
-                            //    const data_apply = ca.getAttribute("data-apply");
-                            //    ca.setAttribute("onClick", data_apply);
-                            //    ca.removeAttribute("data-apply");
-                            });
-
-                            cpane.append(element);
-                        }
-                    });
-
-                    const btn_refresh_internal = document.querySelector(`#${ckey}_extra_refresh_internal`);
-                    btn_refresh_internal.dispatchEvent(new Event("click"));
-
-                    setTimeout(() => {
-                        const asd = document.querySelector(`#${ckey}_aside_split`);
-                        asd.querySelectorAll(`.portal`).forEach((elm, index, array) => {
-                            appendPortalContent(elm, asd, 0, index, array.length);
-                        });
-
-                        // setupExtraNetworksForTab('txt2img');
-                        optimizeExtraNetworksCards(asd);
-                    }, 1000);
-                }
-
-                setTimeout(() => {
-                    document.querySelectorAll(adc).forEach((el) => {
-                        el.click();
-                    });
-                }, 500);
-
-            });
-        }*/
 
     }));
 
