@@ -47,7 +47,7 @@ SD webUI UX implements **event delegation** + **virtualized grid** for O(1) perf
 - **O(n) Scaling**: Linear performance degradation
 
 🐆 **Stable Diffusion web UI UX optimized Architecture**:
-- **Virtualized Grid**: Renders only visible assets (~15 items in viewport)  
+- **Virtualized Grid**: Renders only visible assets (~15 items in default viewport)  
 - **Event Delegation**: Single listener handles all interactions  
 - **DOM Recycling**: Dynamic pool manages thumbnail elements  
 
