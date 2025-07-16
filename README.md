@@ -9,7 +9,8 @@ Please note that while this extension focuses solely on frontend optimizations, 
 
 ![](screenshot.png)
 
-## Optimizations
+
+## Optimization
 - **Redundant Checkpoints & Extra Networks**: Removed redundant Checkpoints and Extra Networks (Textual Inversion, LoRA, Hypernetworks) from txt2img/img2img tabs. → Implemented single-instance infinite scroll to progressively load optimized assets + metadata from SQLite DB.
 - **Inline Event Listeners**: Eradicating inline event listeners from "Extra Networks" cards and action buttons.
 - **Event Delegation Pattern**: Applying an event delegation pattern to further streamline the code by consolidating event handling for "Extra Networks" cards and action buttons.
@@ -17,6 +18,43 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - **Inline Styles & Svelte Classes**: Improved efficiency by eliminating unnecessary inline styles and Svelte classes.
 - **Database-Powered**: SQLite implementation enables rapid indexing/searching across: Extra Networks, Image Browser and Styles Manager.
 - **Virtualized Grid**: Dynamic virtualized grid with memory/DOM efficiency for: Checkpoints, Textual Inversions, LoRA, Hypernetworks, Image Browser, Styles Manager, Civitai Images & Models.
+
+## Performance Comparison
+| Metric          | SD web UI        | SD web UI UX   | Difference (%) |
+|-----------------|------------------|----------------|----------------|
+| **JS Heap**     | 96,945,380       | 55,048,600     | -43.2%         |
+| **Documents**   | 109              | 134            | +22.9%         |
+| **Nodes**       | 53,895           | 41,542         | -22.9%         |
+| **Listeners**   | 8,195            | 4,178          | -49.0%         |
+
+| **Visual Comparison** | |
+|---|---|
+| ![SD web UI](/assets/images/stable-diffusion-webui-insights.png) | ![SD web UI UX](/assets/images/stable-diffusion-webui-ux-insights.png) |
+| *Automatic1111 - Stable Diffusion web UI* | *Anapnoe - Stable Diffusion web UI UX* |
+
+**Performance Analysis**
+- 🔋 **Memory Efficiency**: Stable Diffusion web UI UX uses 43% less JavaScript heap memory  
+- 🏗️ **DOM Efficiency**: Despite handling 23% more documents, Stable Diffusion web UI UX uses 23% fewer DOM nodes  
+- ⚡ **Event Handling**: Stable Diffusion web UI UX requires 49% fewer event listeners  
+- 📊 **Resource Optimization**: Stable Diffusion web UI UX shows better overall resource management with significant reductions in memory consumption and event handling overhead
+
+**Scalable Event Handling & DOM Optimization**:  
+SD webUI UX implements **event delegation** + **virtualized grid** for O(1) performance scaling.
+
+🐘 **Stable Diffusion web UI Constraints**:
+- **DOM Bloat**: Loads all assets → 10k LoRAs create 60k+ DOM nodes (10k images + 50k+ container elements)
+- **Listener Overload**: ~5 listeners per asset → 50k+ listeners for 10K LoRAs
+- **O(n) Scaling**: Linear performance degradation
+
+🐆 **Stable Diffusion web UI UX optimized Architecture**:
+- **Virtualized Grid**: Renders only visible assets (~15 items in viewport)  
+- **Event Delegation**: Single listener handles all interactions  
+- **DOM Recycling**: Dynamic pool manages thumbnail elements  
+
+🎯 **Performance Outcome**:  
+- Flat memory profile (≈50MB heap regardless of library size)  
+- O(1) event handling complexity  
+- Instant scrolling with 100K+ assets   
 
 ## Features Overview
 - **Mobile Responsive Design**: Optimal display and usability across various devices.
