@@ -1771,6 +1771,10 @@ div#layout-3 {
     border-radius: 50%;
     color: var(--ae-label-color);
 }
+.sponsors-coffee::before{
+content: 'x';
+}
+
 #contributors_tabitem_parent .lrp-32,
 #sponsors_tabitem_parent .lrp-32
 {
