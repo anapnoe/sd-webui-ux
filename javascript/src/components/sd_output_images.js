@@ -327,7 +327,8 @@ export async function setupSdOutputImage(netkey, table, base_path) {
             } else {
                 imgRes = 'local_preview';
                 vScroll.setFullSize(true);
-                vScroll.setLayout('horizontal');
+                vScroll.setLayout('vertical');
+                //vScroll.setLayout('horizontal');
                 target.classList.add('active');
             }
         } else if (target.classList.contains("tile-button")) {
