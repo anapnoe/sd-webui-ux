@@ -51,6 +51,7 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - [ ] Create documentation for component integration into UI/UX.
 - [ ] Auto-update Image Browser upon inference completion.
 - [ ] Improve Civitai Models download manager.
+- [ ] Develop framework-specific npm packages for the UI/UX Dynamic Virtualized Grid component, supporting React, Vue, Svelte, Solid, and Qwik.
 
 
 ## Advanced Theme Style Configurator (in progress)(upcoming)
