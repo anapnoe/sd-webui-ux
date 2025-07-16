@@ -5,7 +5,7 @@ This extension is compatible with both backends: [Stable Diffusion web UI](https
 
 Please note that while this extension focuses solely on frontend optimizations, [Stable Diffusion web UI UX](https://github.com/anapnoe/stable-diffusion-webui-ux), along with its variant [Stable Diffusion web UI UX Forge](https://github.com/anapnoe/stable-diffusion-webui-ux-forge), incorporates backend optimizations for an even better and faster user experience. Together, these changes ensure a more effective and enjoyable interaction with the application.
 
-[🌟 Your Support Makes a Difference! 🌟](https://buymeacoffee.com/dayanbayah)
+[💖 Your Support Makes a Difference! 💖](https://buymeacoffee.com/dayanbayah)
 
 ![](screenshot.png)
 
@@ -49,7 +49,7 @@ Please note that while this extension focuses solely on frontend optimizations, 
 ## Todo
 - [ ] Separate and organize CSS into individual files (in progress).
 - [ ] Create documentation for component integration into UI/UX.
-- [ ] Auto-update Image Browser upon inference completion.
+- [ ] Automatically update the Image Browser's SQLite database row upon inference completion.
 - [ ] Improve Civitai Models download manager.
 - [ ] Develop framework-specific npm packages for the UI/UX Dynamic Virtualized Grid component, supporting React, Vue, Svelte, Solid, and Qwik.
 
