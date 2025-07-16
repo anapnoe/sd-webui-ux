@@ -1,5 +1,6 @@
 __pycache__
 package-lock.json
+sd_webui_ux.db
 node_modules
 temp
 **/thumbnails/
