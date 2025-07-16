@@ -1,3 +1,4 @@
+
 import os
 import sys
 from pathlib import Path
@@ -12,6 +13,7 @@ import gradio as gr
 import modules.scripts as scripts
 from modules import script_callbacks, shared
 
+import asyncio
 import requests
 import json
 import httpx
@@ -24,16 +26,25 @@ webui_dir = Path(basedir).parents[1]
 scripts_folder = os.path.join(basedir, "scripts")
 data_folder = os.path.join(basedir, "data")
 
-CIVIT_API_URL = "https://civitai.com/api/v1"
+CIVIT_API_URL = "https://civitai.com/api/v1" 
+MAX_RETRIES = 3
+INITIAL_DELAY = 0.5
 
 async def fetch_civitai_data(endpoint: str, params: dict):
-    async with httpx.AsyncClient(timeout=10) as client:
+    delay = INITIAL_DELAY
+    for attempt in range(MAX_RETRIES + 1):
         try:
-            r = await client.get(f"{CIVIT_API_URL}/{endpoint}", params=params)
-            r.raise_for_status()
-            return r.json(), len(r.content)
+            async with httpx.AsyncClient(timeout=30) as client:
+                r = await client.get(f"{CIVIT_API_URL}/{endpoint}", params=params)
+                r.raise_for_status()
+                return r.json(), len(r.content)
+        
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
-            return {"error": str(e)}, None
+            if attempt == MAX_RETRIES:
+                return {"error": str(e)}, None
+            
+            await asyncio.sleep(delay)
+            delay *= 2  # Exponential backoff
 
 async def handle_request(request: Request, endpoint: str):
     try:
@@ -44,10 +55,52 @@ async def handle_request(request: Request, endpoint: str):
         headers = {"Content-Length": str(content_length)} if content_length else {}
         
         return JSONResponse(result, headers=headers)
+    
     except json.JSONDecodeError:
         return JSONResponse({"error": "Invalid JSON"}, status_code=400)
     except Exception as e:
         return JSONResponse({"error": f"Internal error: {str(e)}"}, status_code=500)
+
+'''
+def fetch_civitai_data(endpoint: str, query_params: dict = None):
+    try:
+        url = f"{CIVIT_API_URL}/{endpoint}"
+        response = requests.get(url, params=query_params)
+        response.raise_for_status()
+        data = response.json()
+        return data, len(response.content)
+    except requests.exceptions.RequestException as e:
+        return {"error": str(e)}, None
+
+async def handle_request(request: Request, endpoint: str):
+    try:
+        request_data = await request.json()
+        query_params = {
+            "limit": request_data.get("limit"),
+            "page": request_data.get("page"),
+            "cursor": request_data.get("cursor"),
+            "query": request_data.get("query"),
+            "tag": request_data.get("tag"),
+            "username": request_data.get("username"),
+            "types": request_data.get("types"),
+            "sort": request_data.get("sort"),
+            "period": request_data.get("period"),
+            "nsfw": request_data.get("nsfw"),
+        }
+        query_params = {k: v for k, v in request_data.items() if v is not None}
+        #print(f"Constructed query params: {query_params}")
+
+        result, content_length = fetch_civitai_data(endpoint, query_params)
+        if content_length:
+            headers = {"Content-Length": str(content_length)}
+        else:
+            headers = {}
+        return JSONResponse(content=result, headers=headers)
+    except json.JSONDecodeError as e:
+        return JSONResponse(content={"error": "Invalid JSON"}, status_code=400)
+    except Exception as e:
+        return JSONResponse(content={"error": "Internal Server Error"}, status_code=500)
+'''
 
 def api_uiux_civitai(_: gr.Blocks, app: FastAPI):
     '''
