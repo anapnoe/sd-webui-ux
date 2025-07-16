@@ -91,20 +91,21 @@ SD webUI UX implements **event delegation** + **virtualized grid** for O(1) perf
 - [ ] Improve Civitai Models download manager.
 - [ ] Develop framework-specific npm packages for the UI/UX Dynamic Virtualized Grid component, supporting React, Vue, Svelte, Solid, and Qwik.
 
+## Workspaces UI-UX (in progress)(early access)
+The workspaces extension empowers you to create customized views and organize them according to your unique preferences. With an intuitive drag-and-drop interface, you can design workflows that are perfectly tailored to your specific requirements, giving you ultimate control over your work environment.
+
+[🌟 Get early access to Workspaces! 🌟](https://buymeacoffee.com/dayanbayah)
+
+![anapnoe-ui-ux-workspaces](/assets/images/anapnoe-ui-ux-workspaces.png)
 
 ## Advanced Theme Style Configurator (in progress)(upcoming)
 A sophisticated theme editor allowing you to personalize any aspect of the UI-UX. Tailor the visual experience of the user interface with the Advanced Theme Style configurator.
 
 [🌟 Get early access to Advanced Theme Style Configurator! 🌟](https://buymeacoffee.com/dayanbayah)
 
-![anapnoe-ui-ux-theme-editor-advanced](https://github.com/anapnoe/sd-webui-ux/blob/main/assets/images/anapnoe-ui-ux-theme-editor-advanced.png)
+![anapnoe-ui-ux-theme-editor-advanced](/assets/images/anapnoe-ui-ux-theme-editor-advanced.png)
 
 
-## Workspaces UI-UX (in progress)(early access)
-The workspaces extension empowers you to create customized views and organize them according to your unique preferences. With an intuitive drag-and-drop interface, you can design workflows that are perfectly tailored to your specific requirements, giving you ultimate control over your work environment.
 
-[🌟 Get early access to Workspaces! 🌟](https://buymeacoffee.com/dayanbayah)
-
-![anapnoe-ui-ux-workspaces](https://github.com/anapnoe/sd-webui-ux/blob/main/assets/images/anapnoe-ui-ux-workspaces.png)
 
 
