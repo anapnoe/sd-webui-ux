@@ -374,7 +374,7 @@ Object.assign(VirtualScroll.prototype, {
                     this.resolvedRenderMethod(scrollDirection);
                 }
             } else {
-                //this.forceRenderItems();
+                this.forceRenderItems();
             }
         });
 
