@@ -269,7 +269,7 @@ export function showMembers() {
                 const temp = document.createElement('div');
                 temp.className = 'sponsors_grid current';
                 const procMembers = processMemberships(result);
-                console.warn(procMembers);
+                //console.warn(procMembers);
 
                 const currentMembers = procMembers.currentMembers;
                 for (let i = 0; i < currentMembers.length; i++) {
