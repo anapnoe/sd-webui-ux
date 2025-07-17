@@ -102,6 +102,11 @@ export function createVirtualItemElement(item, imgRes, selected, endpoint) {
     if (imageUrl) {
         const imgDiv = document.createElement('div');
         imgDiv.style.backgroundImage = `url('${endpoint}${encodeURIComponent(imageUrl)}${timestamp}')`;
+        //imgDiv = document.createElement('img');
+        //imgDiv.src = `${endpoint}${encodeURIComponent(imageUrl)}${timestamp}`; // Use data-src for lazy loading
+        //imgDiv.alt = item.name || 'Image'; // Critical for accessibility
+        //imgDiv.loading = "lazy";
+
         imgDiv.className = 'item-img';
         itemDiv.appendChild(imgDiv);
     }
