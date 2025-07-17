@@ -26,6 +26,7 @@ db_tables_pages = {
     "Images": OutputImagesFolderProcessor(imagesdir)
 }
 
+
 def images_import_update_db(db_tables_pages, refresh=False):
     db_manager = DatabaseManager.get_instance()
     success = True
@@ -82,28 +83,16 @@ def images_import_update_db(db_tables_pages, refresh=False):
         "progress": 100.0
     }) + "\n"
 
-'''
-def images_import_refresh_db():
-    success, total_processed = images_import_update_db(db_tables_pages, refresh=True)
-
-    conn = DatabaseManager.get_instance().connect()
-    conn.execute("PRAGMA wal_checkpoint(FULL)")
-    conn.close()
-    
-    return {
-        "success": success,
-        "processed": total_processed if success else 0
-    }
-'''
 
 def check_and_use_db_output_images():
     if shared.opts.uiux_enable_sd_output_images is False:
         return
     return on_ui_tabs()
 
-#fix this we don't need to update on every restart
+
 if os.path.exists(DB_FILE): 
     images_import_update_db(db_tables_pages, False)
+
 
 def on_ui_tabs():
     with gr.Blocks(analytics_enabled=False) as anapnoe_sd_uiux_db_output_images:
