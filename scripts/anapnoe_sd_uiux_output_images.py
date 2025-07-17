@@ -51,12 +51,14 @@ def images_import_update_db(db_tables_pages, refresh=False):
             try:
                 columns = {k: v[1] for k, v in items[0].items()}
                 db_manager.create_table(table_name, columns)
+                refresh = True
             except Exception as e:
                 logger.error(f"Error creating table {table_name}: {e}")
                 success = False
                 continue
 
         if refresh:
+            #db_manager.delete_invalid_items(table_name)
             for idx, item in enumerate(items, 1):
                 try:
                     db_manager.import_item(type_name.lower(), item)
