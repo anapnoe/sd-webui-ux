@@ -33,26 +33,26 @@ Please note that while this extension focuses solely on frontend optimizations, 
 | *Automatic1111 - Stable Diffusion web UI* | *Anapnoe - Stable Diffusion web UI UX* |
 
 **Performance Analysis**
-- 🔋 **Memory Efficiency**: Stable Diffusion web UI UX uses 43% less JavaScript heap memory  
-- 🏗️ **DOM Efficiency**: Despite handling 23% more documents, Stable Diffusion web UI UX uses 23% fewer DOM nodes  
-- ⚡ **Event Handling**: Stable Diffusion web UI UX requires 49% fewer event listeners  
-- 📊 **Resource Optimization**: Stable Diffusion web UI UX shows better overall resource management with significant reductions in memory consumption and event handling overhead
+- **Memory Efficiency**: Stable Diffusion web UI UX uses 43% less JavaScript heap memory  
+- **DOM Efficiency**: Despite handling 23% more documents, Stable Diffusion web UI UX uses 23% fewer DOM nodes  
+- **Event Handling**: Stable Diffusion web UI UX requires 49% fewer event listeners  
+- **Resource Optimization**: Stable Diffusion web UI UX shows better overall resource management with significant reductions in memory consumption and event handling overhead
 
 **Scalable Event Handling & DOM Optimization**:  
 SD webUI UX implements **event delegation** + **virtualized grid** for O(1) performance scaling.
 
-🐘 **Stable Diffusion web UI Constraints**:
+**Stable Diffusion web UI Constraints**:
 - **DOM Bloat**: Loads all assets → 10k LoRAs create 60k+ DOM nodes (10k images + 50k+ container elements)
 - **Listener Overload**: ~5 listeners per asset → 50k+ listeners for 10K LoRAs
 - **O(n) Scaling**: Linear performance degradation
 
-🐆 **Stable Diffusion web UI UX optimized Architecture**:
+**Stable Diffusion web UI UX optimized Architecture**:
 - **Virtualized Grid**: Renders only visible assets (~15 items in default viewport)  
 - **Event Delegation**: Single listener handles all interactions  
 - **DOM Recycling**: Dynamic pool manages thumbnail elements  
 
 🎯 **Performance Outcome**:  
-- Flat memory profile (≈50MB heap regardless of library size)  
+- Flat memory profile (≈50MB heap regardless of model assets library size)  
 - O(1) event handling complexity  
 - Instant scrolling with 100K+ assets   
 
