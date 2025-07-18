@@ -64,11 +64,8 @@ Please note that while this extension focuses solely on frontend optimizations, 
 |---|---|
 | ![SD web UI Forge](/assets/images/stable-diffusion-webui-forge-insights.png) | ![SD web UI UX Forge](/assets/images/stable-diffusion-webui-ux-forge-insights.png) |
 | *lllyasviel - Stable Diffusion web UI Forge* | *Anapnoe - Stable Diffusion web UI UX Forge* |
-
-### ⚠️ Important Note
-All metrics were measured **with webui extensions disabled** to ensure balanced baseline performance. When extensions are enabled:
-- Event listeners increase dramatically to **over 16,000** 
-- Performance metrics show greater variability between test runs
+ 
+⚠️ *Baseline metrics reflect measurements with **all additional webui extensions disabled** - particularly relevant for SD Forge's extensive collection - to ensure balanced comparisons; enabling these extensions raises event listeners beyond 16,000 and introduces significant test-run performance variability.*
 
 
 ### 🚀 Scalable Event Handling & DOM Optimization  
