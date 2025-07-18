@@ -3,7 +3,7 @@ A bespoke, highly adaptable, blazing fast user interface for Stable Diffusion, e
 
 This extension is compatible with both backends: [Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) and [Stable Diffusion web UI Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge).
 
-Please note that while this extension focuses solely on frontend optimizations, [Stable Diffusion web UI UX](https://github.com/anapnoe/stable-diffusion-webui-ux), along with its variant [Stable Diffusion web UI UX Forge](https://github.com/anapnoe/stable-diffusion-webui-ux-forge), incorporates backend optimizations for an even better and faster user experience. Together, these changes ensure a more effective and enjoyable interaction with the application.
+*This extension performs frontend optimizations **post-DOM load** (modifying elements after they're created), meaning developer tools may show initial resource allocation before optimizations apply. In contrast [Stable Diffusion web UI UX](https://github.com/anapnoe/stable-diffusion-webui-ux) & [Stable Diffusion web UI UX Forge](https://github.com/anapnoe/stable-diffusion-webui-ux-forge) implement **upstream backend optimizations** that prevent unnecessary element creation entirely, enabling faster performance from initialization.*  
 
 [💖 Your Support Makes a Difference! 💖](https://buymeacoffee.com/dayanbayah)
 
@@ -30,7 +30,7 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - **Prompt-All-In-One Extension**
 - **Aspect-Ratio-Helper Extension**
 
-## Optimization
+## Optimizations
 - **Redundant Checkpoints & Extra Networks**: Removed redundant Checkpoints and Extra Networks (Textual Inversion, LoRA, Hypernetworks) from txt2img/img2img tabs. → Implemented single-instance infinite scroll to progressively load optimized assets + metadata from SQLite DB.
 - **Inline Event Listeners**: Eradicating inline event listeners from "Extra Networks" cards and action buttons.
 - **Event Delegation Pattern**: Applying an event delegation pattern to further streamline the code by consolidating event handling for "Extra Networks" cards and action buttons.
