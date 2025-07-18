@@ -1,7 +1,7 @@
 # SD Web UI UX 
 A bespoke, highly adaptable, blazing fast user interface for Stable Diffusion, engineered for unmatched user experience and performance.
 
-This extension is compatible with both backends: [Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) and [Stable Diffusion web UI Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge).
+Compatible with both [Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) and [Stable Diffusion web UI Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge) backends.
 
 *This extension performs frontend optimizations **post-DOM load** (modifying elements after they're created), meaning developer tools may show initial resource allocation before optimizations apply. In contrast [Stable Diffusion web UI UX](https://github.com/anapnoe/stable-diffusion-webui-ux) & [Stable Diffusion web UI UX Forge](https://github.com/anapnoe/stable-diffusion-webui-ux-forge) implement **upstream backend optimizations** that prevent unnecessary element creation entirely, enabling faster performance from initialization.*  
 
