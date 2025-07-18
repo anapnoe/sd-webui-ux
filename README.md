@@ -24,6 +24,12 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - **Toggle Input Modes**: Switch between slider and numeric input modes for a compact interface.
 - **Compatible with Gradio 3 and 4**: Works seamlessly with both Gradio 3 and Gradio 4 frameworks.
 
+### Seamless UI Integration with Extensions
+- **Infinite Image Browsing Extension**
+- **Deforum Extension**
+- **Prompt-All-In-One Extension**
+- **Aspect-Ratio-Helper Extension**
+
 ## Optimization
 - **Redundant Checkpoints & Extra Networks**: Removed redundant Checkpoints and Extra Networks (Textual Inversion, LoRA, Hypernetworks) from txt2img/img2img tabs. → Implemented single-instance infinite scroll to progressively load optimized assets + metadata from SQLite DB.
 - **Inline Event Listeners**: Eradicating inline event listeners from "Extra Networks" cards and action buttons.
@@ -34,27 +40,25 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - **Virtualized Grid**: Dynamic virtualized grid with memory/DOM efficiency for: Checkpoints, Textual Inversions, LoRA, Hypernetworks, Image Browser, Styles Manager, Civitai Images & Models.
 
 ### Performance Comparison: UI vs UX
-### Core Metrics
-| Core Metrics    | SD web UI  | SD web UI UX | Δ (%)      | &nbsp;&nbsp; | Key Improvements                         |
-|-----------------|-----------:|-------------:|-----------:|:-------------|:-----------------------------------------|
-| **JS Heap**     | 96,945,380 | 55,048,600   | **-43.2%** | | **Memory Efficiency**: 43% ↓ JS heap memory |
-| **Documents**   | 109        | 134          | **+22.9%** | | **Resource Management**: Optimized overhead |
-| **Nodes**       | 53,895     | 41,542       | **-22.9%** | | **DOM Efficiency**: 23% ↓ nodes despite 23% ↑ documents |
-| **Listeners**   | 8,195      | 4,178        | **-49.0%** | | **Event Handling**: 49% ↓ listeners |
+| Core Metrics    | SD web UI  | SD web UI UX | Δ (%)      | Key Improvements |
+|-----------------|-----------:|-------------:|-----------:|:-----------------|
+| **JS Heap**     | 96,945,380 | 55,048,600   | **-43.2%** | **Memory Efficiency**: 43% ↓ JS heap memory |
+| **Documents**   | 109        | 134          | **+22.9%** | **Resource Management**: Optimized overhead |
+| **Nodes**       | 53,895     | 41,542       | **-22.9%** | **DOM Efficiency**: 23% ↓ nodes despite 23% ↑ documents |
+| **Listeners**   | 8,195      | 4,178        | **-49.0%** | **Event Handling**: 49% ↓ listeners |
 
 | **Visual Comparison** | |
 |---|---|
 | ![SD web UI](/assets/images/stable-diffusion-webui-insights.png) | ![SD web UI UX](/assets/images/stable-diffusion-webui-ux-insights.png) |
 | *Automatic1111 - Stable Diffusion web UI* | *Anapnoe - Stable Diffusion web UI UX* |
 
-## Performance Comparison: Forge vs UX Forge
-### Core Metrics
-| Metric          | SD web UI Forge  | SD web UI UX Forge | Δ (%)       | &nbsp;&nbsp; | Key Improvements                         |
-|-----------------|-----------------:|-------------------:|------------:|:-------------|:-----------------------------------------|
-| **JS Heap**     | 56,121,196       | 45,049,884         | **-19.7%**  | | **Memory Efficiency**: 19% ↓ JS heap memory |
-| **Documents**   | 21               | 111                | **+428.6%** | | **Resource Management**: Optimized overhead |
-| **Nodes**       | 46,943           | 43,651             | **-7.0%**   | | **DOM Efficiency**: 7% ↓ nodes despite 428% ↑ documents |
-| **Listeners**   | 10,562           | 7,495              | **-29.0%**  | | **Event Handling**: 29% ↓ listeners |
+### Performance Comparison: Forge vs UX Forge
+| Core Metrics    | SD web UI Forge  | SD web UI UX Forge | Δ (%)       | Key Improvements |
+|-----------------|-----------------:|-------------------:|------------:|:-----------------|
+| **JS Heap**     | 56,121,196       | 45,049,884         | **-19.7%**  | **Memory Efficiency**: 19% ↓ JS heap memory |
+| **Documents**   | 21               | 111                | **+428.6%** | **Resource Management**: Optimized overhead |
+| **Nodes**       | 46,943           | 43,651             | **-7.0%**   | **DOM Efficiency**: 7% ↓ nodes despite 428% ↑ documents |
+| **Listeners**   | 10,562           | 7,495              | **-29.0%**  | **Event Handling**: 29% ↓ listeners |
 
 | **Visual Comparison** | |
 |---|---|
@@ -63,7 +67,7 @@ Please note that while this extension focuses solely on frontend optimizations, 
 
 ### ⚠️ Important Note
 All metrics were measured **with webui extensions disabled** to ensure balanced baseline performance. When extensions are enabled:
-- Event listeners increase dramatically to **over 16,000**
+- Event listeners increase dramatically to **over 16,000** 
 - Performance metrics show greater variability between test runs
 
 
@@ -84,12 +88,6 @@ SD webUI UX implements **event delegation** + **virtualized grid** for O(1) perf
 - Flat memory profile (≈50MB heap regardless of model assets library size)  
 - O(1) event handling complexity  
 - Instant scrolling with 100K+ assets   
-
-## Seamless UI Integration with Extensions
-- **Infinite Image Browsing Extension**
-- **Deforum Extension**
-- **Prompt-All-In-One Extension**
-- **Aspect-Ratio-Helper Extension**
 
 ## Installation
 - **Open the Extensions tab in SD-webui.**
