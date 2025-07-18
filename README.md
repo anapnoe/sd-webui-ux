@@ -9,6 +9,20 @@ Please note that while this extension focuses solely on frontend optimizations, 
 
 ![](screenshot.png)
 
+## Features Overview
+- **Mobile Responsive Design**: Optimal display and usability across various devices.
+- **Versatile Micro-Template Engine**: Leverage for enhanced functionality through other extensions.
+- **Customizable Theme Styles**: User-friendly interface for theme customization.
+- **Styles Manager**: Versatile database-driven styles management.
+- **Image Browser**: High-performance database-powered image navigation.
+- **Civitai Images**: Ultra-fast virtualized browser for Civitai images.
+- **Civitai Models**: Ultra-fast virtualized browser for Civitai models.
+- **Built-in Console Log**: Debugging capabilities for developers.
+- **Production and Development Modes**: Dynamically compile the web UI UX using Vite directly from the interface.
+- **Ignore Overrides Option**: Flexibility to maintain original settings when necessary.
+- **Enhanced Usability for Sliders**: Input range sliders support tick marks for improved interaction.
+- **Toggle Input Modes**: Switch between slider and numeric input modes for a compact interface.
+- **Compatible with Gradio 3 and 4**: Works seamlessly with both Gradio 3 and Gradio 4 frameworks.
 
 ## Optimization
 - **Redundant Checkpoints & Extra Networks**: Removed redundant Checkpoints and Extra Networks (Textual Inversion, LoRA, Hypernetworks) from txt2img/img2img tabs. → Implemented single-instance infinite scroll to progressively load optimized assets + metadata from SQLite DB.
@@ -19,48 +33,41 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - **Database-Powered**: SQLite implementation enables rapid indexing/searching across: Extra Networks, Image Browser and Styles Manager.
 - **Virtualized Grid**: Dynamic virtualized grid with memory/DOM efficiency for: Checkpoints, Textual Inversions, LoRA, Hypernetworks, Image Browser, Styles Manager, Civitai Images & Models.
 
-
-## Performance Comparison: SD web UI vs SD web UI UX
+### Performance Comparison: UI vs UX
 ### Core Metrics
-| Metric          | SD web UI        | SD web UI UX       | Difference (%) |
-|-----------------|------------------|--------------------|----------------|
-| **JS Heap**     | 96,945,380       | 55,048,600         | **-43.2%**     |
-| **Documents**   | 109              | 134                | **+22.9%**     |
-| **Nodes**       | 53,895           | 41,542             | **-22.9%**     |
-| **Listeners**   | 8,195            | 4,178              | **-49.0%**     |
+| Core Metrics    | SD web UI  | SD web UI UX | Δ (%)      | &nbsp;&nbsp; | Key Improvements                         |
+|-----------------|-----------:|-------------:|-----------:|:-------------|:-----------------------------------------|
+| **JS Heap**     | 96,945,380 | 55,048,600   | **-43.2%** | | **Memory Efficiency**: 43% ↓ JS heap memory |
+| **Documents**   | 109        | 134          | **+22.9%** | | **Resource Management**: Optimized overhead |
+| **Nodes**       | 53,895     | 41,542       | **-22.9%** | | **DOM Efficiency**: 23% ↓ nodes despite 23% ↑ documents |
+| **Listeners**   | 8,195      | 4,178        | **-49.0%** | | **Event Handling**: 49% ↓ listeners |
 
 | **Visual Comparison** | |
 |---|---|
 | ![SD web UI](/assets/images/stable-diffusion-webui-insights.png) | ![SD web UI UX](/assets/images/stable-diffusion-webui-ux-insights.png) |
 | *Automatic1111 - Stable Diffusion web UI* | *Anapnoe - Stable Diffusion web UI UX* |
 
-**Performance Analysis**
-- **Memory Efficiency**: Stable Diffusion web UI UX uses 43% less JavaScript heap memory  
-- **DOM Efficiency**: Despite handling 23% more documents, Stable Diffusion web UI UX uses 23% fewer DOM nodes  
-- **Event Handling**: Stable Diffusion web UI UX requires 49% fewer event listeners  
-- **Resource Optimization**: Stable Diffusion web UI UX shows better overall resource management with significant reductions in memory consumption and event handling overhead
-
-## Performance Comparison: SD web UI Forge vs SD web UI UX Forge
+## Performance Comparison: Forge vs UX Forge
 ### Core Metrics
-| Metric          | SD web UI Forge  | SD web UI UX Forge | Difference (%) |
-|-----------------|------------------|--------------------|----------------|
-| **JS Heap**     | 56,121,196       | 45,049,884         | **-19.7%**     |
-| **Documents**   | 21               | 111                | **+428.6%**    |
-| **Nodes**       | 46,943           | 43,651             | **-7.0%**      |
-| **Listeners**   | 10,562           | 7,495              | **-29.0%**     |
+| Metric          | SD web UI Forge  | SD web UI UX Forge | Δ (%)       | &nbsp;&nbsp; | Key Improvements                         |
+|-----------------|-----------------:|-------------------:|------------:|:-------------|:-----------------------------------------|
+| **JS Heap**     | 56,121,196       | 45,049,884         | **-19.7%**  | | **Memory Efficiency**: 19% ↓ JS heap memory |
+| **Documents**   | 21               | 111                | **+428.6%** | | **Resource Management**: Optimized overhead |
+| **Nodes**       | 46,943           | 43,651             | **-7.0%**   | | **DOM Efficiency**: 7% ↓ nodes despite 428% ↑ documents |
+| **Listeners**   | 10,562           | 7,495              | **-29.0%**  | | **Event Handling**: 29% ↓ listeners |
 
 | **Visual Comparison** | |
 |---|---|
 | ![SD web UI Forge](/assets/images/stable-diffusion-webui-forge-insights.png) | ![SD web UI UX Forge](/assets/images/stable-diffusion-webui-ux-forge-insights.png) |
 | *lllyasviel - Stable Diffusion web UI Forge* | *Anapnoe - Stable Diffusion web UI UX Forge* |
 
-**Performance Analysis**
-- **Memory Efficiency**: Stable Diffusion web UI UX Forge uses 19% less JavaScript heap memory  
-- **DOM Efficiency**: Despite handling 428% more documents, Stable Diffusion web UI UX Forge uses 7% fewer DOM nodes  
-- **Event Handling**: Stable Diffusion web UI UX Forge requires 29% fewer event listeners  
-- **Resource Optimization**: Stable Diffusion web UI UX Forge shows better overall resource management with significant reductions in memory consumption and event handling overhead
+### ⚠️ Important Note
+All metrics were measured **with webui extensions disabled** to ensure balanced baseline performance. When extensions are enabled:
+- Event listeners increase dramatically to **over 16,000**
+- Performance metrics show greater variability between test runs
 
-**Scalable Event Handling & DOM Optimization**:  
+
+### 🚀 Scalable Event Handling & DOM Optimization  
 SD webUI UX implements **event delegation** + **virtualized grid** for O(1) performance scaling.
 
 **Stable Diffusion web UI & web UI Forge Constraints**:
@@ -77,21 +84,6 @@ SD webUI UX implements **event delegation** + **virtualized grid** for O(1) perf
 - Flat memory profile (≈50MB heap regardless of model assets library size)  
 - O(1) event handling complexity  
 - Instant scrolling with 100K+ assets   
-
-## Features Overview
-- **Mobile Responsive Design**: Optimal display and usability across various devices.
-- **Versatile Micro-Template Engine**: Leverage for enhanced functionality through other extensions.
-- **Customizable Theme Styles**: User-friendly interface for theme customization.
-- **Styles Manager**: Versatile database-driven styles management.
-- **Image Browser**: High-performance database-powered image navigation.
-- **Civitai Images**: Ultra-fast virtualized browser for Civitai images.
-- **Civitai Models**: Ultra-fast virtualized browser for Civitai models.
-- **Built-in Console Log**: Debugging capabilities for developers.
-- **Production and Development Modes**: Dynamically compile the web UI UX using Vite directly from the interface.
-- **Ignore Overrides Option**: Flexibility to maintain original settings when necessary.
-- **Enhanced Usability for Sliders**: Input range sliders support tick marks for improved interaction.
-- **Toggle Input Modes**: Switch between slider and numeric input modes for a compact interface.
-- **Compatible with Gradio 3 and 4**: Works seamlessly with both Gradio 3 and Gradio 4 frameworks.
 
 ## Seamless UI Integration with Extensions
 - **Infinite Image Browsing Extension**
