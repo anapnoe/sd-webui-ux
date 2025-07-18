@@ -3,7 +3,6 @@ from pathlib import Path
 from modules import ui_extra_networks, sd_hijack, shared
 
 
-
 class ExtraNetworksPageTextualInversion(ui_extra_networks.ExtraNetworksPage):
     def __init__(self):
         super().__init__('Textual Inversion')
@@ -55,7 +54,6 @@ class ExtraNetworksPageTextualInversion(ui_extra_networks.ExtraNetworksPage):
     
 
     def list_items(self):
-        # instantiate a list to protect against concurrent modification
         names = list(sd_hijack.model_hijack.embedding_db.word_embeddings)
         for index, name in enumerate(names):
             item = self.create_item(name, index)

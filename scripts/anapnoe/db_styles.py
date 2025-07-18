@@ -6,6 +6,7 @@ from pathlib import Path
 import logging
 logger = logging.getLogger(__name__)
 
+from modules import script_callbacks
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from starlette.responses import FileResponse
@@ -14,13 +15,22 @@ import gradio as gr
 
 class StylesFolderProcessor:
     _instance = None
+    _api_registered = False
 
     allowed_dirs = set()
 
     def __init__(self, styles_folder):
+        #if StylesFolderProcessor._instance:
+        #    raise RuntimeError("Singleton violation")
         self.styles_folder = styles_folder
         self.register_page()
-        StylesFolderProcessor._instance = self 
+        StylesFolderProcessor._instance = self
+        self.register_api()
+
+    def register_api(self):
+        if not self._api_registered:
+            script_callbacks.on_app_started(lambda _, app: self.api_uiux_style(app))
+            self._api_registered = True
 
     @classmethod
     def get_instance(cls):
@@ -29,7 +39,7 @@ class StylesFolderProcessor:
         return cls._instance
 
     def allowed_directories_for_previews(self):
-        return [self.styles_folder]  # Allow the styles folder
+        return [self.styles_folder]
 
     def register_page(self):
         self.allowed_dirs.update(self.allowed_directories_for_previews())
@@ -40,8 +50,11 @@ class StylesFolderProcessor:
             for byte_block in iter(lambda: f.read(4096), b""):
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
-
-    def get_images_and_data(self):
+    
+    def refresh(self):
+        pass
+    
+    def list_items(self):
         items = []
         for root, dirs, files in os.walk(self.styles_folder):
             if 'thumbnails' in dirs:
@@ -125,34 +138,9 @@ class StylesFolderProcessor:
         return FileResponse(str(filename_path), headers={"Accept-Ranges": "bytes"})
         
 
-    #def add_pages_to_demo(self, app: FastAPI):
-    #    app.add_api_route("/sd_styles/thumb/{filename}", self.fetch_file, methods=["GET"])
+    def api_uiux_style(_: gr.Blocks, app: FastAPI):
+        styles_processor = StylesFolderProcessor.get_instance()
 
-
-def api_uiux_style(_: gr.Blocks, app: FastAPI):
-    styles_processor = StylesFolderProcessor.get_instance()
-
-    @app.get("/sd_styles/thumb/{filename:path}")
-    async def get_image(filename: str, t: str = None):
-        return styles_processor.fetch_file(filename)
-
-
-'''
-def api_uiux_style(_: gr.Blocks, app: FastAPI):
-
-    @app.get("/sd_styles/thumb/{filename:path}")
-    async def get_image(filename: str):
-
-        if not os.path.isfile(filename):
-            raise HTTPException(status_code=404, detail="File not found")
-
-        return FileResponse(filename)
-
-
-try:
-    import modules.script_callbacks as script_callbacks
-    script_callbacks.on_app_started(api_uiux_style)
-except Exception:
-    logger.warn("Unable to mount Styles API.")
-
-'''
+        @app.get("/sd_styles/thumb/{filename:path}")
+        async def get_image(filename: str, t: str = None):
+            return styles_processor.fetch_file(filename)

@@ -45,15 +45,14 @@ async function createTabsForExtensions() {
         "tab_modelmerger",
         "tab_settings",
         "tab_extensions",
+        "tab_space",
         "tab_deforum_interface",
         "tab_infinite-image-browsing",
-        "tab_anapnoe_dock",
         "tab_anapnoe_sd_uiux_core",
-        "tab_space",
+        "tab_anapnoe_sd_uiux_db",
         "tab_anapnoe_sd_uiux_civitai",
-        "tab_anapnoe_sd_uiux_db_extra_networks",
-        "tab_anapnoe_sd_uiux_db_styles",
-        "tab_anapnoe_sd_uiux_db_output_images"
+        "tab_anapnoe_dock",
+        
     ];
 
     /*

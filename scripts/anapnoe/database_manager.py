@@ -2,9 +2,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 from fastapi import FastAPI, HTTPException, Query, Body, UploadFile, File
+from fastapi.responses import StreamingResponse
 #from fastapi import Request, Response
 
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Generator
 import sqlite3
 import json
 import os
@@ -18,6 +19,7 @@ from modules import script_callbacks
 import time
 import stat
 import hashlib
+from tqdm import tqdm
 
 def validate_name(name, message):
     if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', name):
@@ -45,10 +47,18 @@ class DatabaseManager:
 # Singleton
 class DatabaseManager:
     _instance = None
+    _api_registered = False
+    _registered_table_classes = {}
 
     def __init__(self, db_name):
         self.db_name = db_name
         self.source_file = None
+        self.register_api()
+
+    def register_api(self):
+        if not self._api_registered:
+            script_callbacks.on_app_started(lambda _, app: self.api_uiux(app))
+            self._api_registered = True
 
     @classmethod
     def set_instance(cls, instance):
@@ -59,9 +69,211 @@ class DatabaseManager:
         if cls._instance is None:
             raise Exception("DatabaseManager instance is not set.")
         return cls._instance
+    
+    @classmethod
+    def register_table_type(cls, table_type: str, page_class):
+        cls._registered_table_classes[table_type.lower()] = page_class
+
+    @classmethod
+    def get_table_instance(cls, table_name: str):
+        return cls._registered_table_classes.get(table_name.lower())
+
+    '''
+    def import_tables_generator(
+        self, 
+        table_types: List[str],
+        refresh: bool = False
+    ):
+        # Filter to requested types
+        pages = {}
+        for t in table_types:
+            if t in self._registered_table_classes:
+                pages[t] = self._registered_table_classes[t]
+            else:
+                logger.warning(f"Skipping unregistered table type: {t}")
+        
+        if not pages:
+            yield json.dumps({
+                "status": "error",
+                "message": "No valid table types to process"
+            }) + "\n"
+            return
+            
+        yield from self._generate_import_process(pages, refresh)
+
+
+    def _generate_import_process(self, pages: dict, refresh: bool):
+    
+        total_items = 0
+        for page in pages.values():
+            items = list(page.list_items()) or []
+            total_items += len(items)
+        
+        if total_items == 0:
+            yield json.dumps({
+                "status": "complete", 
+                "success": True,
+                "processed": 0, 
+                "total": 0, 
+                "progress": 100.0
+            }) + "\n"
+            return
+
+        processed = 0
+
+        yield json.dumps({
+            "status": "starting", 
+            "total": total_items,
+            "processed": 0, 
+            "progress": 0.0
+        }) + "\n"
+
+        for type_name, page in pages.items():
+            table_name = type_name.lower()
+            items = list(page.list_items()) or []
+            
+            if not items:
+                continue
+
+            if not self.table_exists(table_name):
+                try:
+                    first_item = items[0]
+                    if first_item:
+                        columns = {k: v[1] for k, v in first_item.items()}
+                        self.create_table(table_name, columns)
+                except Exception as e:
+                    logger.error(f"Error creating table {table_name}: {e}")
+                    continue
+            
+            page.refresh()
+            for item in items:
+                try:
+                    self.import_item(table_name, item)
+                    processed += 1
+                    progress = min(100.0, (processed / total_items) * 100)
+                    
+                    yield json.dumps({
+                        "status": "processing",
+                        "current_table": table_name,
+                        "processed": processed,
+                        "total": total_items,
+                        "progress": progress
+                    }) + "\n"
+                    
+                except Exception as e:
+                    logger.error(f"Error importing item {item.get('name', '')}: {e}")
+
+        yield json.dumps({
+            "status": "complete",
+            "success": True,
+            "processed": processed,
+            "total": total_items,
+            "progress": 100.0
+        }) + "\n"
+    '''
+
+    def import_tables_generator(self, table_types: List[str], refresh: bool = False):
+        pages = {}
+        for t in table_types:
+            normalized_type = t.lower()
+            if normalized_type in self._registered_table_classes:
+                pages[normalized_type] = self._registered_table_classes[normalized_type]
+            else:
+                logger.warning(f"Skipping unregistered table type: {t}")
+                
+        if not pages:
+            yield json.dumps({
+                "status": "error",
+                "message": "No valid table types to process"
+            }) + "\n"
+            return
+            
+        total_items = sum(len(list(page.list_items()) or []) for page in pages.values())
+        
+        pbar = tqdm(total=total_items, unit='item', 
+                    bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{percentage:3.0f}%]')
+
+        try:
+            yield from self._generate_import_process(pages, refresh, pbar)
+        finally:
+            pbar.close()
+
+    def _generate_import_process(self, pages: dict, refresh: bool, pbar: tqdm):
+        total_items = 0
+        for page in pages.values():
+            items = list(page.list_items()) or []
+            total_items += len(items)
+        
+        if total_items == 0:
+            pbar.write("No items found to import")
+            yield json.dumps({
+                "status": "complete", 
+                "success": True,
+                "processed": 0, 
+                "total": 0, 
+                "progress": 100.0
+            }) + "\n"
+            return
+
+        processed = 0
+        pbar.set_description("Starting import")
+
+        for type_name, page in pages.items():
+            table_name = type_name.lower()
+            items = list(page.list_items()) or []
+            
+            if not items:
+                continue
+
+            pbar.set_description(f"Processing {table_name}")
+            
+            if not self.table_exists(table_name):
+                try:
+                    first_item = items[0]
+                    if first_item:
+                        columns = {k: v[1] for k, v in first_item.items()}
+                        self.create_table(table_name, columns)
+                except Exception as e:
+                    logger.error(f"Error creating table {table_name}: {e}")
+                    continue
+            
+            page.refresh()
+
+            for item in items:
+                try:
+                    processed += 1
+                    progress = min(100.0, (processed / total_items) * 100)
+                    self.import_item(table_name, item)
+                    pbar.update(1)
+                    
+                    yield json.dumps({
+                        "status": "processing",
+                        "current_table": table_name,
+                        "processed": processed,
+                        "total": total_items,
+                        "progress": progress
+                    }) + "\n"
+                    
+                except Exception as e:
+                    pbar.write(f"Error importing item: {e}")
+                    logger.error(f"Error importing item {item.get('name', '')}: {e}")
+            pbar.refresh()
+            
+        pbar.set_description("Import complete")
+        pbar.refresh()
+
+        yield json.dumps({
+            "status": "complete",
+            "success": True,
+            "processed": processed,
+            "total": total_items,
+            "progress": 100.0
+        }) + "\n"
+
 
     def connect(self):
         return sqlite3.connect(self.db_name, check_same_thread=False)
+
 
     def set_source_file(self, source_file):
         self.source_file = source_file
@@ -883,286 +1095,300 @@ class DatabaseManager:
                 conn.close()
 
 
-def api_uiux_db(_: gr.Blocks, app: FastAPI, db_tables_pages):
 
-    # Store the db_tables_pages in the app state
-    app.state.db_tables_pages = db_tables_pages
+    def api_uiux(_: gr.Blocks, app: FastAPI):
 
-    # Middleware to log requests debug
-    '''
-    @app.middleware("http")
-    async def log_requests(request: Request, call_next):
-        # Log request details
-        print(f"Request URL: {request.url}")
-        print(f"Request Method: {request.method}")
-        print(f"Request Headers: {request.headers}")
+        # Middleware to log requests debug
+        '''
+        @app.middleware("http")
+        async def log_requests(request: Request, call_next):
+            # Log request details
+            print(f"Request URL: {request.url}")
+            print(f"Request Method: {request.method}")
+            print(f"Request Headers: {request.headers}")
 
-        # Get response
-        response: Response = await call_next(request)
+            # Get response
+            response: Response = await call_next(request)
 
-        # Log response details
-        print(f"Response Status Code: {response.status_code}")
-        print(f"Response Headers: {response.headers}")
+            # Log response details
+            print(f"Response Status Code: {response.status_code}")
+            print(f"Response Headers: {response.headers}")
 
-        return response
-    '''
+            return response
+        '''
 
-    @app.get("/sd_webui_ux/get_items_from_db")
-    async def get_items_from_db_endpoint(
-        table_name: str,
-        skip: int = 0, 
-        limit: int = 10, 
-        sort_by: Optional[str] = Query("id"), 
-        order: Optional[str] = Query("asc"), 
-        search_term: Optional[str] = Query(""), 
-        search_columns: Optional[List[str]] = Query(["filename"]),
-        sd_version: Optional[str] = Query("")
-    ) -> Dict[str, Any]:
-        if not table_name:
-            raise HTTPException(status_code=400, detail="Table name is required.")
-        
-        db_manager = DatabaseManager.get_instance()
-
-        try:
-            result = db_manager.get_items(table_name, skip, limit, sort_by, order, search_term, search_columns, sd_version)
-            return result
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-    @app.get("/sd_webui_ux/get_internal_metadata")
-    async def get_internal_metadata_endpoint(type: str, name: str):
-        try:
-            page = db_tables_pages.get(type)
-            if not page:
-                raise HTTPException(status_code=400, detail="Invalid type specified")
-
-            metadata = page.get_internal_metadata(name)
-
-            if metadata is None:
-                return {}
-                #raise HTTPException(status_code=404, detail="File not found")
-            return metadata
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-    @app.post("/sd_webui_ux/update_user_metadata")
-    async def update_user_metadata_endpoint(
-        payload: str = Body(...),
-        file: Optional[UploadFile] = File(None)
-    ):    
-
-        payload = json.loads(payload) # not working as a Dict workaround
-        #print("Received payload:", payload)
-
-        table_name:str = payload.get('table_name')
-        item_id:str = payload.get('id')
-        data_type:str = payload.get('type')
-        name:str = payload.get('name')
-        filename:str = payload.get('filename')
-        local_preview:str = payload.get('local_preview')
-
-        description:str = payload.get('description')
-        notes:str = payload.get('notes')
-        tags:str = payload.get('tags')
-        sd_version:str = payload.get('sd_version')
-        
-        activation_text:str = payload.get('activation_text')
-        negative_prompt:str = payload.get('negative_prompt')
-        preferred_weight: Optional[str] = payload.get('preferred_weight')
-
-        prompt:str = payload.get('prompt')
-        negative:str = payload.get('negative')
-        source_file:str = payload.get('source_file')
-
-        if not table_name:
-            raise HTTPException(status_code=422, detail="DB table_name is required")
-
-        db_manager = DatabaseManager.get_instance()
-        table_columns = db_manager.get_table_columns(table_name)
-
-        item = {                     
-            'type': data_type,
-            'name': name,
-        }
-
-        if preferred_weight is not None:
-            try:
-                preferred_weight = float(preferred_weight)  # float
-            except ValueError:
-                raise HTTPException(status_code=422, detail="preferred_weight must be a valid number")
-
-        optional_fields = {
-            'id': item_id,
-            'filename': filename,
-            'local_preview': local_preview, 
-
-            'description': description,
-            'notes': notes,           
-            'tags': tags,
-            'sd_version': sd_version,
-
-            'activation_text': activation_text,
-            'negative_prompt': negative_prompt,
-            'preferred_weight': preferred_weight,
+        @app.get("/sd_webui_ux/get_items_from_db")
+        async def get_items_from_db_endpoint(
+            table_name: str,
+            skip: int = 0, 
+            limit: int = 10, 
+            sort_by: Optional[str] = Query("id"), 
+            order: Optional[str] = Query("asc"), 
+            search_term: Optional[str] = Query(""), 
+            search_columns: Optional[List[str]] = Query(["filename"]),
+            sd_version: Optional[str] = Query("")
+        ) -> Dict[str, Any]:
+            if not table_name:
+                raise HTTPException(status_code=400, detail="Table name is required.")
             
-            'prompt': prompt,
-            'negative': negative,
-        }
+            db_manager = DatabaseManager.get_instance()
 
-        item.update({key: value for key, value in optional_fields.items() if key in table_columns})
-
-        
-        if file and filename:
-            base_path = os.path.splitext(filename)[0]
-            file_extension = os.path.splitext(file.filename)[1]
-            source_file = f"{base_path}{file_extension}"
-            item['local_preview'] = source_file
-            
             try:
-                with open(source_file, "wb") as f:
-                    f.write(await file.read())
-                db_manager.create_and_save_thumbnail(source_file)
+                result = db_manager.get_items(table_name, skip, limit, sort_by, order, search_term, search_columns, sd_version)
+                return result
             except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
-        
-        db_manager.set_source_file(source_file)
-        
-        try:
-            updated_item = db_manager.update_item(table_name, item, update_local_preview=True)
-            return {"message": "Item updated successfully", "data": updated_item}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-            
-
-    @app.post("/sd_webui_ux/generate-thumbnails")
-    async def generate_thumbnails(payload: dict = Body(...)):
-        table_name:str = payload.get('table_name')
-        if not table_name:
-            raise HTTPException(status_code=422, detail="Table name is required")
-
-        db_manager = DatabaseManager.get_instance()
-        response = db_manager.generate_thumbnails(table_name)
-        if "Error" in response["message"]:
-            raise HTTPException(status_code=500, detail=response["message"])
-        return response
-
-    @app.post("/sd_webui_ux/generate-thumbnail")
-    async def generate_thumbnail(payload: dict = Body(...)):
-        table_name:str = payload.get('table_name')
-        file_id:str = payload.get('file_id')
-
-        if not table_name:
-            raise HTTPException(status_code=422, detail="Table name is required")
-        if not file_id:
-            raise HTTPException(status_code=422, detail="File ID is required")
-
-        db_manager = DatabaseManager.get_instance()
-        response = db_manager.generate_thumbnails(table_name, file_id=file_id)
-        if "Error" in response["message"]:
-            raise HTTPException(status_code=500, detail=response["message"])
-        return response
-
-    
-    @app.get("/sd_webui_ux/get_items_by_path")
-    async def get_items_by_path_endpoint(
-        table_name: str,
-        path: str = Query("")):       
-        db_manager = DatabaseManager.get_instance()
-        items, unique_subpaths = db_manager.get_items_by_path(table_name, path)
-        return {"data": items, "unique_subpaths": unique_subpaths}
+                raise HTTPException(status_code=500, detail=str(e))
 
 
-    @app.post("/sd_webui_ux/search_words_in_tables_columns")
-    async def search_words_in_tables_columns_endpoint(payload: dict = Body(...)):       
-        tables: str = payload.get("tables")
-        columns: str = payload.get("columns")
-        words: List[str] = payload.get("words", [])
-        threshold: Optional[str] = payload.get("threshold")
-        textarea: Optional[str] = payload.get("textarea")
-        delimiter: Optional[str] = payload.get("delimiter")  # Optional delimiter
-
-        # Validate input
-        if textarea:
-            if not textarea.strip():
-                raise HTTPException(status_code=400, detail="Invalid input: textarea is empty")
-            words = textarea.split(delimiter) if delimiter else textarea.split()
-
-        if not words or not tables or not columns:
-            raise HTTPException(status_code=400, detail="Invalid input: words, tables, and columns are required")
-
-        if threshold is None:
-            threshold = 1
-        else:
+        @app.get("/sd_webui_ux/get_internal_metadata")
+        async def get_internal_metadata_endpoint(type: str, name: str):
             try:
-                threshold = int(threshold)  # Convert to int
-                if threshold <= 0:
-                    raise ValueError("Threshold must be a positive integer")
-            except ValueError:
-                raise HTTPException(status_code=422, detail="Threshold must be a positive integer")
+                page = DatabaseManager.get_table_instance(type)
+                if not page:
+                    raise HTTPException(status_code=400, detail="Invalid type specified")
+                
+                metadata = page.get_internal_metadata(name)
+                return metadata if metadata is not None else {}
+                
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
 
-        table_list = tables.split(',')  
+        @app.post("/sd_webui_ux/update_user_metadata")
+        async def update_user_metadata_endpoint(
+            payload: str = Body(...),
+            file: Optional[UploadFile] = File(None)
+        ):    
 
-        if ';' in columns:
-            column_list = [col.split(',') for col in columns.split(';')]  # Different columns for each table
-        else:
-            column_list = [columns.split(',')] * len(table_list)  # Same columns for all tables
+            payload = json.loads(payload) # not working as a Dict workaround
+            #print("Received payload:", payload)
 
-        db_manager = DatabaseManager.get_instance()
+            table_name:str = payload.get('table_name')
+            item_id:str = payload.get('id')
+            data_type:str = payload.get('type')
+            name:str = payload.get('name')
+            filename:str = payload.get('filename')
+            local_preview:str = payload.get('local_preview')
 
-        try:
-            results = db_manager.search_words_in_tables_columns(words, table_list, column_list, threshold)
-            return results
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            description:str = payload.get('description')
+            notes:str = payload.get('notes')
+            tags:str = payload.get('tags')
+            sd_version:str = payload.get('sd_version')
+            
+            activation_text:str = payload.get('activation_text')
+            negative_prompt:str = payload.get('negative_prompt')
+            preferred_weight: Optional[str] = payload.get('preferred_weight')
+
+            prompt:str = payload.get('prompt')
+            negative:str = payload.get('negative')
+            source_file:str = payload.get('source_file')
+
+            if not table_name:
+                raise HTTPException(status_code=422, detail="DB table_name is required")
+
+            db_manager = DatabaseManager.get_instance()
+            table_columns = db_manager.get_table_columns(table_name)
+
+            item = {                     
+                'type': data_type,
+                'name': name,
+            }
+
+            if preferred_weight is not None:
+                try:
+                    preferred_weight = float(preferred_weight)  # float
+                except ValueError:
+                    raise HTTPException(status_code=422, detail="preferred_weight must be a valid number")
+
+            optional_fields = {
+                'id': item_id,
+                'filename': filename,
+                'local_preview': local_preview, 
+
+                'description': description,
+                'notes': notes,           
+                'tags': tags,
+                'sd_version': sd_version,
+
+                'activation_text': activation_text,
+                'negative_prompt': negative_prompt,
+                'preferred_weight': preferred_weight,
+                
+                'prompt': prompt,
+                'negative': negative,
+            }
+
+            item.update({key: value for key, value in optional_fields.items() if key in table_columns})
+
+            
+            if file and filename:
+                base_path = os.path.splitext(filename)[0]
+                file_extension = os.path.splitext(file.filename)[1]
+                source_file = f"{base_path}{file_extension}"
+                item['local_preview'] = source_file
+                
+                try:
+                    with open(source_file, "wb") as f:
+                        f.write(await file.read())
+                    db_manager.create_and_save_thumbnail(source_file)
+                except Exception as e:
+                    raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
+            
+            db_manager.set_source_file(source_file)
+            
+            try:
+                updated_item = db_manager.update_item(table_name, item, update_local_preview=True)
+                return {"message": "Item updated successfully", "data": updated_item}
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+                
+
+        @app.post("/sd_webui_ux/generate-thumbnails")
+        async def generate_thumbnails(payload: dict = Body(...)):
+            table_name:str = payload.get('table_name')
+            if not table_name:
+                raise HTTPException(status_code=422, detail="Table name is required")
+
+            db_manager = DatabaseManager.get_instance()
+            response = db_manager.generate_thumbnails(table_name)
+            if "Error" in response["message"]:
+                raise HTTPException(status_code=500, detail=response["message"])
+            return response
+
+        @app.post("/sd_webui_ux/generate-thumbnail")
+        async def generate_thumbnail(payload: dict = Body(...)):
+            table_name:str = payload.get('table_name')
+            file_id:str = payload.get('file_id')
+
+            if not table_name:
+                raise HTTPException(status_code=422, detail="Table name is required")
+            if not file_id:
+                raise HTTPException(status_code=422, detail="File ID is required")
+
+            db_manager = DatabaseManager.get_instance()
+            response = db_manager.generate_thumbnails(table_name, file_id=file_id)
+            if "Error" in response["message"]:
+                raise HTTPException(status_code=500, detail=response["message"])
+            return response
+
+        
+        @app.get("/sd_webui_ux/get_items_by_path")
+        async def get_items_by_path_endpoint(
+            table_name: str,
+            path: str = Query("")):       
+            db_manager = DatabaseManager.get_instance()
+            items, unique_subpaths = db_manager.get_items_by_path(table_name, path)
+            return {"data": items, "unique_subpaths": unique_subpaths}
 
 
-    @app.post("/sd_webui_ux/delete_item")
-    async def delete_item_endpoint(payload: dict = Body(...)):
-        table_name:str = payload.get('table_name')
-        item_id:str = payload.get('item_id')
+        @app.post("/sd_webui_ux/search_words_in_tables_columns")
+        async def search_words_in_tables_columns_endpoint(payload: dict = Body(...)):       
+            tables: str = payload.get("tables")
+            columns: str = payload.get("columns")
+            words: List[str] = payload.get("words", [])
+            threshold: Optional[str] = payload.get("threshold")
+            textarea: Optional[str] = payload.get("textarea")
+            delimiter: Optional[str] = payload.get("delimiter")  # Optional delimiter
 
-        if not table_name:
-            raise HTTPException(status_code=422, detail="Table name is required")
-        if not item_id:
-            raise HTTPException(status_code=422, detail="Item ID is required")
+            # Validate input
+            if textarea:
+                if not textarea.strip():
+                    raise HTTPException(status_code=400, detail="Invalid input: textarea is empty")
+                words = textarea.split(delimiter) if delimiter else textarea.split()
 
-        db_manager = DatabaseManager.get_instance()
-        response = db_manager.delete_item(table_name, item_id)
-        if "Error" in response["message"]:
-            raise HTTPException(status_code=500, detail=response["message"])
-        return response
+            if not words or not tables or not columns:
+                raise HTTPException(status_code=400, detail="Invalid input: words, tables, and columns are required")
+
+            if threshold is None:
+                threshold = 1
+            else:
+                try:
+                    threshold = int(threshold)  # Convert to int
+                    if threshold <= 0:
+                        raise ValueError("Threshold must be a positive integer")
+                except ValueError:
+                    raise HTTPException(status_code=422, detail="Threshold must be a positive integer")
+
+            table_list = tables.split(',')  
+
+            if ';' in columns:
+                column_list = [col.split(',') for col in columns.split(';')]  # Different columns for each table
+            else:
+                column_list = [columns.split(',')] * len(table_list)  # Same columns for all tables
+
+            db_manager = DatabaseManager.get_instance()
+
+            try:
+                results = db_manager.search_words_in_tables_columns(words, table_list, column_list, threshold)
+                return results
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
 
 
-    @app.post("/sd_webui_ux/delete_invalid_items")
-    async def delete_invalid_items_endpoint(payload: dict = Body(...)):
-        table_name: str = payload.get('table_name')
+        @app.post("/sd_webui_ux/delete_item")
+        async def delete_item_endpoint(payload: dict = Body(...)):
+            table_name:str = payload.get('table_name')
+            item_id:str = payload.get('item_id')
 
-        if not table_name:
-            raise HTTPException(status_code=422, detail="Table name is required")
+            if not table_name:
+                raise HTTPException(status_code=422, detail="Table name is required")
+            if not item_id:
+                raise HTTPException(status_code=422, detail="Item ID is required")
 
-        db_manager = DatabaseManager.get_instance()
-        response = db_manager.delete_invalid_items(table_name)
-
-        if "Error" in response:
-            raise HTTPException(status_code=500, detail=response["Error"])
-
-        return response
+            db_manager = DatabaseManager.get_instance()
+            response = db_manager.delete_item(table_name, item_id)
+            if "Error" in response["message"]:
+                raise HTTPException(status_code=500, detail=response["message"])
+            return response
 
 
-    '''
-    @app.get("/sd_webui_ux/images/{filename:path}")
-    async def get_image(filename: str):
-        file_path = filename
+        @app.post("/sd_webui_ux/delete_invalid_items")
+        async def delete_invalid_items_endpoint(payload: dict = Body(...)):
+            table_name: str = payload.get('table_name')
 
-        if not os.path.isfile(file_path):
-            raise HTTPException(status_code=404, detail="File not found")
+            if not table_name:
+                raise HTTPException(status_code=422, detail="Table name is required")
 
-        return FileResponse(file_path)
-    '''
+            db_manager = DatabaseManager.get_instance()
+            response = db_manager.delete_invalid_items(table_name)
 
-    
-# Modify the lambda to pass db_tables_pages in case we need to init db_tables_pages in another module
-#script_callbacks.on_app_started(lambda _, app: api_uiux_db(_, app, db_tables_pages))
+            if "Error" in response:
+                raise HTTPException(status_code=500, detail=response["Error"])
+
+            return response
+
+
+        @app.post("/sd_webui_ux/import_update_table")
+        async def import_update_db_endpoint(payload: dict = Body(...)):
+            requested_tables = payload.get('table_name')
+            if not requested_tables:
+                raise HTTPException(status_code=422, detail="Table name(s) are required")
+            
+            if isinstance(requested_tables, str):
+                requested_tables = [requested_tables]
+            
+            refresh = payload.get('refresh', True)
+            
+            db_manager = DatabaseManager.get_instance()
+            generator = db_manager.import_tables_generator(
+                table_types=requested_tables,
+                refresh=refresh
+            )
+            
+            return StreamingResponse(generator, media_type="application/x-ndjson")
+        
+
+        '''
+        @app.get("/sd_webui_ux/images/{filename:path}")
+        async def get_image(filename: str):
+            file_path = filename
+
+            if not os.path.isfile(file_path):
+                raise HTTPException(status_code=404, detail="File not found")
+
+            return FileResponse(file_path)
+        '''
+
 
 
 

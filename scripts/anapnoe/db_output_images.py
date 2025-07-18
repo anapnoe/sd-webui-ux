@@ -8,6 +8,7 @@ import piexif
 import logging
 logger = logging.getLogger(__name__)
 
+from modules import script_callbacks
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from starlette.responses import FileResponse
@@ -18,13 +19,22 @@ import gradio as gr
 
 class OutputImagesFolderProcessor:
     _instance = None
+    _api_registered = False
 
     allowed_dirs = set()
 
     def __init__(self, images_folder):
+        #if OutputImagesFolderProcessor._instance:
+        #    raise RuntimeError("Singleton violation")
         self.images_folder = images_folder
         self.register_page()
         OutputImagesFolderProcessor._instance = self 
+        self.register_api()
+
+    def register_api(self):
+        if not self._api_registered:
+            script_callbacks.on_app_started(lambda _, app: self.api_uiux_output_image(app))
+            self._api_registered = True
 
     @classmethod
     def get_instance(cls):
@@ -44,8 +54,11 @@ class OutputImagesFolderProcessor:
             for byte_block in iter(lambda: f.read(4096), b""):
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
-
-    def get_images_and_data(self):
+    
+    def refresh(self):
+        pass
+    
+    def list_items(self):
         items = []
         for root, dirs, files in os.walk(self.images_folder):
             if 'thumbnails' in dirs:
@@ -138,14 +151,11 @@ class OutputImagesFolderProcessor:
         return FileResponse(str(filename_path), headers={"Accept-Ranges": "bytes"})
         
 
-    #def add_pages_to_demo(self, app: FastAPI):
-    #    app.add_api_route("/sd_styles/thumb/{filename}", self.fetch_file, methods=["GET"])
+    def api_uiux_output_image(_: gr.Blocks, app: FastAPI):
+        images_processor = OutputImagesFolderProcessor.get_instance()
 
-
-def api_uiux_output_image(_: gr.Blocks, app: FastAPI):
-    images_processor = OutputImagesFolderProcessor.get_instance()
-
-    @app.get("/sd_image/thumb/{filename:path}")
-    async def get_image(filename: str, t: str = None):
-        return images_processor.fetch_file(filename)
+        @app.get("/sd_image/thumb/{filename:path}")
+        async def get_image(filename: str, t: str = None):
+            return images_processor.fetch_file(filename)
+    
 
