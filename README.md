@@ -19,13 +19,15 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - **Database-Powered**: SQLite implementation enables rapid indexing/searching across: Extra Networks, Image Browser and Styles Manager.
 - **Virtualized Grid**: Dynamic virtualized grid with memory/DOM efficiency for: Checkpoints, Textual Inversions, LoRA, Hypernetworks, Image Browser, Styles Manager, Civitai Images & Models.
 
-## Performance Comparison
-| Metric          | SD web UI        | SD web UI UX   | Difference (%) |
-|-----------------|------------------|----------------|----------------|
-| **JS Heap**     | 96,945,380       | 55,048,600     | -43.2%         |
-| **Documents**   | 109              | 134            | +22.9%         |
-| **Nodes**       | 53,895           | 41,542         | -22.9%         |
-| **Listeners**   | 8,195            | 4,178          | -49.0%         |
+
+## Performance Comparison: SD web UI vs SD web UI UX
+### Core Metrics
+| Metric          | SD web UI        | SD web UI UX       | Difference (%) |
+|-----------------|------------------|--------------------|----------------|
+| **JS Heap**     | 96,945,380       | 55,048,600         | **-43.2%**     |
+| **Documents**   | 109              | 134                | **+22.9%**     |
+| **Nodes**       | 53,895           | 41,542             | **-22.9%**     |
+| **Listeners**   | 8,195            | 4,178              | **-49.0%**     |
 
 | **Visual Comparison** | |
 |---|---|
@@ -38,15 +40,35 @@ Please note that while this extension focuses solely on frontend optimizations, 
 - **Event Handling**: Stable Diffusion web UI UX requires 49% fewer event listeners  
 - **Resource Optimization**: Stable Diffusion web UI UX shows better overall resource management with significant reductions in memory consumption and event handling overhead
 
+## Performance Comparison: SD web UI Forge vs SD web UI UX Forge
+### Core Metrics
+| Metric          | SD web UI Forge  | SD web UI UX Forge | Difference (%) |
+|-----------------|------------------|--------------------|----------------|
+| **JS Heap**     | 56,121,196       | 45,049,884         | **-19.7%**     |
+| **Documents**   | 21               | 111                | **+428.6%**    |
+| **Nodes**       | 46,943           | 43,651             | **-7.0%**      |
+| **Listeners**   | 10,562           | 7,495              | **-29.0%**     |
+
+| **Visual Comparison** | |
+|---|---|
+| ![SD web UI Forge](/assets/images/stable-diffusion-webui-forge-insights.png) | ![SD web UI UX Forge](/assets/images/stable-diffusion-webui-ux-forge-insights.png) |
+| *lllyasviel - Stable Diffusion web UI Forge* | *Anapnoe - Stable Diffusion web UI UX Forge* |
+
+**Performance Analysis**
+- **Memory Efficiency**: Stable Diffusion web UI UX Forge uses 19% less JavaScript heap memory  
+- **DOM Efficiency**: Despite handling 428% more documents, Stable Diffusion web UI UX Forge uses 7% fewer DOM nodes  
+- **Event Handling**: Stable Diffusion web UI UX Forge requires 29% fewer event listeners  
+- **Resource Optimization**: Stable Diffusion web UI UX Forge shows better overall resource management with significant reductions in memory consumption and event handling overhead
+
 **Scalable Event Handling & DOM Optimization**:  
 SD webUI UX implements **event delegation** + **virtualized grid** for O(1) performance scaling.
 
-**Stable Diffusion web UI Constraints**:
+**Stable Diffusion web UI & web UI Forge Constraints**:
 - **DOM Bloat**: Loads all assets → 10k LoRAs create 60k+ DOM nodes (10k images + 50k+ container elements)
 - **Listener Overload**: ~5 listeners per asset → 50k+ listeners for 10K LoRAs
 - **O(n) Scaling**: Linear performance degradation
 
-**Stable Diffusion web UI UX optimized Architecture**:
+**Stable Diffusion web UI UX & web UI UX Forge optimized Architecture**:
 - **Virtualized Grid**: Renders only visible assets (~15 items in default viewport)  
 - **Event Delegation**: Single listener handles all interactions  
 - **DOM Recycling**: Dynamic pool manages thumbnail elements  
