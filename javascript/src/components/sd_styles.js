@@ -4,7 +4,8 @@ import {DynamicForm} from './dynamic_forms.js';
 import {DEFAULT_PATH, SD_VERSIONS_OPTIONS} from '../constants.js';
 import {updateInput, sendImageParamsTo} from "../utils/helpers.js";
 import {setupInputObservers, setupCheckpointChangeObserver} from '../utils/observers.js';
-import {requestGetData, requestPostData} from '../utils/api.js';
+import {requestGetData, requestPostData} from '../utils/api_external.js';
+import {resyncTableData} from '../utils/api.js';
 import {createVirtualItemElement} from '../utils/renderers.js';
 
 
@@ -167,13 +168,11 @@ export async function setupSdStyle(netkey, table, base_path) {
         applySdStylesPrompts(target, itemData, itemData.id);
     };
 
-    refresh.addEventListener('click', (e) => {
-        gradio_refresh.click();
-        setTimeout(() => {
-            apiParams.skip = 0;
-            vScroll.updateParamsAndFetch(apiParams, 0);
-            treeView.initialize();
-        }, 1000);
+    refresh.addEventListener('click', async () => {
+        const result = await resyncTableData(apiParams, vScroll, treeView);
+        if (!result.success) {
+            console.warn(`Resync failed: ${result.error}`);
+        }
     });
 
     // Highlight Selected Items
@@ -195,7 +194,7 @@ export async function setupSdStyle(netkey, table, base_path) {
             const selectedNames = new Set(cleanedNetwork.map(network => network.name));
             vScroll.selected = treeView.selected = selectedNames;
 
-            vScroll.renderItems();
+            vScroll.forceRenderItems();
             treeView.updateSelectedItems();
 
         }, 100);
@@ -256,7 +255,7 @@ export async function setupSdStyle(netkey, table, base_path) {
             vScroll.selected = treeView.selected = new Set();
         }
 
-        vScroll.renderItems();
+        vScroll.forceRenderItems()
         treeView.updateSelectedItems();
     }
 

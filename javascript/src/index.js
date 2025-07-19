@@ -4,7 +4,7 @@ import {loadTemplates} from './components/templates.js';
 import {setupAnimations, countEventListeners} from './utils/helpers.js';
 import {initUiUxComponents} from './components/components.js';
 import {removeRedundantExtraNetworks, removeStyleAssets} from './components/optimizations.js';
-import {showContributors, showMembers} from './utils/api.js';
+import {showContributors, showMembers} from './utils/api_external.js';
 import {switchMobile} from './utils/mobile.js';
 import {uiuxOptionSettings} from './components/settings.js';
 import {localStorageWrapper, onLocalStorageChange} from './utils/storage.js';
@@ -122,6 +122,11 @@ function onUiUxReady(content_div) {
         sd_output_images_nav.addEventListener('click', () => {
             setupSdOutputImages();
         }, {once: true});
+    }
+
+
+    if (!IS_BACKEND_OPTIMIZED) {
+        document.querySelector("#github-project-link").href = "https://github.com/anapnoe/sd-webui-ux"
     }
 
     const totalListeners = countEventListeners(document.body);

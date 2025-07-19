@@ -4,7 +4,8 @@ import {DynamicForm} from './dynamic_forms.js';
 import {DEFAULT_PATH, SD_VERSIONS_OPTIONS} from '../constants.js';
 import {updateInput, sendImageParamsTo} from "../utils/helpers.js";
 import {setupInputObservers, setupCheckpointChangeObserver} from '../utils/observers.js';
-import {requestGetData, requestPostData} from '../utils/api.js';
+import {requestGetData, requestPostData} from '../utils/api_external.js';
+import {resyncTableData} from '../utils/api.js';
 import {createVirtualItemElement} from '../utils/renderers.js';
 
 
@@ -173,20 +174,33 @@ export async function setupSdOutputImage(netkey, table, base_path) {
         applySdOutputImagesPrompts(target, itemData, itemData.id);
     };
 
+    refresh.addEventListener('click', async () => {
+        const result = await resyncTableData(apiParams, vScroll, treeView);
+        if (!result.success) {
+            console.warn(`Resync failed: ${result.error}`);
+        }
+    });
 
+    /*
     refresh.addEventListener('click', async (e) => {
         try {
-            const response = await fetch('/sd_webui_ux/import_update_table', {
+            const deleteResponse = await fetch('/sd_webui_ux/delete_invalid_items', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({table_name: 'images'})
+                body: JSON.stringify({table_name: table})
             });
+            if (!deleteResponse.ok) throw new Error(`DELETE failed! Status: ${deleteResponse.status}`);
             
-            if (!response.ok) throw new Error("Network error");
-    
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
+            const importResponse = await fetch('/sd_webui_ux/import_update_table', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({table_name: table})
+            });
+            if (!importResponse.ok) throw new Error(`IMPORT failed! Status: ${importResponse.status}`);
+            
             vScroll.showLoadingIndicator();
+            const reader = importResponse.body.getReader();
+            const decoder = new TextDecoder();
             
             while (true) {
                 const {done, value} = await reader.read();
@@ -199,23 +213,25 @@ export async function setupSdOutputImage(netkey, table, base_path) {
                     try {
                         const data = JSON.parse(line);
                         vScroll.updateLoadingIndicator(Math.round(data.progress));
-                        console.log(`Status: ${data.status}, Processed ${data.processed}/${data.total} (${data.progress}%)`);
+                        console.log(`Processed ${data.processed}/${data.total} (${data.progress}%)`);
                     } catch (e) {
-                        console.error('Error parsing JSON:', e);
+                        console.error('JSON parse error:', e, 'Raw:', line);
                     }
                 }
             }
-    
-            vScroll.hideLoadingIndicator();
+            
+            //vScroll.hideLoadingIndicator();
             apiParams.skip = 0;
             await vScroll.updateParamsAndFetch(apiParams, 0);
             await treeView.initialize();
-            
-        } catch (e) {
-            console.error("Refresh error:", e);
+    
+        } catch (error) {
+            console.error('Operation failed:', error);
             vScroll.hideLoadingIndicator();
         }
     });
+    */
+
 
     // Highlight Selected Items
     function selectItems(e) {
@@ -236,7 +252,7 @@ export async function setupSdOutputImage(netkey, table, base_path) {
             const selectedNames = new Set(cleanedNetwork.map(network => network.name));
             vScroll.selected = treeView.selected = selectedNames;
 
-            vScroll.renderItems();
+            vScroll.forceRenderItems();
             treeView.updateSelectedItems();
 
         }, 100);
@@ -297,7 +313,7 @@ export async function setupSdOutputImage(netkey, table, base_path) {
             vScroll.selected = treeView.selected = new Set();
         }
 
-        vScroll.renderItems();
+        vScroll.forceRenderItems();
         treeView.updateSelectedItems();
     }
 

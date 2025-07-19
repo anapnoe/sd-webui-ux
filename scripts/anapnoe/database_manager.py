@@ -78,99 +78,6 @@ class DatabaseManager:
     def get_table_instance(cls, table_name: str):
         return cls._registered_table_classes.get(table_name.lower())
 
-    '''
-    def import_tables_generator(
-        self, 
-        table_types: List[str],
-        refresh: bool = False
-    ):
-        # Filter to requested types
-        pages = {}
-        for t in table_types:
-            if t in self._registered_table_classes:
-                pages[t] = self._registered_table_classes[t]
-            else:
-                logger.warning(f"Skipping unregistered table type: {t}")
-        
-        if not pages:
-            yield json.dumps({
-                "status": "error",
-                "message": "No valid table types to process"
-            }) + "\n"
-            return
-            
-        yield from self._generate_import_process(pages, refresh)
-
-
-    def _generate_import_process(self, pages: dict, refresh: bool):
-    
-        total_items = 0
-        for page in pages.values():
-            items = list(page.list_items()) or []
-            total_items += len(items)
-        
-        if total_items == 0:
-            yield json.dumps({
-                "status": "complete", 
-                "success": True,
-                "processed": 0, 
-                "total": 0, 
-                "progress": 100.0
-            }) + "\n"
-            return
-
-        processed = 0
-
-        yield json.dumps({
-            "status": "starting", 
-            "total": total_items,
-            "processed": 0, 
-            "progress": 0.0
-        }) + "\n"
-
-        for type_name, page in pages.items():
-            table_name = type_name.lower()
-            items = list(page.list_items()) or []
-            
-            if not items:
-                continue
-
-            if not self.table_exists(table_name):
-                try:
-                    first_item = items[0]
-                    if first_item:
-                        columns = {k: v[1] for k, v in first_item.items()}
-                        self.create_table(table_name, columns)
-                except Exception as e:
-                    logger.error(f"Error creating table {table_name}: {e}")
-                    continue
-            
-            page.refresh()
-            for item in items:
-                try:
-                    self.import_item(table_name, item)
-                    processed += 1
-                    progress = min(100.0, (processed / total_items) * 100)
-                    
-                    yield json.dumps({
-                        "status": "processing",
-                        "current_table": table_name,
-                        "processed": processed,
-                        "total": total_items,
-                        "progress": progress
-                    }) + "\n"
-                    
-                except Exception as e:
-                    logger.error(f"Error importing item {item.get('name', '')}: {e}")
-
-        yield json.dumps({
-            "status": "complete",
-            "success": True,
-            "processed": processed,
-            "total": total_items,
-            "progress": 100.0
-        }) + "\n"
-    '''
 
     def import_tables_generator(self, table_types: List[str], refresh: bool = False):
         pages = {}
@@ -520,7 +427,6 @@ class DatabaseManager:
                 logger.info(f"Item {item_filtered['name']} not found in source. Updating paths.")
                 self.update_item_paths(table_name, item_filtered)
                 return
-            
             
             elif item_exists_by_filename:
                 if item_allow_update:
