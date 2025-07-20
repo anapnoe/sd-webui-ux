@@ -7,14 +7,13 @@
                     A bespoke, highly adaptable, blazing fast user interface for Stable Diffusion, engineered for unmatched user experience and performance.
                 </p>
                 <p>
-                    This extension is compatible with both backends:
-                    <a href="https://github.com/AUTOMATIC1111/stable-diffusion-webui" target="_blank">Stable Diffusion web UI</a>
-                    and
-                    <a href="https://github.com/lllyasviel/stable-diffusion-webui-forge" target="_blank">Stable Diffusion web UI Forge</a>.
+                    Compatible with both <a href="https://github.com/AUTOMATIC1111/stable-diffusion-webui" target="_blank">Stable Diffusion web UI</a>
+                    and <a href="https://github.com/lllyasviel/stable-diffusion-webui-forge" target="_blank">Stable Diffusion web UI Forge</a> backends.
                 </p>
                 <p>
-                    Please note that this extension focuses solely on frontend optimizations to significantly reduce DOM memory usage and improve loading speed. In contrast, the <a href="https://github.com/anapnoe/stable-diffusion-webui-ux" target="_blank">Stable Diffusion web UI UX</a> and its variant, <a href="https://github.com/anapnoe/stable-diffusion-webui-ux-forge" target="_blank">Stable Diffusion web UI UX Forge</a>, incorporate backend optimizations for an even better and faster user experience. Together, these changes ensure a more effective and enjoyable interaction with the application.
+                    This extension performs frontend optimizations <b>post-DOM load</b> (modifying elements after they're created), meaning developer tools may show initial resource allocation before optimizations apply. In contrast <a href="https://github.com/anapnoe/stable-diffusion-webui-ux" target="_blank">Stable Diffusion web UI UX</a> & <a href="https://github.com/anapnoe/stable-diffusion-webui-ux-forge" target="_blank">Stable Diffusion web UI UX Forge</a> implement <b>upstream backend optimizations</b> that prevent unnecessary element creation entirely, enabling faster performance from initialization.
                 </p>
+                
             </div>
         </div>
         <div class="flexbox col">

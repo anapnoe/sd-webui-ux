@@ -11,7 +11,7 @@
                 </a>
             </button>
             <button class="ae-button">
-                <a title="Github" target="_blank" href="https://github.com/anapnoe/stable-diffusion-webui-ux">
+                <a id="github-project-link" title="Github" target="_blank" href="https://github.com/anapnoe/stable-diffusion-webui-ux-forge">
                     <div class="mask-icon icon-github"></div>
                     <span>Github</span>
                 </a>
@@ -85,8 +85,18 @@
                 <div class="mask-icon icon-hypernetworks"></div>
                 <span>Hypernetworks</span>
             </button>
+            <button title="Styles" tabItemId="#layout_db_styles" tabGroup="extra_networks" id="sd_styles_nav" class="xtabs-tab hidden">
+                <div class="mask-icon icon-stylez"></div>
+                <span>Styles</span>
+            </button>
+
+            <button title="Images" tabItemId="#layout_db_output_images" tabGroup="extra_networks" id="sd_output_images_nav" class="xtabs-tab hidden">
+                <div class="mask-icon icon-gallery"></div>
+                <span>Browser</span>
+            </button>
+
             <div class="flexbox col spacer-v"></div>
-            <div id="civitai_explorer_nav" class="flexbox col shrink hidden">
+            <div id="civitai_explorer_nav" class="flexbox col hidden">
                 <button title="Civitai Images" id="civitai_nav_images" tabItemId="#civitai_images_tabitem" tabGroup="extra_networks" class="xtabs-tab">
                     <div class="mask-icon icon-civitai-images"></div>
                     <span>Images</span>
@@ -97,16 +107,8 @@
                 </button>
                 <div class="flexbox col spacer-v"></div>
             </div>
-            
-            <button title="Styles" tabItemId="#layout_db_styles" tabGroup="extra_networks" id="sd_styles_nav" class="xtabs-tab hidden">
-                <div class="mask-icon icon-stylez"></div>
-                <span>Styles</span>
-            </button>
 
-            <button title="Images" tabItemId="#layout_db_output_images" tabGroup="extra_networks" id="sd_output_images_nav" class="xtabs-tab hidden">
-                <div class="mask-icon icon-gallery"></div>
-                <span>Browser</span>
-            </button>
+
         </div>
     </div>
     <div class="accordion-container">
