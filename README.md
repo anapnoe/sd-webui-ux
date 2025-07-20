@@ -96,8 +96,9 @@ SD webUI UX implements **event delegation** + **virtualized grid** for O(1) perf
 ## Todo
 - [ ] Separate and organize CSS into individual files (in progress).
 - [ ] Create documentation for component integration into UI/UX.
-- [ ] Automatically update the Image Browser's SQLite database row upon inference completion.
+- [ ] Automatically update the Image Browser's SQLite database when files added or removed.
 - [ ] Improve Civitai Models download manager.
+- [ ] Add virtualization for **Tree View** component.
 - [ ] Develop framework-specific npm packages for the UI/UX Dynamic Virtualized Grid component, supporting React, Vue, Svelte, Solid, and Qwik.
 
 ## Workspaces UI-UX (in progress)(early access)
