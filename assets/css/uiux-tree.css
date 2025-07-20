@@ -55,7 +55,8 @@
     border-width: 0 0 var(--lw) var(--lw);
 }
 
-.tree-view summary {
+.tree-view summary{
+    padding-right: 70px;
     display: block;
     cursor: pointer;
     margin-left: calc(var(--radius));

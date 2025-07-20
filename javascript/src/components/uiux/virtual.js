@@ -24,7 +24,8 @@ export function VirtualScroll(container,
     this.useDataFetching = true;
     this.isInit = false;
 
-    this.resolvedRenderMethod = this.renderItemsByIndex;
+    this.resolvedRenderMethod = this.renderItems;//ByIndex;
+    //this.forceRenderItems = this.renderItems;//ByIndex;
     this.selected;
 
     this.smoothScrolling = true;
@@ -32,6 +33,11 @@ export function VirtualScroll(container,
     this.zoom_scale = 1;
     this.scrollDelta = 0;
     this.x = this.y = 0;
+
+    this.renderedRange = { start: -1, end: -1 };
+    this.pendingRender = null;
+    this.scrollEndTimer = null;
+    this.lastScrollEventTime = 0;
 
     this.createContainer();
     this.createSentinels();
@@ -56,8 +62,7 @@ Object.assign(VirtualScroll.prototype, {
                 this.updateDimensions();
             }
         } else if (this.data.length > 0) {
-            this.itemsWrapper.classList.remove("hidden");
-            this.forceRenderItems(); // this is used when renderItemsByIndex is selected as renderer
+            //this.itemsWrapper.classList.remove("hidden");
             //this.renderItems();
             this.updateDimensions(true);
         } else {
@@ -177,7 +182,7 @@ Object.assign(VirtualScroll.prototype, {
 
 
     /* Rendering Methods */
-    
+    /*
     getItemsToRender() {
         const start = Math.max(0, this.startIndex);
         const end = Math.min(this.data.length, this.startIndex + this.itemsPerPage);
@@ -234,6 +239,89 @@ Object.assign(VirtualScroll.prototype, {
                 this.renderedItems[idx].remove();
                 delete this.renderedItems[idx];
             }
+        }
+    },
+    */
+
+    getItemsToRender() {
+        const start = Math.max(0, this.startIndex);
+        const end = Math.min(this.data.length, start + this.itemsPerPage);
+        return { start, end };
+    },
+
+    renderItems(scrollDirection = 'increase') {
+        if (this.pendingRender) {
+            cancelAnimationFrame(this.pendingRender);
+            this.pendingRender = null;
+        }
+    
+        const { start, end } = this.getItemsToRender();
+
+        if (this.renderedRange.start === start && this.renderedRange.end === end) {
+            return;
+        }
+    
+        this.pendingRender = requestAnimationFrame(() => {
+            const startTime = performance.now();
+            this._executeRender(start, end, scrollDirection);
+            const duration = performance.now() - startTime;
+            
+            if (duration > 2) {
+                console.warn(`Render time: ${duration.toFixed(2)}ms`);
+            }
+            
+            this.renderedRange = { start, end };
+            this.pendingRender = null;
+        });
+    },
+    
+    _executeRender(start, end, scrollDirection) {
+        const currentRange = new Set();
+        const fragment = document.createDocumentFragment();
+        
+        for (let idx = start; idx < end; idx++) {
+            currentRange.add(idx);
+            
+            if (!this.renderedItems[idx]) {
+                const item = this.data[idx];
+                if (!item) continue;
+                
+                const node = this.createItemElement(item, idx);
+                node.dataset.index = idx;
+                node.dataset.id = item.id;
+                fragment.appendChild(node);
+                this.renderedItems[idx] = node;
+            }
+        }
+        
+        if (fragment.childElementCount > 0) {
+            if (scrollDirection === 'increase') {
+                this.itemsWrapper.appendChild(fragment);
+            } else {
+                this.itemsWrapper.insertBefore(fragment, this.itemsWrapper.firstChild);
+            }
+        }
+        
+        for (const idx in this.renderedItems) {
+            if (!currentRange.has(Number(idx))) {
+                this.renderedItems[idx].remove();
+                delete this.renderedItems[idx];
+            }
+        }
+
+        this.renderedRange = { start, end };
+        this.updateSentinels();
+        
+    },
+
+    forceRenderItems() {
+        try {
+            this.itemsWrapper.innerHTML = '';
+            this.renderedItems = {};
+            this.renderedRange = { start: -1, end: -1 };
+            this.renderItems();
+        } catch (e) {
+            console.error("Force render error:", e);
         }
     },
 
@@ -323,87 +411,45 @@ Object.assign(VirtualScroll.prototype, {
         }
     },
 
-    updateScroll() {
-        const scrollPos = this.container[this.scrollProp];
-        const { lastScrollPos, itemSize } = this;
-
-        const sindex = Math.floor(scrollPos / itemSize) * this.itemsPerRow;
-        this.startIndex = sindex;
-
-        //const threshold = Math.abs(itemSize) * 0.9;
-        //const scrollDelta = Math.abs(scrollPos - lastScrollPos);
-
-        const scrollDirection = scrollPos > lastScrollPos ? 'increase' : 'decrease';
-
-        //if ((scrollDelta > threshold)) {
-
-        this.lastScrollPos = scrollPos;
-
-        if (scrollDirection === 'increase' && this.useDataFetching && !this.isFetching && this.params.cursor) {
-            if (sindex >= this.maxStartIndex) {
-                this.isFetching = true;
-                this.fetchUpdateData();
-                return;
-            }
-        }
-
-        //if (this.startIndex <= this.maxStartIndex) {
-        //this.resolvedRenderMethod(scrollDirection);
-        //}
-
-        //.time('Render Time'); // Benchmark
-        //this.resolvedRenderMethod(scrollDirection);
-
-        if (this.scrollAnimationFrame) {
-            cancelAnimationFrame(this.scrollAnimationFrame);
-        }
-
-        this.scrollAnimationFrame = requestAnimationFrame(() => {
-            const existingItems = this.itemsWrapper.children;
-            if (existingItems.length > 0) {
-                const firstRenderedIndex = parseInt(existingItems[0].dataset.index);
-                const lastRenderedIndex = parseInt(existingItems[existingItems.length - 1].dataset.index);
-                if (firstRenderedIndex > lastRenderedIndex) {
-                    //this.forceRenderItems();                   
-                    if (this.renderTimeout) clearTimeout(this.renderTimeout);
-                    this.renderTimeout = setTimeout(() => {
-                        console.warn('Out of order items detected', { firstRenderedIndex, lastRenderedIndex });
-                        this.forceRenderItems();
-                    }, 300);
-                } else {
-                    this.resolvedRenderMethod(scrollDirection);
-                }
-            } else {
-                this.forceRenderItems();
-            }
-        });
-
-        //.timeEnd('Render Time');
-        //}
-
-
-    },
-
-    /* Handlers */
     scrollHandler() {
-
-        if (this.scrollTimeout) {
-            clearTimeout(this.scrollTimeout);
-        }
-
-        if (this.scrollAnimationFrame) {
-            cancelAnimationFrame(this.scrollAnimationFrame);
-        }
-
-        this.scrollAnimationFrame = requestAnimationFrame(() => {
-            this.updateScroll();
-        });
-
-        //this.updateScroll();
+        //this.lastScrollEventTime = performance.now();
+        //if (this.scrollEndTimer) clearTimeout(this.scrollEndTimer);
+        //this.scrollEndTimer = setTimeout(() => this.handleScrollEnd(), 100);
+        if (this.scrollAnimationFrame) cancelAnimationFrame(this.scrollAnimationFrame);
+        this.scrollAnimationFrame = requestAnimationFrame(() => this.updateScroll());
         this.scrollTimeout = setTimeout(() => {
-            //this.updateDimensions();
             this.updateScroll();
         }, 100);
+    },
+    
+    //handleScrollEnd() {
+        //const timeSinceLastScroll = performance.now() - this.lastScrollEventTime;
+        //if (timeSinceLastScroll < 100) return;
+        //this.validateAndFixRender();
+    //},
+    
+    updateScroll() {
+        const scrollPos = this.container[this.scrollProp];
+        const scrollDirection = scrollPos > this.lastScrollPos ? 'increase' : 'decrease';
+        this.lastScrollPos = scrollPos;
+    
+        const sindex = Math.floor(scrollPos / this.itemSize) * this.itemsPerRow;
+        
+        if (scrollDirection === 'increase' && 
+            this.useDataFetching && 
+            !this.isFetching && 
+            this.params.cursor && 
+            sindex >= this.maxStartIndex
+        ) {
+            this.isFetching = true;
+            this.fetchUpdateData();
+            return;
+        }
+    
+        if (this.startIndex !== sindex) {
+            this.startIndex = sindex;
+            this.renderItems(scrollDirection);
+        }
     },
 
     clickHandler(e) {
@@ -512,6 +558,7 @@ Object.assign(VirtualScroll.prototype, {
             if (this.resizeTimer) clearTimeout(this.resizeTimer);
             if (!this.invalidateScrollIndex) this.invalidateScrollIndex = this.startIndex;
             this.resizeTimer = setTimeout(() => {
+                //console.warn("ResizeObserver", this.invalidateScrollIndex);
                 this.updateDimensions(true);
             }, 100);
         });
@@ -778,7 +825,7 @@ Object.assign(VirtualScroll.prototype, {
 
     async fetchUpdateData(renew = false) {
         this.showLoadingIndicator();
-        //console.log("renew data:", renew);
+        //console.warn("renew data:", renew);
         const newData = await this.fetchData(percentage => this.updateLoadingIndicator(percentage));
         if (newData) {
             this.total = newData.total;

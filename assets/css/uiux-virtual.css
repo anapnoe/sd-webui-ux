@@ -347,6 +347,7 @@ span.extra-type {
 .ae-virtual .item {
     display: flex;
     flex-direction: column;
+    
 }
 
 .ae-virtual .item-info {
@@ -511,9 +512,11 @@ span.extra-type {
     line-height: var(--ae-input-height) !important;
 }
 
-/*
+.ae-virtual .item {
+    background-color : rgb(255 255 255 / 0%);
+}
 .ae-virtual:not(.full) .item-img {
-    filter: grayscale(var(--ae-uiux_exnet_image_tint));
+    filter: grayscale(calc(var(--ae-uiux_exnet_image_tint) * 10));
     mix-blend-mode: multiply;
 }
 
@@ -533,4 +536,3 @@ span.extra-type {
     background: var(--ae-secondary-color);
     opacity: var(--ae-uiux_exnet_image_tint);
 }
-*/
