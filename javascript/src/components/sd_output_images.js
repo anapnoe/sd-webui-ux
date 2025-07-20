@@ -37,6 +37,8 @@ export async function setupSdOutputImage(netkey, table, base_path) {
     const rebuild_thumbs = document.querySelector(`#${netkey}_rebuild`);
     const searchClear = document.querySelector(`#${netkey}_clear`);
 
+    const treeViewButton = document.querySelector(`#${netkey}_show-dirs`);
+
     const gradio_refresh = document.querySelector("#refresh_output_images_database");
 
     selected_sd_output_images[`txt2img_${table}`] = [];
@@ -135,102 +137,68 @@ export async function setupSdOutputImage(netkey, table, base_path) {
 
 
     // TreeView
-    treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_items_by_path', table, base_path);
-    treeView.initialize();
+    function createTreeView() {
+        treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_items_by_path', table, base_path);
+        treeView.initialize();
 
-    treeView.createFileItem = function(tree, key) {
-        const li = document.createElement('li');
-        li.dataset.name = tree[key].name;
-        li.dataset.id = tree[key].id;
-        if (this.selected?.has(tree[key].name)) {
-            li.classList.add('active');
+        treeView.createFileItem = function(tree, key) {
+            const li = document.createElement('li');
+            li.dataset.name = tree[key].name;
+            li.dataset.id = tree[key].id;
+            if (this.selected?.has(tree[key].name)) {
+                li.classList.add('active');
+            }
+            li.innerHTML = `<summary class="tree-file">${tree[key].name}</summary>`;
+            li.classList.add('li-file');
+
+            const itemEditMeta = document.createElement('button');
+            itemEditMeta.className = `edit-meta edit-button card-button`;
+
+            const copyPath = document.createElement('button');
+            copyPath.className = `copy-path copy-path-button card-button`;
+
+            const itemActions = document.createElement('div');
+            itemActions.className = `item-actions`;
+
+            itemActions.appendChild(copyPath);
+            itemActions.appendChild(itemEditMeta);
+
+            li.appendChild(itemActions);
+            return li;
+        };
+
+        treeView.onFolderClicked = function(target, path, active) {
+            //console.log(path, active);
+            //searchInput.value = active ? path : "";
+            //updateInput(searchInput);
+        };
+
+        treeView.onFileClicked = function(target, itemData) {
+            applySdOutputImagesPrompts(target, itemData, itemData.id);
+        };
+    }
+
+    treeViewButton.addEventListener('click', () => {
+        createTreeView();
+    });
+
+    function updateTreeViewSelectedItems() {
+        if (treeView) {
+            treeView.selected = vScroll.selected;
+            treeView.updateSelectedItems();
         }
-        li.innerHTML = `<summary class="tree-file">${tree[key].name}</summary>`;
-        li.classList.add('li-file');
-
-        const itemEditMeta = document.createElement('button');
-        itemEditMeta.className = `edit-meta edit-button card-button`;
-
-        const copyPath = document.createElement('button');
-        copyPath.className = `copy-path copy-path-button card-button`;
-
-        const itemActions = document.createElement('div');
-        itemActions.className = `item-actions`;
-
-        itemActions.appendChild(copyPath);
-        itemActions.appendChild(itemEditMeta);
-
-        li.appendChild(itemActions);
-        return li;
-    };
-
-    treeView.onFolderClicked = function(target, path, active) {
-        //console.log(path, active);
-        //searchInput.value = active ? path : "";
-        //updateInput(searchInput);
-    };
-
-    treeView.onFileClicked = function(target, itemData) {
-        applySdOutputImagesPrompts(target, itemData, itemData.id);
-    };
+    }
 
     refresh.addEventListener('click', async () => {
-        const result = await resyncTableData(apiParams, vScroll, treeView);
+        const result = await resyncTableData(apiParams, vScroll);
+        if (treeView) {
+            await treeView.initialize();
+        }
         if (!result.success) {
             console.warn(`Resync failed: ${result.error}`);
         }
     });
 
-    /*
-    refresh.addEventListener('click', async (e) => {
-        try {
-            const deleteResponse = await fetch('/sd_webui_ux/delete_invalid_items', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({table_name: table})
-            });
-            if (!deleteResponse.ok) throw new Error(`DELETE failed! Status: ${deleteResponse.status}`);
-            
-            const importResponse = await fetch('/sd_webui_ux/import_update_table', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({table_name: table})
-            });
-            if (!importResponse.ok) throw new Error(`IMPORT failed! Status: ${importResponse.status}`);
-            
-            vScroll.showLoadingIndicator();
-            const reader = importResponse.body.getReader();
-            const decoder = new TextDecoder();
-            
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
-                
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n').filter(line => line.trim());
-                
-                for (const line of lines) {
-                    try {
-                        const data = JSON.parse(line);
-                        vScroll.updateLoadingIndicator(Math.round(data.progress));
-                        console.log(`Processed ${data.processed}/${data.total} (${data.progress}%)`);
-                    } catch (e) {
-                        console.error('JSON parse error:', e, 'Raw:', line);
-                    }
-                }
-            }
-            
-            //vScroll.hideLoadingIndicator();
-            apiParams.skip = 0;
-            await vScroll.updateParamsAndFetch(apiParams, 0);
-            await treeView.initialize();
-    
-        } catch (error) {
-            console.error('Operation failed:', error);
-            vScroll.hideLoadingIndicator();
-        }
-    });
-    */
 
 
     // Highlight Selected Items
@@ -250,10 +218,10 @@ export async function setupSdOutputImage(netkey, table, base_path) {
             selected_sd_output_images[`${prompt_focused}_${table}`] = cleanedNetwork;
 
             const selectedNames = new Set(cleanedNetwork.map(network => network.name));
-            vScroll.selected = treeView.selected = selectedNames;
+            vScroll.selected = selectedNames;
 
             vScroll.forceRenderItems();
-            treeView.updateSelectedItems();
+            updateTreeViewSelectedItems();
 
         }, 100);
     }
@@ -304,17 +272,18 @@ export async function setupSdOutputImage(netkey, table, base_path) {
                     });
 
                     selected_sd_output_images[`${prompt_focused}_${table}`] = cleanedNetwork;
-                    vScroll.selected = treeView.selected = new Set(cleanedNetwork.map(network => network.name));
+                    vScroll.selected = new Set(cleanedNetwork.map(network => network.name));
 
                 });
             }
 
         } else {
-            vScroll.selected = treeView.selected = new Set();
+            vScroll.selected = new Set();
         }
 
         vScroll.forceRenderItems();
-        treeView.updateSelectedItems();
+        updateTreeViewSelectedItems();
+        
     }
 
     document.querySelectorAll('#txt2img_prompt textarea, #img2img_prompt textarea, #txt2img_neg_prompt textarea, #img2img_neg_prompt textarea').forEach(textarea => {
@@ -363,8 +332,9 @@ export async function setupSdOutputImage(netkey, table, base_path) {
             sendImageParamsTo(imgUrl, `#pnginfo_send_${prompt_focused} button`);
         } else if (itemData.type === "Image") {
             if (vScroll.isFullSize) return;
+            //console.warn(prompt_focused, window.UIUX.FOCUS_PROMPT);
             window.cardClicked(prompt_focused, prompt, neg_prompt, true);
-            selected_sd_output_images[`${prompt_focused}_output_images`].push({id: itemData.id, name: itemData.name, value: prompt});
+            selected_sd_output_images[`${prompt_focused}_${table}`].push({id: itemData.id, name: itemData.name, value: prompt});
         }
     }
 
@@ -378,12 +348,13 @@ export async function setupSdOutputImage(netkey, table, base_path) {
         requestPostData(url, params, function(result) {
             //console.log(result);
             vScroll.removeDataById(itemId);
-            treeView.update();
+            treeView?.update();
         });
     }
 
     // User Metadata Form
     function createUserMetaForm(itemData, item_id) {
+        createTreeView();
         const table = "images";
         const output_images_folders = treeView.subpaths;
         const output_images_folders_options = new Set(output_images_folders.map(folder => folder.relativePath));
@@ -529,7 +500,7 @@ export async function setupSdOutputImage(netkey, table, base_path) {
             //data.local_preview = local_preview_path_value;
             vScroll.updateDataById(newdata, newdata.id);
             //treeView.updateDataById(data, item_id);
-            treeView.update();
+            treeView?.update();
         };
 
         function replacePreviewImage() {
@@ -564,7 +535,7 @@ export async function setupSdOutputImage(netkey, table, base_path) {
                     vScroll.hideDetail();
                     apiParams.skip = 0;
                     vScroll.updateParamsAndFetch(apiParams, 0);
-                    treeView.update();
+                    treeView?.update();
 
                 });
             });

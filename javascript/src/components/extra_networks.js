@@ -73,7 +73,7 @@ async function requestGetMetaData(type, name, vScroll, container) {
 const selected_networks = {};
 
 export async function setupExtraNetwork(netkey, table, base_path) {
-
+    //const gradio_refresh = document.querySelector("#refresh_database");
     const container = document.querySelector(`#${netkey}_cardholder`);
     const searchInput = document.querySelector(`#${netkey}_search`);
     const sortSelect = document.querySelector(`#${netkey}_sort`);
@@ -83,8 +83,23 @@ export async function setupExtraNetwork(netkey, table, base_path) {
     const rebuild_thumbs = document.querySelector(`#${netkey}_rebuild`);
     const searchClear = document.querySelector(`#${netkey}_clear`);
     //const treeViewContainer = document.querySelector(`#${netkey}_tree_view`);
+    const treeViewButton = document.querySelector(`#${netkey}_show-dirs`);
+    const search_row = document.querySelector(`#${netkey}_search_row`);
+    
+    const search_area = document.querySelector(`#layout_db_${netkey} > div`);
+    const observer = new ResizeObserver(() => {
+        if (!search_area || !treeViewButton) return;
+        const searchAreaHeight = search_area.offsetHeight;
+        const buttonHeight = treeViewButton.offsetHeight + 10;
+        if (searchAreaHeight > buttonHeight) {
+            search_row.style.order = "100";
+        } else {
+            search_row.style.order = "";
+        }
+    });
+    observer.observe(search_area);
 
-    const gradio_refresh = document.querySelector("#refresh_database");
+    
 
     selected_networks[`txt2img_${table}`] = [];
     selected_networks[`img2img_${table}`] = [];
@@ -203,16 +218,9 @@ export async function setupExtraNetwork(netkey, table, base_path) {
         e.stopPropagation();
     };
 
-
     rebuild_thumbs.addEventListener('click', (e) => {
-        /*
-        requestPostData('/sd_webui_ux/generate-thumbnail', {table_name: table, file_id: parseInt(fileId)}, (metadata) => {
-            document.getElementById('status').innerText = metadata.message;
-        });
-        */
         requestPostData('/sd_webui_ux/generate-thumbnails', {table_name: table}, function(data) {
             console.log(data);
-            //gradio_refresh.click();
             setTimeout(() => {
                 apiParams.skip = 0;
                 vScroll.updateParamsAndFetch(apiParams, 0);
@@ -234,77 +242,92 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
     vScroll.updateParamsAndFetch(apiParams, 0);
 
+    let checkpointObserver;
+    if (table !== 'checkpoint') {
+        document.querySelectorAll('#txt2img_prompt textarea, #img2img_prompt textarea, #txt2img_neg_prompt textarea, #img2img_neg_prompt textarea').forEach(textarea => {
+            textarea.addEventListener('input', selectItems);
+            textarea.addEventListener('focus', selectItemsFromDB);
+        });
+    } else {
+        checkpointObserver = setupCheckpointChangeObserver(vScroll);
+    }
+    
+    let treeView;
+    function createTreeView() {
+        treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_items_by_path', table, base_path);
+        treeView.initialize();
 
-    // TreeView
-    const treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_items_by_path', table, base_path);
-    treeView.initialize();
+        checkpointObserver?.setTreeViewCallback((selectedSet) => {
+            treeView.selected = selectedSet;
+            treeView.updateSelectedItems();
+        });
+        
 
-    treeView.createFileItem = function(tree, key) {
-        const li = document.createElement('li');
-        li.dataset.name = tree[key].name;
-        li.dataset.id = tree[key].id;
-        if (this.selected?.has(tree[key].name)) {
-            li.classList.add('active');
-        }
-        li.innerHTML = `<summary class="tree-file">${tree[key].name}</summary>`;
-        li.classList.add('li-file');
+        treeView.createFileItem = function(tree, key) {
+            const li = document.createElement('li');
+            li.dataset.name = tree[key].name;
+            li.dataset.id = tree[key].id;
+            if (this.selected?.has(tree[key].name)) {
+                li.classList.add('active');
+            }
+            li.innerHTML = `<summary class="tree-file">${tree[key].name}</summary>`;
+            li.classList.add('li-file');
 
-        const itemEditMeta = document.createElement('button');
-        itemEditMeta.className = `edit-meta edit-button card-button`;
+            const itemEditMeta = document.createElement('button');
+            itemEditMeta.className = `edit-meta edit-button card-button`;
 
-        const copyPath = document.createElement('button');
-        copyPath.className = `copy-path copy-path-button card-button`;
+            const copyPath = document.createElement('button');
+            copyPath.className = `copy-path copy-path-button card-button`;
 
-        const itemActions = document.createElement('div');
-        itemActions.className = `item-actions`;
+            const itemActions = document.createElement('div');
+            itemActions.className = `item-actions`;
 
-        itemActions.appendChild(copyPath);
+            itemActions.appendChild(copyPath);
 
-        if (tree[key].metadata_exists) {
-            const itemShowMeta = document.createElement('button');
-            itemShowMeta.className = `show-meta metadata-button card-button`;
-            itemActions.appendChild(itemShowMeta);
-        }
+            if (tree[key].metadata_exists) {
+                const itemShowMeta = document.createElement('button');
+                itemShowMeta.className = `show-meta metadata-button card-button`;
+                itemActions.appendChild(itemShowMeta);
+            }
 
-        itemActions.appendChild(itemEditMeta);
+            itemActions.appendChild(itemEditMeta);
 
-        li.appendChild(itemActions);
-        return li;
-    };
+            li.appendChild(itemActions);
+            return li;
+        };
 
-    treeView.onFolderClicked = function(target, path, active) {
-        //console.log(path, active);
-        //searchInput.value = active ? path : "";
-        //updateInput(searchInput);
-    };
+        treeView.onFolderClicked = function(target, path, active) {
+            //console.log(path, active);
+            //searchInput.value = active ? path : "";
+            //updateInput(searchInput);
+        };
 
-    treeView.onFileClicked = function(target, itemData) {
-        applyExtraNetworkPrompts(target, itemData, itemData.id);
-    };
+        treeView.onFileClicked = function(target, itemData) {
+            applyExtraNetworkPrompts(target, itemData, itemData.id);
+        };
+    }
 
-    /*
-    refresh.addEventListener('click', (e) => {
-        try {
-            gradio_refresh.click();
-            setTimeout(() => {
-                apiParams.skip = 0;
-                vScroll.updateParamsAndFetch(apiParams, 0);
-                treeView.initialize();
-            }, 1000);
-
-        } catch (error) {
-            console.error('Failed to fetch data:', error);
-        }
-    });
-    */
+    treeViewButton.addEventListener('click', () => {
+        createTreeView();
+    }, {once: true});
 
     refresh.addEventListener('click', async () => {
-        const result = await resyncTableData(apiParams, vScroll, treeView);
+        const result = await resyncTableData(apiParams, vScroll);
+        if (treeView) {
+            await treeView.initialize();
+        }
         if (!result.success) {
             console.warn(`Resync failed: ${result.error}`);
         }
     });
 
+    function updateTreeViewSelectedItems() {
+        if (treeView) {
+            treeView.selected = vScroll.selected;
+            treeView.updateSelectedItems();
+        }
+    }
+    
 
     // Highlight Selected Items
     function selectItems(e) {
@@ -323,10 +346,10 @@ export async function setupExtraNetwork(netkey, table, base_path) {
             selected_networks[`${prompt_focused}_${table}`] = cleanedNetwork;
 
             const selectedNames = new Set(cleanedNetwork.map(network => network.name));
-            vScroll.selected = treeView.selected = selectedNames;
-
+            vScroll.selected = selectedNames;
             vScroll.forceRenderItems();
-            treeView.updateSelectedItems();
+            updateTreeViewSelectedItems();
+           
 
         }, 100);
     }
@@ -390,31 +413,21 @@ export async function setupExtraNetwork(netkey, table, base_path) {
 
                     selected_networks[`${prompt_focused}_${table}`] = cleanedNetwork;
 
-                    vScroll.selected = treeView.selected = new Set(cleanedNetwork.map(network => network.name));
-
+                    vScroll.selected = new Set(cleanedNetwork.map(network => network.name));
                     vScroll.forceRenderItems();
-                    treeView.updateSelectedItems();
+                    updateTreeViewSelectedItems();
                 });
             }
 
         } else {
 
-            vScroll.selected = treeView.selected = new Set();
+            vScroll.selected = new Set();
             vScroll.forceRenderItems();
-            treeView.updateSelectedItems();
+            updateTreeViewSelectedItems();
+     
         }
     }
 
-
-    if (table !== 'checkpoint') {
-        document.querySelectorAll('#txt2img_prompt textarea, #img2img_prompt textarea, #txt2img_neg_prompt textarea, #img2img_neg_prompt textarea').forEach(textarea => {
-            textarea.addEventListener('input', selectItems);
-            //textarea.addEventListener('focus', selectItems);
-            textarea.addEventListener('focus', selectItemsFromDB);
-        });
-    } else {
-        setupCheckpointChangeObserver(vScroll, treeView);
-    }
 
 
     // User Metadata Form
@@ -548,7 +561,7 @@ export async function setupExtraNetwork(netkey, table, base_path) {
                 data.timestamp = `&t=${timestamp}`;
                 vScroll.updateDataById(data, id);
                 //treeView.updateDataById(data, id);
-                treeView.update();
+                treeView?.update();
             };
 
             const replace_local_preview = imgEl.querySelector('button.replace_preview');

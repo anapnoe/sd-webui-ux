@@ -2869,6 +2869,7 @@ div[data-testid="image"] canvas {
 .group-row>* button,
 .group-row>* {
     border-radius: 0 !important;
+    min-width: fit-content;
 }
 
 .group-row>*:last-child button,

@@ -1,6 +1,6 @@
 import {REPO_NAME} from '../constants.js';
 
-export async function resyncTableData(apiParams, vScroll, treeView) {
+export async function resyncTableData(apiParams, vScroll) {
     try {
 
         //alert(`Resync table: ${apiParams.table_name}`);
@@ -54,8 +54,6 @@ export async function resyncTableData(apiParams, vScroll, treeView) {
         // Step 3: Final UI updates
         apiParams.skip = 0;
         await vScroll.updateParamsAndFetch(apiParams, 0);
-        await treeView.initialize();
-        
         return {success: true, message: 'Table resynced successfully'};
 
     } catch (error) {

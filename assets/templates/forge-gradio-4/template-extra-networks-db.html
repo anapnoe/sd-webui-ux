@@ -1,13 +1,15 @@
 <div id="layout_db_{{template_key}}" class="layout no-padding-one layout-extra-networks">
     <div class="flexbox row padding flex-start group-row">
-        <button toggle="true" class="ae-button shrink show-dirs">
-            <div class="mask-icon icon-node-tree"></div>
-        </button>
-        <input id="{{template_key}}_search" type="text" placeholder="Search..">
-        <button id="{{template_key}}_clear" class="ae-button shrink">
-            <div class="mask-icon icon-cancel"></div>
-        </button>
-        <select id="{{template_key}}_search_in">
+        <div id="{{template_key}}_search_row" class="flexbox row flex-start group-row">
+            <button id="{{template_key}}_show-dirs" toggle="true" class="ae-button shrink show-dirs">
+                <div class="mask-icon icon-node-tree"></div>
+            </button>
+            <input id="{{template_key}}_search" class="grow" type="text" placeholder="Search..">
+            <button id="{{template_key}}_clear" class="ae-button shrink">
+                <div class="mask-icon icon-cancel"></div>
+            </button>
+        </div>
+        <select id="{{template_key}}_search_in" class="grow" >
             <option selected value="filename">Path</option>
             <option value="hash">Hash</option>
             <option value="description">Description</option>
@@ -15,7 +17,7 @@
             <option value="tags">Tags</option>
             <!--<option value="train_tags">Train tags</option>-->
         </select>
-        <select id="{{template_key}}_sd_version">
+        <select id="{{template_key}}_sd_version" class="grow" >
             <option selected value="">All</option>
             <option value="SD1">SD1</option>
             <option value="SD2">SD2</option>
@@ -25,16 +27,18 @@
             <option value="FLUX">FLUX</option>
             <option value="Unknown">Unknown</option>
         </select>
-        <select id="{{template_key}}_sort">
-            <option selected value="id">Default Sort</option>
-            <option value="name">Name</option>
-            <option value="filename">Path</option>
-            <option value="date_created">Date Created</option>
-            <option value="date_modified">Date Modified</option>
-        </select>
-        <button id="{{template_key}}_order" toggle="true" class="ae-button shrink reverse-order">
-            <div class="mask-icon icon-sort"></div>
-        </button>
+        <!---<div class="flexbox row flex-start group-row">-->
+            <select id="{{template_key}}_sort" class="grow" >
+                <option selected value="id">Default Sort</option>
+                <option value="name">Name</option>
+                <option value="filename">Path</option>
+                <option value="date_created">Date Created</option>
+                <option value="date_modified">Date Modified</option>
+            </select>
+            <button id="{{template_key}}_order" toggle="true" class="ae-button shrink reverse-order">
+                <div class="mask-icon icon-sort"></div>
+            </button>
+        <!--</div>-->
         <button id="{{template_key}}_refresh" class="ae-button shrink reverse-order">
             <div class="mask-icon refresh"></div>
         </button>

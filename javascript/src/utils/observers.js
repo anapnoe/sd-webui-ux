@@ -53,7 +53,7 @@ export function setupGenerateObservers() {
         }
     });
 }
-
+/*
 export function setupCheckpointChangeObserver(vScroll, treeView) {
 
     const ch_input = document.querySelector("#setting_sd_model_checkpoint .wrap .secondary-wrap input") || document.querySelector(".gradio-dropdown.model_selection .wrap .secondary-wrap input");
@@ -68,9 +68,14 @@ export function setupCheckpointChangeObserver(vScroll, treeView) {
     const selectCard = (value) => {
         if (hash_value !== value) {
             const name = value.split('.').slice(0, -1).join();
-            vScroll.selected = treeView.selected = new Set([name]);
+            vScroll.selected = new Set([name]);
             vScroll.renderItems();
-            treeView.updateSelectedItems();
+
+            if (treeView) {
+                treeView.selected = vScroll.selected;
+                treeView.updateSelectedItems();
+            }
+            
             ch_footer_selected.textContent = value;
             console.log("Checkpoint:", value, name);
             hash_value = value;
@@ -89,6 +94,63 @@ export function setupCheckpointChangeObserver(vScroll, treeView) {
     combinedObserver.observe(ch_input, {attributes: true});
     combinedObserver.observe(ch_preload, {childList: true, subtree: true});
 }
+*/
+
+export function setupCheckpointChangeObserver(vScroll) {
+    const ch_input = document.querySelector("#setting_sd_model_checkpoint .wrap .secondary-wrap input") || 
+                     document.querySelector(".gradio-dropdown.model_selection .wrap .secondary-wrap input");
+    const ch_preload = document.querySelector("#setting_sd_model_checkpoint .wrap") || 
+                       document.querySelector(".gradio-dropdown.model_selection .wrap");
+
+    const ch_footer_selected = document.querySelector("#checkpoints_main_footer_db .model-selected");
+    const ch_footer_preload = document.querySelector("#checkpoints_main_footer_db .model-preloader");
+    ch_footer_preload.append(ch_preload);
+
+    let hash_value = "";
+    let observer = null;
+    let treeViewCallback = null;
+
+    const selectCard = (value) => {
+        if (hash_value !== value) {
+            const name = value.split('.').slice(0, -1).join('.');
+            vScroll.selected = new Set([name]);
+            vScroll.forceRenderItems();
+
+            if (typeof treeViewCallback === 'function') {
+                treeViewCallback(vScroll.selected);
+            }
+
+            ch_footer_selected.textContent = value;
+            console.log("Checkpoint:", value, name);
+            hash_value = value;
+        }
+    };
+
+    selectCard(ch_input.value);
+
+    const setupObserver = () => {
+        if (observer) return;
+        observer = new MutationObserver(() => {
+            setTimeout(() => selectCard(ch_input.value), 1000);
+        });
+        
+        observer.observe(ch_input, { attributes: true });
+        observer.observe(ch_preload, { childList: true, subtree: true });
+    };
+
+    setupObserver();
+
+    return {
+        setTreeViewCallback(callback) {
+            treeViewCallback = callback;
+            selectCard(hash_value);
+        },
+        destroy() {
+            if (observer) observer.disconnect();
+        }
+    };
+}
+
 
 export function setupExtraNetworksAddToPromptObserver() {
     //do some work here

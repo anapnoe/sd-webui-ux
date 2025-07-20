@@ -35,7 +35,9 @@ export async function setupSdStyle(netkey, table, base_path) {
     const rebuild_thumbs = document.querySelector(`#${netkey}_rebuild`);
     const searchClear = document.querySelector(`#${netkey}_clear`);
 
-    const gradio_refresh = document.querySelector("#refresh_styles_database");
+    const treeViewButton = document.querySelector(`#${netkey}_show-dirs`);
+
+    //const gradio_refresh = document.querySelector("#refresh_styles_database");
 
     selected_sd_styles[`txt2img_${table}`] = [];
     selected_sd_styles[`img2img_${table}`] = [];
@@ -128,48 +130,63 @@ export async function setupSdStyle(netkey, table, base_path) {
     vScroll.updateParamsAndFetch(apiParams, 0);
 
 
-    // TreeView
-    treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_items_by_path', table, base_path);
-    treeView.initialize();
+    function createTreeView() {
+        treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_items_by_path', table, base_path);
+        treeView.initialize();
 
-    treeView.createFileItem = function(tree, key) {
-        const li = document.createElement('li');
-        li.dataset.name = tree[key].name;
-        li.dataset.id = tree[key].id;
-        if (this.selected?.has(tree[key].name)) {
-            li.classList.add('active');
+        treeView.createFileItem = function(tree, key) {
+            const li = document.createElement('li');
+            li.dataset.name = tree[key].name;
+            li.dataset.id = tree[key].id;
+            if (this.selected?.has(tree[key].name)) {
+                li.classList.add('active');
+            }
+            li.innerHTML = `<summary class="tree-file">${tree[key].name}</summary>`;
+            li.classList.add('li-file');
+
+            const itemEditMeta = document.createElement('button');
+            itemEditMeta.className = `edit-meta edit-button card-button`;
+
+            const copyPath = document.createElement('button');
+            copyPath.className = `copy-path copy-path-button card-button`;
+
+            const itemActions = document.createElement('div');
+            itemActions.className = `item-actions`;
+
+            itemActions.appendChild(copyPath);
+            itemActions.appendChild(itemEditMeta);
+
+            li.appendChild(itemActions);
+            return li;
+        };
+
+        treeView.onFolderClicked = function(target, path, active) {
+            //console.log(path, active);
+            //searchInput.value = active ? path : "";
+            //updateInput(searchInput);
+        };
+
+        treeView.onFileClicked = function(target, itemData) {
+            applySdStylesPrompts(target, itemData, itemData.id);
+        };
+    }
+
+    treeViewButton.addEventListener('click', () => {
+        createTreeView();
+    });
+
+    function updateTreeViewSelectedItems() {
+        if (treeView) {
+            treeView.selected = vScroll.selected;
+            treeView.updateSelectedItems();
         }
-        li.innerHTML = `<summary class="tree-file">${tree[key].name}</summary>`;
-        li.classList.add('li-file');
-
-        const itemEditMeta = document.createElement('button');
-        itemEditMeta.className = `edit-meta edit-button card-button`;
-
-        const copyPath = document.createElement('button');
-        copyPath.className = `copy-path copy-path-button card-button`;
-
-        const itemActions = document.createElement('div');
-        itemActions.className = `item-actions`;
-
-        itemActions.appendChild(copyPath);
-        itemActions.appendChild(itemEditMeta);
-
-        li.appendChild(itemActions);
-        return li;
-    };
-
-    treeView.onFolderClicked = function(target, path, active) {
-        //console.log(path, active);
-        //searchInput.value = active ? path : "";
-        //updateInput(searchInput);
-    };
-
-    treeView.onFileClicked = function(target, itemData) {
-        applySdStylesPrompts(target, itemData, itemData.id);
-    };
+    }
 
     refresh.addEventListener('click', async () => {
-        const result = await resyncTableData(apiParams, vScroll, treeView);
+        const result = await resyncTableData(apiParams, vScroll);
+        if (treeView) {
+            await treeView.initialize();
+        }
         if (!result.success) {
             console.warn(`Resync failed: ${result.error}`);
         }
@@ -192,10 +209,10 @@ export async function setupSdStyle(netkey, table, base_path) {
             selected_sd_styles[`${prompt_focused}_${table}`] = cleanedNetwork;
 
             const selectedNames = new Set(cleanedNetwork.map(network => network.name));
-            vScroll.selected = treeView.selected = selectedNames;
+            vScroll.selected = selectedNames;
 
             vScroll.forceRenderItems();
-            treeView.updateSelectedItems();
+            updateTreeViewSelectedItems();
 
         }, 100);
     }
@@ -246,17 +263,19 @@ export async function setupSdStyle(netkey, table, base_path) {
                     });
 
                     selected_sd_styles[`${prompt_focused}_${table}`] = cleanedNetwork;
-                    vScroll.selected = treeView.selected = new Set(cleanedNetwork.map(network => network.name));
+                    vScroll.selected = new Set(cleanedNetwork.map(network => network.name));
+                    updateTreeViewSelectedItems();
 
                 });
             }
 
         } else {
-            vScroll.selected = treeView.selected = new Set();
+            vScroll.selected = new Set();
+            updateTreeViewSelectedItems();
         }
 
         vScroll.forceRenderItems()
-        treeView.updateSelectedItems();
+        updateTreeViewSelectedItems();
     }
 
     document.querySelectorAll('#txt2img_prompt textarea, #img2img_prompt textarea, #txt2img_neg_prompt textarea, #img2img_neg_prompt textarea').forEach(textarea => {
@@ -318,12 +337,13 @@ export async function setupSdStyle(netkey, table, base_path) {
         requestPostData(url, params, function(result) {
             //console.log(result);
             vScroll.removeDataById(itemData.id);
-            treeView.update();
+            treeView?.update();
         });
     }
 
     // User Metadata Form
     function createUserMetaForm(itemData, item_id) {
+        createTreeView();
         const table = "styles";
         const styles_folders = treeView.subpaths;
         const styles_folders_options = new Set(styles_folders.map(folder => folder.relativePath));
@@ -469,7 +489,7 @@ export async function setupSdStyle(netkey, table, base_path) {
             //data.local_preview = local_preview_path_value;
             vScroll.updateDataById(newdata, newdata.id);
             //treeView.updateDataById(data, item_id);
-            treeView.update();
+            treeView?.update();
         };
 
         function replacePreviewImage() {
@@ -504,7 +524,7 @@ export async function setupSdStyle(netkey, table, base_path) {
                     vScroll.hideDetail();
                     apiParams.skip = 0;
                     vScroll.updateParamsAndFetch(apiParams, 0);
-                    treeView.update();
+                    treeView?.update();
 
                 });
             });
