@@ -7,7 +7,7 @@ Compatible with both [Stable Diffusion web UI](https://github.com/AUTOMATIC1111/
 
 [💖 Your Support Makes a Difference! 💖](https://buymeacoffee.com/dayanbayah)
 
-![](screenshot.png)
+![](/assets/images/anapnoe-ui-ux-flux.png)
 
 ## Features Overview
 - **Mobile Responsive Design**: Optimal display and usability across various devices.
@@ -74,7 +74,7 @@ SD webUI UX implements **event delegation** + **virtualized grid** for O(1) perf
 **Stable Diffusion web UI & web UI Forge Constraints**:
 - **DOM Bloat**: Loads all assets → 10k LoRAs create 60k+ DOM nodes (10k images + 50k+ container elements)
 - **Listener Overload**: ~5 listeners per asset → 50k+ listeners for 10K LoRAs
-- **O(n) Scaling**: Linear performance degradation
+- **O(n) Scaling**: Linear performance degradation ***(Checkpoints, Textual Inversions, LoRAs, Hypernetworks)***
 
 **Stable Diffusion web UI UX & web UI UX Forge optimized Architecture**:
 - **Virtualized Grid**: Renders only visible assets (~15 items in default viewport)  
