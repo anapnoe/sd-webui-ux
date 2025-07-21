@@ -343,6 +343,7 @@ body {
     padding: var(--ae-input-padding);
     margin: 0;
     min-height: var(--ae-input-height);
+
 }
 
 .range-line,
@@ -352,6 +353,13 @@ body {
 
 .numbers input:nth-child(2) {
     order: -1;
+}
+
+* select,
+* input:not([type="range"]),
+* textarea {
+    padding-left: calc(var(--ae-input-padding) + (var(--ae-border-radius) * 0.25))  !important;
+    padding-right: calc(var(--ae-input-padding) + (var(--ae-border-radius) * 0.25))  !important;
 }
 
 /* * .no-slider-layout .min-width,
@@ -870,6 +878,8 @@ label>span+div,
     flex-direction: column;
     height: auto;
     white-space: normal;
+    padding-left: calc(var(--ae-border-radius) * 0.5);
+    padding-right: calc(var(--ae-border-radius) * 0.5);
 }
 
 .gradio-video .controls .inner {
@@ -1439,8 +1449,10 @@ li.item span {
 .mask-icon {
     display: inline-block;
     background: var(--ae-input-text-color);
+    /*
     border: var(--ae-input-border-size) solid var(--ae-input-border-color);
     border-radius: var(--ae-border-radius);
+    */
     line-height: var(--ae-input-line-height);
     font-size: var(--ae-input-font-size);
     padding: var(--ae-input-padding);
