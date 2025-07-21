@@ -1,7 +1,7 @@
 import {getGradioApp, getAnapnoeApp, getAnapnoeTabContent, IS_BACKEND_OPTIMIZED, CSS_INCLUDES, DEFAULT_ASSETS_PATH, VERSION_DATA} from './constants.js';
 import {setupLogger} from './components/logger.js';
 import {loadTemplates} from './components/templates.js';
-import {setupAnimations, countEventListeners} from './utils/helpers.js';
+import {setupAnimations, detectHoverOnElements, countEventListeners} from './utils/helpers.js';
 import {initUiUxComponents} from './components/components.js';
 import {removeRedundantExtraNetworks, removeStyleAssets} from './components/optimizations.js';
 import {showContributors, showMembers} from './utils/api_external.js';
@@ -124,6 +124,7 @@ function onUiUxReady(content_div) {
         }, {once: true});
     }
 
+    detectHoverOnElements(".layout-extra-networks");
 
     if (!IS_BACKEND_OPTIMIZED) {
         document.querySelector("#github-project-link").href = "https://github.com/anapnoe/sd-webui-ux"

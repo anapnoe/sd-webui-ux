@@ -138,3 +138,22 @@ export function sendImageParamsTo(src, btnid) {
         })
         .catch(error => console.error('Error fetching image:', error));
 }
+
+export function detectHoverOnElements(selector){
+    let timeout;
+    document.querySelectorAll(selector).forEach((parent) => {
+
+        parent.addEventListener('mouseenter', (e) => {
+            clearTimeout(timeout);
+            parent.classList.remove('init-view');
+            timeout = setTimeout(() => {
+                parent.classList.add('mouseenter');
+            }, 500);
+        });
+
+        parent.addEventListener('mouseleave', (e) => {
+            clearTimeout(timeout);
+            parent.classList.remove('mouseenter');
+        });
+    });
+}
