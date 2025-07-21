@@ -24,7 +24,15 @@ export async function initButtonComponents(contentDiv) {
     await Promise.all(Array.from(contentDiv.querySelectorAll('.ae-button')).map(async(el) => {
         const toggle = el.getAttribute("toggle");
         const active = el.getAttribute("active");
+        const data_click = el.getAttribute("data-click");
         const input = el.querySelector('input');
+
+        if (data_click) {
+            el.addEventListener('click', (e) => {
+                const target = document.querySelector(data_click);
+                target?.click();
+            });
+        }
 
         if (input) {
             if (input.checked === true && !active) {
