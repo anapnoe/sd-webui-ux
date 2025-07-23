@@ -523,6 +523,7 @@ span.extra-type {
 }
 
 /* Hover effects */
+/*
 .layout-extra-networks .ae-virtual:not(.full) .item-img {
     animation: addEffect 0.3s forwards;
 }
@@ -537,9 +538,8 @@ span.extra-type {
     animation: removeBgEffect 0.3s forwards;
 }
 
-/* Global hover state */
-.layout-extra-networks.mouseenter:hover *,
-.layout-extra-networks.mouseenter * {
+.layout-extra-networks.mouseenter:hover .ae-virtual:not(.full) .item-img,
+.layout-extra-networks.mouseenter .ae-virtual:not(.full) .item-img {
     filter: none !important;
     mix-blend-mode: normal !important;
     animation: none !important;
@@ -556,6 +556,37 @@ span.extra-type {
 }
 .layout-extra-networks.init-view  .ae-virtual:not(.full) .card:before {
     opacity: var(--ae-uiux_exnet_image_tint) !important;
+    animation: none !important;
+}
+
+.default-mobile .layout-extra-networks .ae-virtual:not(.full) .item-img,
+.default-mobile .layout-extra-networks.init-view .ae-virtual:not(.full) .item-img {
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    animation: none !important;
+}
+.default-mobile .layout-extra-networks .ae-virtual:not(.full) .card:before,
+.default-mobile .layout-extra-networks.init-view .ae-virtual:not(.full) .card:before {
+    opacity: 0 !important;
+}
+*/
+
+.layout-extra-networks .ae-virtual:not(.full) .item-img {
+    filter: grayscale(calc(var(--ae-uiux_exnet_image_tint) * 10)) !important;
+    mix-blend-mode: multiply !important;
+    animation: none !important;
+}
+.layout-extra-networks  .ae-virtual:not(.full) .card:before {
+    opacity: var(--ae-uiux_exnet_image_tint) !important;
+    animation: none !important;
+}
+.layout-extra-networks:hover .ae-virtual:not(.full) .item-img {
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    animation: none !important;
+}
+.layout-extra-networks:hover .ae-virtual:not(.full) .card:before {
+    opacity: 0 !important;
     animation: none !important;
 }
 

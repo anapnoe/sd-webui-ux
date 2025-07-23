@@ -131,6 +131,7 @@ export async function setupSdStyle(netkey, table, base_path) {
 
 
     function createTreeView() {
+        if (treeView){return;}
         treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_items_by_path', table, base_path);
         treeView.initialize();
 
@@ -344,6 +345,12 @@ export async function setupSdStyle(netkey, table, base_path) {
     // User Metadata Form
     function createUserMetaForm(itemData, item_id) {
         createTreeView();
+        if (!treeView.subpaths){
+            setTimeout(() => {
+                createUserMetaForm(itemData, item_id)
+            }, 1000);
+            return;
+        }
         const table = "styles";
         const styles_folders = treeView.subpaths;
         const styles_folders_options = new Set(styles_folders.map(folder => folder.relativePath));

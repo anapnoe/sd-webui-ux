@@ -62,7 +62,7 @@ Object.assign(VirtualScroll.prototype, {
                 this.updateDimensions();
             }
         } else if (this.data.length > 0) {
-            //this.itemsWrapper.classList.remove("hidden");
+            this.itemsWrapper.classList.remove("hidden");
             //this.renderItems();
             this.updateDimensions(true);
         } else {
@@ -490,7 +490,9 @@ Object.assign(VirtualScroll.prototype, {
         this.container.addEventListener('change', this.changeHandler.bind(this));
         this.container.addEventListener("wheel", this.wheelHandler.bind(this), { passive: false });
 
-        document.addEventListener('keydown', this.keyPressHandler.bind(this));
+        this.container.tabIndex = -1; 
+        this.container.addEventListener('keydown', this.keyPressHandler.bind(this));
+        this.container.addEventListener('click', () => this.container.focus());
 
         this.panel = this.itemsWrapper;
 

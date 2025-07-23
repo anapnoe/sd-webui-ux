@@ -35,88 +35,66 @@ export function setupAnimations() {
     });
 }
 
-export function countInlineEventListeners(element) {
-    let count = 0;
 
-    // Function to check event listeners that may have been added via 'addEventListener'
-    const checkEventListeners = (el) => {
-        const attrs = Object.getOwnPropertyDescriptors(el);
-        if (attrs && attrs.onclick) count++;
-        for (const eventName of ['onblur', 'onchange', 'onclick', 'oncontextmenu', 'ondblclick',
-            'onerror', 'onfocus', 'oninput', 'onkeydown', 'onkeypress',
-            'onkeyup', 'onload', 'onmousedown', 'onmousemove',
-            'onmouseout', 'onmouseover', 'onmouseup', 'onresize',
-            'onscroll', 'onselect', 'onsubmit']) {
-            if (el[eventName]) count++;
-        }
-    };
-
-    // Recursive function to traverse the DOM
-    const traverseChildren = (el) => {
-        checkEventListeners(el);
-        for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
-            traverseChildren(child);
-        }
-    };
-
-    traverseChildren(element);
-    return count;
-}
-
-const eventListenersMap = new WeakMap();
-export function countEventListeners(element) {
-    if (!(element instanceof Element)) {
-        return 0;
-    }
-    let totalListeners = 0;
-    const elementListeners = eventListenersMap.get(element);
-    if (elementListeners) {
-        for (const event in elementListeners) {
-            totalListeners += elementListeners[event].size; // Count Set size
-        }
-    }
-
-    for (const child of element.children) {
-        totalListeners += countEventListeners(child);
-    }
-
-    return totalListeners;
-}
-
-(function() {
-    const originalAddEventListener = EventTarget.prototype.addEventListener;
-    const originalRemoveEventListener = EventTarget.prototype.removeEventListener;
-
-    EventTarget.prototype.addEventListener = function(type, listener, options) {
-        if (typeof options === 'undefined') {
-            options = false; // Assign a default value if necessary
-        }
-
-        const elementListeners = eventListenersMap.get(this) || {};
-        if (!elementListeners[type]) {
-            elementListeners[type] = new Set(); // Use Set to prevent duplicates
-        }
-        elementListeners[type].add(listener);
-        eventListenersMap.set(this, elementListeners);
-
-        originalAddEventListener.call(this, type, listener, options);
-    };
-
-    EventTarget.prototype.removeEventListener = function(type, listener, options) {
-        const elementListeners = eventListenersMap.get(this);
-        if (elementListeners && elementListeners[type]) {
-            elementListeners[type].delete(listener); // Remove the listener from the Set
-            if (elementListeners[type].size === 0) {
-                delete elementListeners[type]; // Optionally clean up the empty array
+async function waitForPngInfoText(png_info_text, maxRetries = 4) {
+    return new Promise((resolve) => {
+        const check = (count) => {
+            if (png_info_text.value != "" || count >= maxRetries) {
+                resolve(true);
+            } else {
+                setTimeout(() => check(count + 1), 500);
             }
+        };
+        check(0);
+    });
+}
+
+
+export async function sendImageParamsTo(src, btnid) {
+    const root_dock = document.querySelector(`#root-dock-components`);
+    const fileInput = document.querySelector('#pnginfo_image input[type="file"]');
+    const btn = document.querySelector(`#pnginfo_send_buttons ${btnid}`);
+    const tab_active = document.querySelector(`#main-nav .active`);
+    const wtb = document.querySelector(`#workspaces_tabitem`);
+    //console.warn("sendImageParamsTo", btnid, btn);
+
+    const png_info_text = document.querySelector('[data-selector="#tab_pnginfo textarea"] textarea');
+    if(png_info_text){
+        png_info_text.value = "";
+        updateInput(png_info_text);
+    }
+
+    try {
+        const response = await fetch(src);
+        const blob = await response.blob();
+        const file = new File([blob], 'image.jpg');
+        
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+        updateChange(fileInput);
+
+        const loaded = await waitForPngInfoText(png_info_text);
+        if (loaded) {
+            if(root_dock){
+                wtb.classList.add("no-redraw");
+                setTimeout(() => {
+                    tab_active?.click();
+                    wtb.classList.remove("no-redraw");
+                }, 1000);
+            }
+
+            btn?.click();
+
+        } else {
+            console.error('PNG info not loaded');
         }
-        originalRemoveEventListener.call(this, type, listener, options);
-    };
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
 
-    window.countEventListeners = countEventListeners;
-}());
-
-
+/*
 export function sendImageParamsTo(src, btnid) {
     const btn = document.querySelector(`#pnginfo_send_buttons ${btnid}`);
     const fileInput = document.querySelector('#pnginfo_image input[type="file"]');
@@ -138,7 +116,7 @@ export function sendImageParamsTo(src, btnid) {
         })
         .catch(error => console.error('Error fetching image:', error));
 }
-
+*/
 export function detectHoverOnElements(selector){
     let timeout;
     document.querySelectorAll(selector).forEach((parent) => {

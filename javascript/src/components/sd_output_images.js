@@ -138,6 +138,7 @@ export async function setupSdOutputImage(netkey, table, base_path) {
 
     // TreeView
     function createTreeView() {
+        if (treeView){return;}
         treeView = new TreeView(`#${netkey}_tree_view`, '/sd_webui_ux/get_items_by_path', table, base_path);
         treeView.initialize();
 
@@ -355,6 +356,12 @@ export async function setupSdOutputImage(netkey, table, base_path) {
     // User Metadata Form
     function createUserMetaForm(itemData, item_id) {
         createTreeView();
+        if (!treeView.subpaths){
+            setTimeout(() => {
+                createUserMetaForm(itemData, item_id)
+            }, 1000);
+            return;
+        }
         const table = "images";
         const output_images_folders = treeView.subpaths;
         const output_images_folders_options = new Set(output_images_folders.map(folder => folder.relativePath));

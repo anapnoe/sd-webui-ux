@@ -65,7 +65,7 @@ async function setupLogger() {
         '\n', "╔═╗╔═╦╦═╗╔═╦═╦╦═╦═╗", '\n', "║╬╚╣║║║╬╚╣╬║║║║╬║╩╣", '\n', "╚══╩╩═╩══╣╔╩╩═╩═╩═╝", '\n', "─────────╚╝"
     );
 
-    console.log(`Initialize Anapnoe UI/UX runtime engine version ${ANAPNOE_APP_VER}`);
+    console.log(`Initialize Anapnoe UI/UX Core version ${ANAPNOE_APP_VER}`);
     console.log(`UI/UX Backend Optimizations:`, IS_BACKEND_OPTIMIZED);
     console.log(navigator.userAgent);
     console.log(fetchAndCacheVersionData());

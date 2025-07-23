@@ -2751,11 +2751,10 @@ span.star_count b {
 }
 
 #popup_close {
-    position: absolute;
-    right: calc(var(--ae-panel-padding) * 2);
-    bottom: calc(var(--ae-panel-padding) * 3);
-    height: 24px;
-    padding-right: calc(var(--ae-panel-padding) * 3);
+    width: 120px;
+    order: -1;
+    margin: auto;
+    margin-right: 0;
 }
 
 

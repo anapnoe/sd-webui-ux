@@ -1,4 +1,4 @@
-import {updateInput, countEventListeners, countInlineEventListeners} from '../utils/helpers.js';
+import {updateInput} from '../utils/helpers.js';
 import {appendPopupContent} from './uiux/portal.js';
 import {getGradioApp, getAnapnoeApp, getLoggerUiUx, IS_BACKEND_OPTIMIZED} from '../constants.js';
 import {UIUX} from '../utils/module.js';
