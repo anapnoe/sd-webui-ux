@@ -4077,5 +4077,8 @@ table.non-editable-table td {
     pointer-events: none;
 }
 */
-
-
+.no-slider-layout .min-width,
+.no-slider-layout .flexbox:not(.unset-min-width, .flex-start, .shrink),
+.no-slider-layout .block {
+    min-width: min(100px, 100%) !important;
+}
