@@ -65,7 +65,7 @@ async function setupLogger() {
         '\n', "╔═╗╔═╦╦═╗╔═╦═╦╦═╦═╗", '\n', "║╬╚╣║║║╬╚╣╬║║║║╬║╩╣", '\n', "╚══╩╩═╩══╣╔╩╩═╩═╩═╝", '\n', "─────────╚╝"
     );
 
-    console.log(`Initialize Anapnoe UI/UX runtime engine version ${ANAPNOE_APP_VER}`);
+    console.log(`Initialize Anapnoe UI/UX Core version ${ANAPNOE_APP_VER}`);
     console.log(`UI/UX Backend Optimizations:`, IS_BACKEND_OPTIMIZED);
     console.log(navigator.userAgent);
     console.log(fetchAndCacheVersionData());
@@ -74,6 +74,9 @@ async function setupLogger() {
     console.log("Console log enabled: ", window.opts.uiux_enable_console_log);
     console.log("Dev Mode enabled: ", window.opts.uiux_enable_dev_mode);
     console.log("Theme editor enabled: ", window.opts.uiux_enable_theme_editor);
+    console.log("SD Styles enabled: ", window.opts.uiux_enable_sd_styles);
+    console.log("Image Browser enabled: ", window.opts.uiux_enable_sd_output_images);
+    console.log("Civitai Explorer enabled: ", window.opts.uiux_enable_civitai_explorer);
     console.log("Maximum resolution output: ", window.opts.uiux_max_resolution_output);
     console.log("Ignore overrides: ", window.opts.uiux_ignore_overrides);
     console.log("Show ticks for input range slider: ", window.opts.uiux_show_input_range_ticks);

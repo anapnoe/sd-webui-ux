@@ -112,7 +112,12 @@ shared.options_templates.update(
             "uiux_enable_dev_mode": shared.OptionInfo(False, "Enable Development Mode (Needs Restart)"),
             "uiux_nodejs_path": shared.OptionInfo("C:/Program Files/nodejs/npm.cmd", "Dev mode set Nodejs path to compile from src (Needs Restart)"),
             "uiux_enable_theme_editor": shared.OptionInfo(True, "Enable Theme Editor (Needs Restart)"),
-            "uiux_enable_event_delegation": shared.OptionInfo(False, "Enable Event Delegation for Extra Networks (Needs Restart)"),
+            "uiux_enable_civitai_explorer": shared.OptionInfo(True, "Enable CivitAI Explorer (Needs Restart)"),
+            #"uiux_enable_db_extra_networks": shared.OptionInfo(True, "Enable Database for Extra Networks (Needs Restart)"),
+            "uiux_enable_sd_styles": shared.OptionInfo(True, "Enable Styles (Needs Restart)"),
+            "uiux_enable_sd_output_images": shared.OptionInfo(True, "Enable Image Browser (Needs Restart)"),
+                          
+            #"uiux_enable_event_delegation": shared.OptionInfo(False, "Enable Event Delegation for Extra Networks (Needs Restart)"),
             "uiux_max_resolution_output": shared.OptionInfo(
                 2048, "Max resolution output for txt2img and img2img"
             ),
@@ -207,17 +212,17 @@ def on_ui_tabs():
     log_messages = []
     
     with gr.Blocks(analytics_enabled=False) as anapnoe_sd_uiux_core:
-        textbox = gr.Textbox(elm_id="pylogger", lines=10, label="Log Output", interactive=False)
+        textbox = gr.Textbox(elem_id="pylogger", lines=10, label="Log Output", interactive=False)
 
         logger = StreamToLogger(log_messages)
-        sys.stdout = logger  # Redirect stdout to our custom logger
+        sys.stdout = logger 
         with gr.Row():
             run_button = gr.Button("Update Logs")
             vite_build = gr.Button("Vite build")
         
         def capture_logs():
             test_function()
-            return "\n".join(log_messages)  # Return the concatenated log messages
+            return "\n".join(log_messages)
         
         def run_vite_build_callback():
             run_vite_build()

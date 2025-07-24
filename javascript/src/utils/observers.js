@@ -53,30 +53,31 @@ export function setupGenerateObservers() {
         }
     });
 }
-
-export function setupCheckpointChangeObserver() {
+/*
+export function setupCheckpointChangeObserver(vScroll, treeView) {
 
     const ch_input = document.querySelector("#setting_sd_model_checkpoint .wrap .secondary-wrap input") || document.querySelector(".gradio-dropdown.model_selection .wrap .secondary-wrap input");
     const ch_preload = document.querySelector("#setting_sd_model_checkpoint .wrap") || document.querySelector(".gradio-dropdown.model_selection .wrap");
 
-    const ch_footer_selected = document.querySelector("#txt2img_checkpoints_main_footer .model-selected");
-    const ch_footer_preload = document.querySelector("#txt2img_checkpoints_main_footer .model-preloader");
+    const ch_footer_selected = document.querySelector("#checkpoints_main_footer_db .model-selected");
+    const ch_footer_preload = document.querySelector("#checkpoints_main_footer_db .model-preloader");
     ch_footer_preload.append(ch_preload);
 
-    let hash_value;
-    // Function to handle checkpoint selection
+    let hash_value = "";
+
     const selectCard = (value) => {
         if (hash_value !== value) {
-            console.log("Checkpoint:", value);
-            const oldcard = document.querySelector(`#txt2img_checkpoints_cards .card.selected`);
-            oldcard?.classList.remove("selected");
+            const name = value.split('.').slice(0, -1).join();
+            vScroll.selected = new Set([name]);
+            vScroll.renderItems();
 
-            const new_card = document.querySelector(`#txt2img_checkpoints_cards .card[data-apply*="${value}"]`) || document.querySelector(`#txt2img_checkpoints_cards .card[onclick*="${value}"]`);
-            new_card?.classList.add("selected");
-
+            if (treeView) {
+                treeView.selected = vScroll.selected;
+                treeView.updateSelectedItems();
+            }
+            
             ch_footer_selected.textContent = value;
-            console.log("Checkpoint:", value);
-
+            console.log("Checkpoint:", value, name);
             hash_value = value;
         }
     };
@@ -85,9 +86,6 @@ export function setupCheckpointChangeObserver() {
 
     const combinedObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(m) {
-            //if (m.type === "attributes" && m.target === ch_input) {
-            //    selectCard(ch_input.value);
-            //}
             setTimeout(() => selectCard(ch_input.value), 1000);
         });
     });
@@ -95,6 +93,62 @@ export function setupCheckpointChangeObserver() {
     // Observe both the input and the preloaded model in one line
     combinedObserver.observe(ch_input, {attributes: true});
     combinedObserver.observe(ch_preload, {childList: true, subtree: true});
+}
+*/
+
+export function setupCheckpointChangeObserver(vScroll) {
+    const ch_input = document.querySelector("#setting_sd_model_checkpoint .wrap .secondary-wrap input") || 
+                     document.querySelector(".gradio-dropdown.model_selection .wrap .secondary-wrap input");
+    const ch_preload = document.querySelector("#setting_sd_model_checkpoint .wrap") || 
+                       document.querySelector(".gradio-dropdown.model_selection .wrap");
+
+    const ch_footer_selected = document.querySelector("#checkpoints_main_footer_db .model-selected");
+    const ch_footer_preload = document.querySelector("#checkpoints_main_footer_db .model-preloader");
+    ch_footer_preload.append(ch_preload);
+
+    let hash_value = "";
+    let observer = null;
+    let treeViewCallback = null;
+
+    const selectCard = (value) => {
+        if (hash_value !== value) {
+            const name = value.split('.').slice(0, -1).join('.');
+            vScroll.selected = new Set([name]);
+            vScroll.forceRenderItems();
+
+            if (typeof treeViewCallback === 'function') {
+                treeViewCallback(vScroll.selected);
+            }
+
+            ch_footer_selected.textContent = value;
+            console.log("Checkpoint:", value, name);
+            hash_value = value;
+        }
+    };
+
+    selectCard(ch_input.value);
+
+    const setupObserver = () => {
+        if (observer) return;
+        observer = new MutationObserver(() => {
+            setTimeout(() => selectCard(ch_input.value), 1000);
+        });
+        
+        observer.observe(ch_input, { attributes: true });
+        observer.observe(ch_preload, { childList: true, subtree: true });
+    };
+
+    setupObserver();
+
+    return {
+        setTreeViewCallback(callback) {
+            treeViewCallback = callback;
+            selectCard(hash_value);
+        },
+        destroy() {
+            if (observer) observer.disconnect();
+        }
+    };
 }
 
 
@@ -125,4 +179,39 @@ export function setupExtraNetworksAddToPromptObserver() {
 
     //console.log(matchingCards);
 
+}
+
+export function setupInputObservers(paramsMapping, apiParams, vScroll, modifyParamsCallback = null) {
+    Object.keys(paramsMapping).forEach((inputId) => {
+        const inputElement = document.querySelector(`${inputId}`);
+        if (inputElement) {
+            const paramKey = paramsMapping[inputId];
+            const eventType = (inputElement.tagName === 'SELECT' && inputElement.multiple) ? 'change' :
+                (inputElement.tagName === 'SELECT' ||
+                (inputElement.type === 'checkbox' || inputElement.type === 'radio') ||
+                (inputElement.type !== 'range' && inputElement.type !== 'color' && inputElement.type !== 'text')) ? 'change' : 'input';
+
+            const updateParams = () => {
+                let paramValue;
+                if (inputElement.tagName === 'SELECT' && inputElement.multiple) {
+                    paramValue = Array.from(inputElement.selectedOptions).map(option => option.value);
+                    apiParams[paramKey] = paramValue;
+                } else if (inputElement.type === 'checkbox' || inputElement.type === 'radio') {
+                    paramValue = inputElement.checked;
+                } else {
+                    paramValue = inputElement.value;
+                }
+                // Apply the callback if provided
+                const modifiedParams = modifyParamsCallback ? modifyParamsCallback({[paramKey]: paramValue}) : {[paramKey]: paramValue};
+                vScroll.updateParamsAndFetch(modifiedParams, 1000);
+            };
+
+            inputElement.addEventListener(eventType, updateParams);
+            // Initialize apiParams with the current values of the inputs
+            //updateParams();
+        } else {
+            console.warn(`Input element with id ${inputId} not found.`);
+        }
+    });
+    return apiParams;
 }

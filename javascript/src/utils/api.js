@@ -1,54 +1,64 @@
 import {REPO_NAME} from '../constants.js';
 
-export async function getContributors(repoName = REPO_NAME, page = 1) {
-    const request = await fetch(`https://api.github.com/repos/${repoName}/contributors?per_page=100&page=${page}`, {
-        method: 'GET',
-        headers: {'Content-Type': 'application/json'},
-    });
+export async function resyncTableData(apiParams, vScroll) {
+    try {
 
-    return await request.json();
-}
-
-export async function getAllContributorsRecursive(repoName = REPO_NAME, page = 1, allContributors = []) {
-    const list = await getContributors(repoName, page);
-    allContributors = allContributors.concat(list);
-
-    if (list.length === 100) {
-        return getAllContributorsRecursive(repoName, page + 1, allContributors);
-    }
-
-    return allContributors;
-}
-
-export function showContributors() {
-    const contributors_btn = document.querySelector('#contributors');
-    const contributors_view = document.querySelector('#contributors_tabitem');
-    const temp = document.createElement('div');
-    temp.id = 'contributors_grid';
-    temp.innerHTML = `Kindly allow us a moment to retrieve the contributors. 
-    We're grateful for the many individuals who have generously put their time and effort to make this possible.`;
-
-    contributors_view.append(temp);
-
-    contributors_btn.addEventListener('click', (e) => {
-        if (!contributors_btn.getAttribute('data-visited')) {
-            contributors_btn.setAttribute('data-visited', 'true');
-            const promise = getAllContributorsRecursive();
-            promise.then((result) => {
-                temp.innerHTML = '';
-                for (let i = 0; i < result.length; i++) {
-                    const login = result[i].login;
-                    const html_url = result[i].html_url;
-                    const avatar_url = result[i].avatar_url;
-                    temp.innerHTML += `
-                        <a href="${html_url}" target="_blank" rel="noopener noreferrer nofollow" class="contributor-button flexbox col">
-                            <figure><img src="${avatar_url}" lazy="true"></figure>
-                            <div class="contributor-name">
-                                ${login}
-                            </div>
-                        </a>`;
-                }
-            });
+        //alert(`Resync table: ${apiParams.table_name}`);
+        // Step 1: Delete invalid items
+        const deleteResponse = await fetch('/sd_webui_ux/delete_invalid_items', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({table_name: apiParams.table_name})
+        });
+        
+        if (!deleteResponse.ok) {
+            throw new Error(`DELETE failed! Status: ${deleteResponse.status}`);
         }
-    });
+        
+        // Step 2: Import/update table and process stream
+        const importResponse = await fetch('/sd_webui_ux/import_update_table', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({table_name: apiParams.table_name})
+        });
+        
+        if (!importResponse.ok) {
+            throw new Error(`IMPORT failed! Status: ${importResponse.status}`);
+        }
+        
+        vScroll.showLoadingIndicator();
+        const reader = importResponse.body.getReader();
+        const decoder = new TextDecoder();
+        
+        // Process stream chunks
+        while (true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, {stream: true});
+            const lines = chunk.split('\n').filter(line => line.trim());
+            
+            for (const line of lines) {
+                try {
+                    const data = JSON.parse(line);
+                    vScroll.updateLoadingIndicator(Math.round(data.progress));
+                    console.log(`Processed ${data.processed}/${data.total} (${data.progress}%)`);
+                } catch (e) {
+                    console.error('JSON parse error:', e, 'Raw:', line);
+                }
+            }
+        }
+        
+        vScroll.hideLoadingIndicator();
+        
+        // Step 3: Final UI updates
+        apiParams.skip = 0;
+        await vScroll.updateParamsAndFetch(apiParams, 0);
+        return {success: true, message: 'Table resynced successfully'};
+
+    } catch (error) {
+        console.error('Operation failed:', error);
+        vScroll.hideLoadingIndicator();
+        return {success: false, error: error.message};
+    }
 }

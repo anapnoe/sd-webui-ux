@@ -1,10 +1,10 @@
-import {getGradioApp, getAnapnoeApp, getAnapnoeTabContent, IS_BACKEND_OPTIMIZED, CSS_INCLUDES, DEFAULT_ASSETS_PATH, VERSION_DATA} from './constants.js';
+import {getGradioApp, getAnapnoeApp, getAnapnoeTabContent, IS_BACKEND_OPTIMIZED, CSS_INCLUDES, DEFAULT_ASSETS_PATH, VERSION_DATA, ANAPNOE_APP_VER,} from './constants.js';
 import {setupLogger} from './components/logger.js';
 import {loadTemplates} from './components/templates.js';
-import {setupAnimations, countEventListeners} from './utils/helpers.js';
+import {setupAnimations, detectHoverOnElements} from './utils/helpers.js';
 import {initUiUxComponents} from './components/components.js';
-import {removeRedundantExtraNetworks, removeStyleAssets, optimizeExtraNetworksCards, optimizeExtraNetworksSearchSort} from './components/optimizations.js';
-import {showContributors} from './utils/api.js';
+import {removeRedundantExtraNetworks, removeStyleAssets} from './components/optimizations.js';
+import {showContributors, showMembers} from './utils/api_external.js';
 import {switchMobile} from './utils/mobile.js';
 import {uiuxOptionSettings} from './components/settings.js';
 import {localStorageWrapper, onLocalStorageChange} from './utils/storage.js';
@@ -12,7 +12,10 @@ import {setupGenerateObservers, setupCheckpointChangeObserver} from './utils/obs
 import {createTabsForExtensions, injectStylesToIframe, injectStylesAfterUIUX, replaceStylesheet} from './components/extensions.js';
 import {setupThemeEditor} from './components/theme_editor.js';
 import {UIUX} from './utils/module.js';
-
+import {setupCivitaiExplorerImages, setupCivitaiExplorerModels} from './components/civitai_explorer.js';
+import {setupExtraNetworkCheckpoints, setupExtraNetworkTextualinversion, setupExtraNetworkLora, setupExtraNetworkHypernetworks} from './components/extra_networks.js';
+import {setupSdStyles} from './components/sd_styles.js';
+import {setupSdOutputImages} from './components/sd_output_images.js';
 function onUiUxReady(content_div) {
 
     const logger_screen = document.querySelector("#logger_screen");
@@ -22,22 +25,17 @@ function onUiUxReady(content_div) {
         logger_screen.remove();
     }
 
-    content_div.querySelectorAll(".extra-network-cards, .extra-network-tree").forEach((el) => {
-        optimizeExtraNetworksCards(el);
-    });
-
     console.log("Finishing optimizations for Extra Networks");
 
-    optimizeExtraNetworksSearchSort();
     setupGenerateObservers();
     uiuxOptionSettings();
     showContributors();
+    showMembers();
     switchMobile();
-    setupCheckpointChangeObserver();
+    //setupCheckpointChangeObserver();
 
     document.querySelectorAll("#txt2img_styles_edit_button, #img2img_styles_edit_button").forEach((elm) => {
         elm.addEventListener("click", function(e) {
-            /* eslint-disable no-undef */
             window.popup_trigger.click();
             //appendPopupContent();
         });
@@ -54,6 +52,7 @@ function onUiUxReady(content_div) {
             setFocusPrompt(closestId);
         });
     });
+
     /*
     document.querySelectorAll("#txt2img_nav, #img2img_nav").forEach(button => {
         button.addEventListener("click", (e) => {
@@ -78,9 +77,60 @@ function onUiUxReady(content_div) {
         setupThemeEditor();
     }
 
+    if (window.opts.uiux_enable_civitai_explorer) {
+        const caiexp = document.querySelector("#civitai_explorer_nav");
+        caiexp.classList.remove("hidden");
+        const civitai_nav_images = document.querySelector("#civitai_nav_images");
+        const civitai_nav_models = document.querySelector("#civitai_nav_models");
+        civitai_nav_images.addEventListener('click', () => {
+            setupCivitaiExplorerImages();
+        }, {once: true});
+        civitai_nav_models.addEventListener('click', () => {
+            setupCivitaiExplorerModels();
+        }, {once: true});
+    }
+
+    const textual_inversion_nav = document.querySelector("#textual_inversion_nav");
+    const lora_nav = document.querySelector("#lora_nav");
+    const hypernetwork_nav = document.querySelector("#hypernetwork_nav");
+
     setTimeout(() => {
-        document.querySelector("#btn_checkpoints")?.click();
+        setupExtraNetworkCheckpoints();
     }, 500);
+
+    textual_inversion_nav.addEventListener('click', () => {
+        setupExtraNetworkTextualinversion();
+    }, {once: true});
+    lora_nav.addEventListener('click', () => {
+        setupExtraNetworkLora();
+    }, {once: true});
+    hypernetwork_nav.addEventListener('click', () => {
+        setupExtraNetworkHypernetworks();
+    }, {once: true});
+
+    if (window.opts.uiux_enable_sd_styles) {
+        const sd_styles_nav = document.querySelector("#sd_styles_nav");
+        sd_styles_nav.classList.remove("hidden");
+        sd_styles_nav.addEventListener('click', () => {
+            setupSdStyles();
+        }, {once: true});
+    }
+
+    if (window.opts.uiux_enable_sd_output_images) {
+        const sd_output_images_nav = document.querySelector("#sd_output_images_nav");
+        sd_output_images_nav.classList.remove("hidden");
+        sd_output_images_nav.addEventListener('click', () => {
+            setupSdOutputImages();
+        }, {once: true});
+    }
+
+    detectHoverOnElements(".layout-extra-networks");
+
+    if (!IS_BACKEND_OPTIMIZED) {
+        document.querySelector("#github-project-link").href = "https://github.com/anapnoe/sd-webui-ux"
+    }
+
+   
 
     //const totalListeners = countEventListeners(document.body);
     //console.warn(`Total event listeners: ${totalListeners}`);
@@ -173,7 +223,4 @@ function observeGradioInit() {
     }
 }
 
-
 observeGradioInit();
-
-

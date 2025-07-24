@@ -16,7 +16,7 @@ export async function initTabComponents(contentDiv) {
                 tab.classList.remove('active');
                 const tids = tab.getAttribute("tabItemId");
                 anapnoeApp.querySelectorAll(tids).forEach((tabItem) => {
-                    tabItem.classList.remove('fade-in');
+                    tabItem.classList.remove('fade-in', 'init-view');
                     tabItem.classList.add('fade-out');
                 });
             }
@@ -42,7 +42,7 @@ export async function initTabComponents(contentDiv) {
                 const tids = el.getAttribute("tabItemId");
                 anapnoeApp.querySelectorAll(tids).forEach((tabItem) => {
                     tabItem.classList.remove('fade-out');
-                    tabItem.classList.add('fade-in');
+                    tabItem.classList.add('fade-in', 'init-view');
                     tabItem.querySelectorAll(`.portal.dynamic`).forEach((dpEl, index, array) => {
                         appendPortalContent(dpEl, document, 0, index, array.length);
                     });
@@ -51,6 +51,7 @@ export async function initTabComponents(contentDiv) {
 
                 el.classList.add('active');
                 callToAction(el, tids, pid);
+
             }
 
         });
@@ -59,7 +60,7 @@ export async function initTabComponents(contentDiv) {
         if (!active) {
             const tids = el.getAttribute("tabItemId");
             anapnoeApp.querySelectorAll(tids).forEach((tabItem) => {
-                tabItem.classList.remove('fade-in');
+                tabItem.classList.remove('fade-in', 'init-view');
                 tabItem.classList.add('fade-out');
             });
         }
@@ -73,6 +74,7 @@ export async function initTabComponents(contentDiv) {
             tabItem.classList.remove('fade-out');
             tabItem.classList.add('fade-in');
         });
+
         callToAction(el, tids, pid);
         // console.log('tab', tids, el);
     }));

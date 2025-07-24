@@ -5,7 +5,7 @@ window.onAfterUiUpdate(() => {
         const visibleGalleryButtons = [];
 
         if (tabitem) {
-            // console.log(tabitem, allGalleryButtons);
+            //console.log(tabitem, allGalleryButtons);
             const allGalleryButtons = gradioApp().querySelectorAll(`${tabitem} .gradio-gallery .thumbnails > .thumbnail-small`);
 
             allGalleryButtons?.forEach((elem) => {
@@ -85,22 +85,40 @@ window.onAfterUiUpdate(() => {
     let active_main_tab = gradioApp().getElementById('tab_txt2img');
 
     window.get_uiCurrentTabContent = function() {
-        // console.log(active_main_tab);
-        if (active_main_tab.id === 'tab_txt2img') {
+        //console.log(active_main_tab);
+        if (active_main_tab?.id === 'tab_txt2img') {
             return document.getElementById('txt2img_tabitem');
-        } if (active_main_tab.id === 'tab_img2img') {
+        } if (active_main_tab?.id === 'tab_img2img') {
             return document.getElementById('img2img_tabitem');
         }
     };
 
     window.mainTabs = function(element, tab) {
+        //console.warn(element, tab);
+        const root_dock = document.querySelector(`#root-dock-components`);
+        const tab_active = document.querySelector(`#main-nav .active`);
+        const wtb = document.querySelector(`#workspaces_tabitem`);
+        if(root_dock){wtb.classList.add("no-redraw");}
+
         if (active_main_tab) {
-            active_main_tab.style.display = 'none';
+            active_main_tab.click();
         }
+        
         const ntab = document.querySelector(tab);
         if (ntab) {
             ntab.style.display = 'block';
             active_main_tab = ntab;
         }
+
+        if(root_dock && tab != "#tab_anapnoe_dock"){
+            setTimeout(() => {
+                tab_active?.click();
+                wtb.classList.remove("no-redraw");
+            }, 500);
+        }
+
     };
+    
+
+
 });

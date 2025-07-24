@@ -1,0 +1,93 @@
+<div id="layout_db_{{template_key}}" class="layout no-padding-one layout-extra-networks">
+    <div class="flexbox row padding flex-start group-row">
+        <div id="{{template_key}}_search_row" class="flexbox row flex-start group-row">
+            <button id="{{template_key}}_show-dirs" toggle="true" class="ae-button shrink show-dirs">
+                <div class="mask-icon icon-node-tree"></div>
+            </button>
+            <input id="{{template_key}}_search" class="grow" type="text" placeholder="Search..">
+            <button id="{{template_key}}_clear" class="ae-button shrink">
+                <div class="mask-icon icon-cancel"></div>
+            </button>
+        </div>
+        <select id="{{template_key}}_search_in" class="grow" >
+            <option selected value="filename">Path</option>
+            <option value="hash">Hash</option>
+            <option value="description">Description</option>
+            <option value="notes">Notes</option>
+            <option value="tags">Tags</option>
+            <!--<option value="train_tags">Train tags</option>-->
+        </select>
+        <select id="{{template_key}}_sd_version" class="grow" >
+            <option selected value="">All</option>
+            <option value="SD1">SD1</option>
+            <option value="SD2">SD2</option>
+            <option value="SD3">SD3</option>
+            <option value="SDXL">SDXL</option>
+            <option value="PONY">PONY</option>
+            <option value="FLUX">FLUX</option>
+            <option value="Unknown">Unknown</option>
+        </select>
+        <select id="{{template_key}}_sort" class="grow" >
+            <option selected value="id">Default Sort</option>
+            <option value="name">Name</option>
+            <option value="filename">Path</option>
+            <option value="date_created">Date Created</option>
+            <option value="date_modified">Date Modified</option>
+        </select>
+        <button id="{{template_key}}_order" toggle="true" class="ae-button shrink reverse-order">
+            <div class="mask-icon icon-sort"></div>
+        </button>
+        <button id="{{template_key}}_refresh" class="ae-button shrink reverse-order">
+            <div class="mask-icon refresh"></div>
+        </button>
+        <button title="Rebuild thumbnails" id="{{template_key}}_rebuild" class="ae-button shrink reverse-order">
+            <div class="mask-icon icon-rebuild-thumbs"></div>
+        </button>
+        <button title="Settings" toggle="true" tabItemId="#{{template_key}}_settings_db" class="xtabs-tab">
+            <div class="mask-icon icon-settings"></div>
+        </button>
+    </div>
+    <div id="{{template_key}}_aside_split_db" direction="horizontal" gutterSize="8" class="split">
+        <div id="{{template_key}}_aside_db" data-minSize="0" data-initSize="0" class="split-container exnet-left no-drag">
+            <div class="layout">
+                <div class="layout-content">
+                    <div id="{{template_key}}_tree_view" class="tree-view-container">
+                     
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="{{template_key}}_main_db" data-minSize="0" data-initSize="100" class="split-container exnet-right no-drag">
+            <div class="layout no-top-padding">
+                <div class="layout-header flexbox col relative">
+                    <div id="{{template_key}}_settings_db" class="extra-network-settings flexbox col panel relative">
+                        <div class="flexbox row">
+                            <div data-selector="#setting_uiux_exnet_aspect_ratio_x" data-parent-selector="gradio-app" class="portal dynamic"></div>
+                            <div data-selector="#setting_uiux_exnet_aspect_ratio_y" data-parent-selector="gradio-app" class="portal dynamic"></div>
+                            <div data-selector="#setting_uiux_exnet_fit_size" data-parent-selector="gradio-app" class="portal dynamic"></div>
+                            <div data-selector="#setting_uiux_exnet_header_size" data-parent-selector="gradio-app" class="portal dynamic"></div>
+                            <div data-selector="#setting_uiux_exnet_image_tint" data-parent-selector="gradio-app" class="portal dynamic"></div>
+                            <button class="ae-button shrink" data-click="#settings_submit">
+                                <div class="mask-icon icon-save"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="layout-content no-top-padding">
+                    <div id="{{template_key}}_cardholder" class="ae-virtual-cardholder"></div>
+                    <!--
+                    <div class="xtabs auto-scroll">
+                        <div class="xtabs-items no-padding">
+                            
+                        </div>
+                    </div>
+                -->
+                </div>
+                <div id="{{template_key}}_main_footer_db" class="layout-footer ">
+                    <div class="flexbox col model-preloader"></div>
+                    <div class="flexbox col model-selected"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -5,7 +5,7 @@ export const REPO_NAME = "anapnoe/stable-diffusion-webui-ux";
 export const REPO_NAME_UPSTREAM = "AUTOMATIC1111/stable-diffusion-webui";
 
 export const ANAPNOE_APP_ID = "#anapnoe_app";
-export const ANAPNOE_APP_VER = "0.1.0";
+export const ANAPNOE_APP_VER = "1.0.0";
 export const DEFAULT_PATH = window.basePath;
 export const DEFAULT_ASSETS_PATH = `${DEFAULT_PATH}assets/`;
 export const DEFAULT_CSS_PATH = `${DEFAULT_ASSETS_PATH}css/`;
@@ -16,8 +16,7 @@ export const DEFAULT_TEMPLATES_FORGE_GRADIO_4 = `${DEFAULT_TEMPLATES_PATH}forge-
 
 export const EXTENSION_TEMPLATE_MAP = {
     'template-deforum-params.html': 'deforum',
-    'template-deforum-results.html': 'deforum',
-    'template-stylez.html': 'enable_Stylez'
+    'template-deforum-results.html': 'deforum'
 };
 
 export const CSS_INCLUDES = [
@@ -28,14 +27,17 @@ export const CSS_INCLUDES = [
     'uiux-extra-networks.css',
     'uiux-settings.css',
     'uiux-range.css',
-    'uiux-gradio.css'
+    'uiux-gradio.css' 'uiux-stylez.css'
     */
-    /*'style-v2.css',*/
+    //'style-v2.css',
     'uiux-icons.css',
     'uiux-theme-editor.css',
     'uiux-deforum.css',
     'uiux-iibrowser.css',
-    'uiux-physton.css'
+    'uiux-physton.css',
+    'uiux-virtual.css',
+    'uiux-tree.css',
+
 ];
 
 let cachedAnapnoeApp = null;
@@ -136,4 +138,12 @@ const getDefaultTemplatesPath = () => {
 export {getDefaultTemplatesPath};
 
 
-
+export const SD_VERSIONS_OPTIONS = [
+    {value: 'SD1', textContent: 'SD1'},
+    {value: 'SD2', textContent: 'SD2'},
+    {value: 'SD3', textContent: 'SD3'},
+    {value: 'SDXL', textContent: 'SDXL'},
+    {value: 'PONY', textContent: 'PONY'},
+    {value: 'FLUX', textContent: 'FLUX'},
+    {value: 'Unknown', textContent: 'Unknown'}
+];
