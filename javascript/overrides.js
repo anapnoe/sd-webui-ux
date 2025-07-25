@@ -98,7 +98,9 @@ window.onAfterUiUpdate(() => {
         const root_dock = document.querySelector(`#root-dock-components`);
         const tab_active = document.querySelector(`#main-nav .active`);
         const wtb = document.querySelector(`#workspaces_tabitem`);
-        if(root_dock){wtb.classList.add("no-redraw");}
+        if(root_dock && tab != "#tab_anapnoe_dock"){
+            wtb.classList.add("no-redraw");
+        }
 
         if (active_main_tab) {
             active_main_tab.click();
