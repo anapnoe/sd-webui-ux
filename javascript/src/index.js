@@ -8,7 +8,7 @@ import {showContributors, showMembers} from './utils/api_external.js';
 import {switchMobile} from './utils/mobile.js';
 import {uiuxOptionSettings} from './components/settings.js';
 import {localStorageWrapper, onLocalStorageChange} from './utils/storage.js';
-import {setupGenerateObservers, setupCheckpointChangeObserver} from './utils/observers.js';
+import {setupGenerateObservers, setupCheckpointChangeObserver, setReloadBackgroundColor} from './utils/observers.js';
 import {createTabsForExtensions, injectStylesToIframe, injectStylesAfterUIUX, replaceStylesheet} from './components/extensions.js';
 import {setupThemeEditor} from './components/theme_editor.js';
 import {UIUX} from './utils/module.js';
@@ -130,7 +130,7 @@ function onUiUxReady(content_div) {
         document.querySelector("#github-project-link").href = "https://github.com/anapnoe/sd-webui-ux"
     }
 
-   
+    setReloadBackgroundColor();
 
     //const totalListeners = countEventListeners(document.body);
     //console.warn(`Total event listeners: ${totalListeners}`);
