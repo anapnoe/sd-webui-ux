@@ -215,3 +215,27 @@ export function setupInputObservers(paramsMapping, apiParams, vScroll, modifyPar
     });
     return apiParams;
 }
+
+export function setReloadBackgroundColor() {
+    const bgcolor = getComputedStyle(document.documentElement).getPropertyValue('--ae-main-bg-color').trim();
+    const color = getComputedStyle(document.documentElement).getPropertyValue('--ae-primary-color').trim();
+    const encodedColor = color.replace(/#/g, '%23');
+    const bgsvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <polygon fill="${encodedColor}" points="19.5,13.7 21.6,9.9 11.8,9.9 16.7,18.5 17.7,16.7 17.1,15.7 16.7,16.5 13.5,10.9 19.9,10.9 18.9,12.7"/>
+            <polygon fill="${encodedColor}" points="17.3,11.7 15.8,11.7 20.2,19.3 3.8,19.3 12,5.2 14.2,9 15.8,9 12,2.5 1.5,20.7 22.5,20.7"/>
+        </svg>
+        `.replace(/\n\s+/g, ' ');
+    const encodedSVG = encodeURIComponent(bgsvg);
+    const dataURI = `url("data:image/svg+xml,${encodedSVG}")`;
+
+    document.documentElement.style.cssText = `
+        background-position: 50% 40%;
+        background-size: 200px;
+        background-repeat: no-repeat;
+        background-color: ${bgcolor} !important;
+        background-image: ${dataURI} !important;
+        color: ${color};
+        height: 100%;
+    `;
+}

@@ -120,7 +120,29 @@ window.onAfterUiUpdate(() => {
         }
 
     };
-    
 
+    window.restart_reload = function() {
+        document.body.innerHTML = `<p style="
+            font-family: monospace;
+            position: absolute;
+            top: calc(40% + 110px);
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding-left: 20px;
+            text-align: center;
+            width: max-content;
+        ">Server is restarting please wait...⚡</p>`;
+        //document.body.innerHTML = '';
+        var requestPing = function() {
+            requestGet("./internal/ping", {}, function(data) {
+                location.reload();
+            }, function() {
+                setTimeout(requestPing, 500);
+            });
+        };
+        setTimeout(requestPing, 1000);
+        return [];
+    }
+    
 
 });
