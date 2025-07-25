@@ -228,10 +228,12 @@ function processMemberships(membershipData) {
 }
 
 function createMemberItem(currentMember){
-    const profile_name = currentMember.supporter_name;
+    let profile_name = currentMember.supporter_name;
     const avatar_url = currentMember.profile_picture_url;
     const avatar_img = avatar_url.includes("/default") ?  `https://robohash.org/${currentMember.fk_user_id}` : avatar_url;
     //const avatar_img = avatar_url.includes("/default") ?  `https://api.dicebear.com/9.x/pixel-art/svg?seed=${currentMember.fk_user_id}` : avatar_url;
+    
+    if(currentMember.fk_user_id == "7367914"){profile_name = "Bruce";}
 
     return `
         <a href="#" target="_blank" rel="noopener noreferrer nofollow" class="sponsors-button flexbox col">
