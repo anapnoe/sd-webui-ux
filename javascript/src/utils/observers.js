@@ -1,6 +1,7 @@
 import {VERSION_DATA} from "../constants.js";
 
 export function setupGenerateObservers() {
+
     const keys = ['#txt2img', '#img2img', '#deforum'];
     keys.forEach((key) => {
         const tgb = document.querySelector(`${key}_generate`);
@@ -13,88 +14,63 @@ export function setupGenerateObservers() {
             const ts = document.querySelector(`${key}_skip`).closest('.portal');
             const loop = document.querySelector(`${key}_loop`);
 
-
-
             tib.addEventListener('click', () => {
                 loop?.classList.add('stop');
             });
-
-
+ 
             const gen_observer = new MutationObserver((mutations) => {
                 mutations.forEach((m) => {
-                    if (tib.style.display === 'none') {
-                        const progress = document.querySelector(`.progressDiv .progress`);
-                        if (progress) {
-                            ti.classList.remove('disable');
-                            setTimeout(() => tib.click(), 500);
-                        }
-                        if (loop) {
-                            if (loop.className.indexOf('stop') !== -1 || loop.className.indexOf('active') === -1) {
-                                loop.classList.remove('stop');
-                                ti.classList.add('disable');
-                                ts?.classList.add('disable');
-                                tg.classList.remove('active');
-                            } else if (loop.className.indexOf('active') !== -1) {
-                                tgb.click();
+                    const isNotGenerating = tib.style.display === 'none';
+                    const check = () => {
+                        const progressElExists = document.querySelector(`.progressDiv .progress`);
+                        if (isNotGenerating) {
+
+                            if (progressElExists) {
+                                setTimeout(() => {
+                                    tib.click(); //interrupt
+                                    check();
+                                }, 500); 
+                                return;
                             }
+
+                            if (loop) {
+                                const isLoopActive = loop.classList.contains('active');
+                                const isLoopStopped = loop.classList.contains('stop');
+                                if (isLoopStopped || !isLoopActive) {
+                                    loop.classList.remove('stop');
+                                    ti.classList.add('disable');
+                                    ts?.classList.add('disable');
+                                    tg.classList.remove('active');
+                                    tgb.classList.remove('disable')
+                                } else if (isLoopActive) {
+                                    tgb.click();
+                                    tgb.classList.add('disable');
+                                }
+                            } else {
+                                ti.classList.add('disable');
+                                tg.classList.remove('active');
+                                tgb.classList.remove('disable')
+                            }
+                            
                         } else {
-                            ti.classList.add('disable');
-                            tg.classList.remove('active');
+                            ti.classList.remove('disable');
+                            ts?.classList.remove('disable');
+                            tg.classList.add('active');
+                            tgb.classList.add('disable');
                         }
-                    } else {
-                        ti.classList.remove('disable');
-                        ts?.classList.remove('disable');
-                        tg.classList.add('active');
-                    }
+                    };
+
+                    check();
+
                 });
             });
+            
 
             gen_observer.observe(tib, {attributes: true, attributeFilter: ['style']});
         }
     });
 }
-/*
-export function setupCheckpointChangeObserver(vScroll, treeView) {
 
-    const ch_input = document.querySelector("#setting_sd_model_checkpoint .wrap .secondary-wrap input") || document.querySelector(".gradio-dropdown.model_selection .wrap .secondary-wrap input");
-    const ch_preload = document.querySelector("#setting_sd_model_checkpoint .wrap") || document.querySelector(".gradio-dropdown.model_selection .wrap");
-
-    const ch_footer_selected = document.querySelector("#checkpoints_main_footer_db .model-selected");
-    const ch_footer_preload = document.querySelector("#checkpoints_main_footer_db .model-preloader");
-    ch_footer_preload.append(ch_preload);
-
-    let hash_value = "";
-
-    const selectCard = (value) => {
-        if (hash_value !== value) {
-            const name = value.split('.').slice(0, -1).join();
-            vScroll.selected = new Set([name]);
-            vScroll.renderItems();
-
-            if (treeView) {
-                treeView.selected = vScroll.selected;
-                treeView.updateSelectedItems();
-            }
-            
-            ch_footer_selected.textContent = value;
-            console.log("Checkpoint:", value, name);
-            hash_value = value;
-        }
-    };
-
-    selectCard(ch_input.value);
-
-    const combinedObserver = new MutationObserver(function(mutations) {
-        mutations.forEach(function(m) {
-            setTimeout(() => selectCard(ch_input.value), 1000);
-        });
-    });
-
-    // Observe both the input and the preloaded model in one line
-    combinedObserver.observe(ch_input, {attributes: true});
-    combinedObserver.observe(ch_preload, {childList: true, subtree: true});
-}
-*/
 
 export function setupCheckpointChangeObserver(vScroll) {
     const ch_input = document.querySelector("#setting_sd_model_checkpoint .wrap .secondary-wrap input") || 
@@ -180,6 +156,8 @@ export function setupExtraNetworksAddToPromptObserver() {
     //console.log(matchingCards);
 
 }
+
+
 
 export function setupInputObservers(paramsMapping, apiParams, vScroll, modifyParamsCallback = null) {
     Object.keys(paramsMapping).forEach((inputId) => {
