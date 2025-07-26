@@ -122,7 +122,8 @@ window.onAfterUiUpdate(() => {
     };
 
     window.restart_reload = function() {
-        document.body.innerHTML = `<p style="
+        const messageElement = document.createElement('p');
+        messageElement.style.cssText = `
             font-family: monospace;
             position: absolute;
             top: calc(40% + 110px);
@@ -131,18 +132,39 @@ window.onAfterUiUpdate(() => {
             padding-left: 20px;
             text-align: center;
             width: max-content;
-        ">Server is restarting please wait...⚡</p>`;
-        //document.body.innerHTML = '';
-        var requestPing = function() {
+            white-space: pre;
+        `;
+        document.body.innerHTML = '';
+        document.body.appendChild(messageElement);
+        
+        const animationFrames = [
+            "   ",
+            ".  ",
+            ".. ",
+            "...",
+        ];
+
+        let frameIndex = 0;
+        function updateMessage() {
+            const animation = animationFrames[frameIndex % animationFrames.length];
+            messageElement.innerHTML = `Server is restarting please wait${animation} `;
+            frameIndex++;
+        }
+
+        const requestPing = function() {
+            updateMessage();
             requestGet("./internal/ping", {}, function(data) {
                 location.reload();
             }, function() {
                 setTimeout(requestPing, 500);
             });
         };
+
+        updateMessage();
         setTimeout(requestPing, 1000);
+
         return [];
-    }
+    };
     
 
 });
