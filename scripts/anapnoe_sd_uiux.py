@@ -116,6 +116,7 @@ shared.options_templates.update(
             #"uiux_enable_db_extra_networks": shared.OptionInfo(True, "Enable Database for Extra Networks (Needs Restart)"),
             "uiux_enable_sd_styles": shared.OptionInfo(True, "Enable Styles (Needs Restart)"),
             "uiux_enable_sd_output_images": shared.OptionInfo(True, "Enable Image Browser (Needs Restart)"),
+            "uiux_sd_output_images_path": shared.OptionInfo("outputs", "Default base path for images"),
                           
             #"uiux_enable_event_delegation": shared.OptionInfo(False, "Enable Event Delegation for Extra Networks (Needs Restart)"),
             "uiux_max_resolution_output": shared.OptionInfo(
