@@ -7,6 +7,8 @@ import modules.scripts as scripts
 from modules import script_callbacks, shared, ui_extra_networks
 from fastapi import FastAPI, HTTPException, Query, Body
 from typing import Optional, List, Dict, Any
+from modules.paths_internal import default_output_dir
+from modules.shared import opts
 
 import launch
 commit = launch.commit_hash()
@@ -33,7 +35,10 @@ basedir = scripts.basedir()
 webuidir = Path(basedir).parents[1]
 scriptsdir = os.path.join(basedir, "scripts")
 
-imagesdir = os.path.join(webuidir, "outputs")
+#imagesdir = os.path.join(webuidir, "outputs")
+imagesdir = opts.outdir_samples or opts.uiux_sd_output_images_path
+#print(imagesdir)
+
 stylesdir = os.path.join(basedir, "styles_data")
 
 DB_FILE = os.path.join(basedir, 'sd_webui_ux.db')

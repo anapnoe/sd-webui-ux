@@ -43,7 +43,7 @@ class OutputImagesFolderProcessor:
         return cls._instance
 
     def allowed_directories_for_previews(self):
-        return [self.images_folder]  # Allow the styles folder
+        return [self.images_folder] 
 
     def register_page(self):
         self.allowed_dirs.update(self.allowed_directories_for_previews())
