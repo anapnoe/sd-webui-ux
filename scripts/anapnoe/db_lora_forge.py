@@ -92,7 +92,7 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
             "tags": "", 
             "local_preview": f"{path}.{shared.opts.samples_format}", 
             "metadata_exists": bool(lora_on_disk.metadata), 
-            "sd_version": lora_on_disk.sd_version.name, 
+            "sd_version": "Unknown", 
             "type": "LORA", 
             "filesize": stats.st_size,
             "date_created": int(mtime), 
@@ -107,15 +107,14 @@ class ExtraNetworksPageLora(ui_extra_networks.ExtraNetworksPage):
         item["activation_text"] = item["user_metadata"].get("activation text", "")
         item["preferred_weight"] = item["user_metadata"].get("preferred weight", 0.0)
 
-        sd_version = item["user_metadata"].get("sd version")
-        if sd_version in network.SdVersion.__members__:
-            item["sd_version"] = sd_version
-            sd_version = network.SdVersion[sd_version]
+        user_metadata_sd_version = item["user_metadata"].get("sd version")
+        if user_metadata_sd_version:
+            item["sd_version"] = user_metadata_sd_version
         else:
-            sd_version = lora_on_disk.sd_version        #   use heuristics
-            #sd_version = network.SdVersion.Unknown     #   avoid heuristics 
-
-        #item["sd_version_str"] = str(sd_version)
+            try:
+                item["sd_version"] = lora_on_disk.sd_version.name
+            except AttributeError:
+                pass
 
         return self.add_types_to_item(item)
 
